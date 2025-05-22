@@ -1,32 +1,37 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import speaker from '../assets/speaker.jpg'; // Adjust the path if needed
+import speaker from '../assets/speaker.jpg';
 
 function Home() {
   return (
-    <div className="w-full flex items-center justify-between bg-white px-16 overflow-hidden">
+    
+<div className="bg-white w-full min-h-[100dvh] flex flex-col lg:flex-row items-center justify-center px-6 lg:px-16 overflow-hidden">
       
       {/* Left Section: Text */}
-      <div className="flex flex-col" style={{"position":"absolute",top:200,left: 200}}>
-        <p className="text-5xl font-semibold text-gray-800 mb-6 pl-30">
+      <div className="flex flex-col items-start text-center lg:text-left max-w-xl overflow-hidden">
+        <p className="text-3xl sm:text-4xl md:text-5xl font-semibold text-gray-800 mb-6">
           A practical way to learn
         </p>
-        <h1 className="text-8xl font-extrabold text-blue-600 mb-10 leading-tight">
-          <span className='leading-[1.4]'>Public</span> <br />
-          <span className='pl-30'>Speaking</span>
+        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold text-blue-600 mb-10 leading-tight">
+          <span className="block leading-[1.2]">Public</span>
+          <span className="block">Speaking</span>
         </h1>
-        <button className="px-6 py-3 bg-indigo-600 text-white text-lg rounded-md w-fit hover:bg-indigo-700 transition ml-70 mt-30">
-          <Link to='/login'>Get Started</Link>
-        </button>
+        <Link to="/login">
+          <button className="px-6 py-3 bg-indigo-600 text-white text-lg rounded-md hover:bg-indigo-700 transition">
+            Get Started
+          </button>
+        </Link>
       </div>
 
-      {/* Right Section: Image */}
-      <div className=" flex-shrink-0" style={{position:'absolute', right: 0,bottom: 0}}>
-        <img
-          src={speaker}
-          alt="Speaker"
-          className="h-full object-contain"
-        />
+      {/* Right Section: Image with Colored Box */}
+      <div className="w-full lg:w-1/2 flex justify-center mt-10 lg:mt-0">
+        <div className="bg-blue-100 rounded-3xl p-6 sm:p-10 shadow-lg max-w-[400px]">
+          <img
+            src={speaker}
+            alt="Speaker"
+            className="w-full h-auto object-contain rounded-2xl"
+          />
+        </div>
       </div>
     </div>
   );
