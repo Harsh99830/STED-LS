@@ -17,7 +17,7 @@ function Home() {
           <span className="block">Speaking</span>
         </h1>
         <Link to="/login">
-          <button className="px-6 py-3 bg-indigo-600 text-white text-lg rounded-md hover:bg-indigo-700 transition">
+          <button className="px-4 py-2 ml-40 mt-20 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 transition ">
             Get Started
           </button>
         </Link>

@@ -4,7 +4,7 @@ import { SignIn } from '@clerk/clerk-react';
 function Login() {
   return (
     <div className="flex items-center justify-center bg-white">
-      <div className="scale-130 mt-40"> 
+      <div className="scale-100 mt-10"> 
         <SignIn afterSignInUrl="/dashboard"/>
       </div>
     </div>
