@@ -5,6 +5,7 @@ import Sidebar from "../components/Sidebar";
 import TaskCard from "../components/TaskCard";
 import ProgressCard from "../components/ProgressCard";
 import StartButton from "../components/StartButton";
+import { SignOutButton } from "@clerk/clerk-react";
 import { useUser } from "@clerk/clerk-react"; // Clerk import
 import React from "react";
 
@@ -45,8 +46,13 @@ export default function Dashboard() {
         }
       } else {
         // If user doesn't exist in Firebase, create entry with default task
-        const newUser = { currentTask: "task1" };
-        await set(userRef, newUser);
+        const newUser = {
+        currentTask: "task1",
+        tasksCompleted: 0,
+        xp: 0,
+        level: 1,
+      };
+      await set(userRef, newUser);
         setUserData(newUser);
       }
     };
@@ -70,24 +76,61 @@ export default function Dashboard() {
   };
 
   const handleDoneTask = async () => {
-    if (!startedTask) return;
+  if (!startedTask) return;
 
-    const startedRef = ref(db, `users/${userId}/startedTasks/${startedTask.id}`);
-    await remove(startedRef);
+  const startedRef = ref(db, `users/${userId}/startedTasks/${startedTask.id}`);
+  await remove(startedRef);
 
-    const currentNumber = parseInt(task.id.replace("task", ""));
-    const newTaskId = `task${currentNumber + 1}`;
+  const currentNumber = parseInt(task.id.replace("task", ""));
+  const newTaskId = `task${currentNumber + 1}`;
 
-    const userTaskRef = ref(db, `users/${userId}/currentTask`);
-    await set(userTaskRef, newTaskId);
+  const userRef = ref(db, `users/${userId}`);
+  const userSnap = await get(userRef);
+  let updatedData = userSnap.val() || {};
 
-    setStartedTask(null);
-    setUserData({ ...userData, currentTask: newTaskId });
+  // Task XP from current task
+  const taskXp = task.xp || 0;
+
+  // Update user XP and level
+  let newXp = (updatedData.xp || 0) + taskXp;
+  let newLevel = updatedData.level || 1;
+  while (newXp >= 500) {
+    newXp -= 500;
+    newLevel += 1;
+  }
+
+  // Update completedTasks
+  let tasksCompleted = (updatedData.tasksCompleted || 0) + 1;
+
+  // Set updated values
+  const newUserData = {
+    ...updatedData,
+    currentTask: newTaskId,
+    tasksCompleted: tasksCompleted,
+    xp: newXp,
+    level: newLevel,
   };
+
+  await set(userRef, newUserData);
+
+  setStartedTask(null);
+  setUserData(newUserData);
+
+  // Fetch new task
+  const taskRef = ref(db, `tasks/${newTaskId}`);
+  const taskSnap = await get(taskRef);
+  if (taskSnap.exists()) {
+    const taskData = taskSnap.val();
+    setTask({ id: newTaskId, ...taskData });
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#c2dbf7] to-[#2596be] text-black p-4 relative">
       <Sidebar />
+      <SignOutButton className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"/>
+        Sign Out
       <h1 className="text-xl font-bold mb-4">Welcome {user?.firstName || "User"}!</h1>
 
       <div className="flex flex-col md:flex-row gap-4">
