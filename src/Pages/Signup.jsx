@@ -1,14 +1,14 @@
 import React from 'react';
-import { SignIn } from '@clerk/clerk-react';
+import { SignUp } from '@clerk/clerk-react';
 
-function Login() {
+function Signup() {
   return (
     <div className="flex items-center justify-center bg-white">
       <div className="scale-100 mt-10"> 
-        <SignIn afterSignInUrl="/home"/>
+        <SignUp afterSignUpUrl="/dashboard"/>
       </div>
     </div>
   );
 }
 
-export default Login;
+export default Signup;

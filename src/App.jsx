@@ -4,6 +4,7 @@ import './App.css'
 import Home from './Pages/Home'
 import Login from './Pages/Login'
 import Dashboard from './Pages/Dashboard';
+import Signup from './Pages/Signup';
 
 function App() {
 
@@ -12,8 +13,9 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Home/>} />
-          <Route path="/dashboard" element={<Dashboard/>} />
+          <Route path="/home" element={<Dashboard/>} />
           <Route path="/login" element={<Login/>} />
+          <Route path="/signup" element={<Signup/>} />
         </Routes>
       </BrowserRouter>
     </>
