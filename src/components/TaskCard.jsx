@@ -2,8 +2,8 @@ import React from 'react';
 
 export default function TaskCard({ task }) {
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md w-180 border  ml-50 mt-40 max-h-99 text-left">
-      <h2 className="text-lg font-bold mb-2">#{task.id}</h2>
+    <div className="bg-white pl-4 pt-3 rounded-xl shadow-md w-180 border mt-5 ml-50 h-130 text-left">
+      <h2 className="text-lg font-bold mb-2">Task- {task.id[4]}</h2>
       <h1 className="text-4xl font-bold text-black mb-3">{task.title}</h1>
       <p className="text-gray-600 font-medium mb-2 text-sm mb-5">{task.description}</p>
       <p className="text-sm mb-1"><span className='text-lg font-semibold'>Reward:</span> <span className="font-semibold">+{task.xp}XP</span></p>

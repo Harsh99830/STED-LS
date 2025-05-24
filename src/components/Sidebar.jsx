@@ -7,7 +7,7 @@ export default function Sidebar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="fixed top-4 left-4 z-50">
+    <div className="fixed top-5 left-4 z-50">
       <button onClick={() => setOpen(!open)} className="text-black text-2xl">
         <FaBars />
       </button>
