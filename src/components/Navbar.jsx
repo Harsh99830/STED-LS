@@ -16,7 +16,7 @@ function Navbar({ onProgressClick, showProgress }) {
           {showProgress ? "Close" : "Your Progress"}
         </button>
 
-        <div className='transform scale-125'>
+        <div className='transform scale-125 mr-3'>
           <UserButton afterSignOutUrl="/" />
         </div>
       </div>
