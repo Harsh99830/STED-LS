@@ -6,8 +6,8 @@ export default function StartButton({ isStarted, onClick }) {
       <button
         onClick={onClick}
         className={`${
-          isStarted ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
-        } text-white text-lg  text-center h-10 w-20 shadow-lg transition-all duration-200 rounded-full`}
+          isStarted ? 'bg-[#46a052] hover:bg-[#22843b]' : 'bg-[#155DFC] hover:bg-[#1f4189]'
+        } text-white text-lg  text-center h-12 w-25 shadow-lg transition-all duration-200 rounded-xl`}
       >
         {isStarted ? 'Done' : 'Start'}
       </button>

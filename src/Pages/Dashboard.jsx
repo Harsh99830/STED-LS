@@ -7,6 +7,8 @@ import StartButton from "../components/StartButton";
 import { useUser } from "@clerk/clerk-react"; // Clerk import
 import React from "react";
 import Navbar from "../components/Navbar";
+import TaskPointsBox from "../components/TaskPointsBox";
+
 
 export default function Dashboard() {
   const { user } = useUser(); // Clerk user
@@ -167,20 +169,21 @@ const toggleProgress = () => {
     
     <div className="min-h-screen bg-gradient-to-br from-[#c2dbf7] to-[#2596be] text-black  relative">
       <Navbar onProgressClick={toggleProgress}  showProgress={showProgress}/>
+      {showProgress && userData && (
+      <div className="">
+     <ProgressCard stats={userData} startedTask={startedTask} />
+    </div>
+  )}
       {/* <SignOutButton className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"/>
         Sign Out */}
-      <h1 className="text-3xl text-left pl-52 mt-7">Welcome {user?.firstName || "User"}!</h1>
+      {/* <h1 className="text-3xl text-left pl-52 mt-7">Welcome {user?.firstName || "User"}!</h1> */}
 
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex  md:flex-row border-black mt-8 h-145 w-306 justify-center rounded-lg mx-37">
         {task && <TaskCard task={task} />}
-        {showProgress && userData && (
-  <div className="mt-4">
-    <ProgressCard stats={userData} startedTask={startedTask} />
-  </div>
-)}
-      </div>
-
+        {task && <TaskPointsBox points={task.points} />}
+        
       <StartButton onClick={startedTask ? handleDoneTask : handleStartTask} isStarted={!!startedTask} />
+      </div>
 
       {showStartedModal && (
         <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
