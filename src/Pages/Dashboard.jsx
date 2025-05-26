@@ -225,7 +225,7 @@ const handleRestart = async () => {
         </div>
       )}
 
-     <div className="flex flex-col items-center justify-center mt-8 h-145 w-306 mx-37 rounded-lg bg-white bg-opacity-80 p-6 shadow-md">
+     <div className="flex flex-col justify-center items-center mt-8 h-145 w-306 mx-37 rounded-lg bg-white bg-opacity-80 shadow-md">
   {taskExists && task ? (
     <>
       <div className="flex md:flex-row justify-center">
