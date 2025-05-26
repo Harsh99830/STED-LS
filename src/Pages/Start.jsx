@@ -2,9 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import speaker from '../assets/speaker.jpg';
-import speak from '../assets/speak.jpg';
-import ano from '../assets/ano.jpg';
-import mic from '../assets/mic.jpg';
+import speak from '../assets/speak.jpg'
+import ano from '../assets/ano.jpg'
+import mic from '../assets/mic.jpg'
 
 function Start() {
   return (
@@ -32,8 +32,8 @@ function Start() {
           <motion.button
             whileHover={{
               scale: 1.1,
-              boxShadow: '0 0 15px rgba(249, 115, 22, 0.8)',
-              backgroundColor: '#EA580C',
+              boxShadow: '0 0 15px rgba(249, 115, 22, 0.8)', // Orange glow
+              backgroundColor: '#EA580C', // Deep Orange on hover
             }}
             whileTap={{ scale: 0.95 }}
             className="px-6 py-3 bg-[#F97316] text-white text-lg rounded-md transition font-semibold"
@@ -42,44 +42,45 @@ function Start() {
           </motion.button>
         </Link>
       </motion.div>
-
+      {/* Right Section: Image with Colored Box */}
       <motion.div
-  initial={{ x: 50, opacity: 0 }}
-  animate={{ x: 0, opacity: 1 }}
-  transition={{ delay: 0.6, duration: 0.8, ease: 'easeOut' }}
-  className="w-full lg:w-1/2 flex justify-center mt-10 lg:mt-0"
->
-  <div className="grid grid-cols-2 gap-4 bg-[#BFDBFE] rounded-3xl p-4 sm:p-6 w-full max-w-[90%] md:max-w-[500px]">
-    <motion.img
-      src={speaker}
-      alt="Speaker"
-      className="w-full h-[140px] sm:h-[160px] md:h-[180px] object-cover rounded-2xl"
-      whileHover={{ scale: 1.05, rotate: 2 }}
-      transition={{ type: 'spring', stiffness: 300 }}
-    />
-    <motion.img
-      src={speak}
-      alt="Speaking Practice"
-      className="w-full h-[140px] sm:h-[160px] md:h-[180px] object-cover rounded-2xl"
-      whileHover={{ scale: 1.05, rotate: -2 }}
-      transition={{ type: 'spring', stiffness: 300 }}
-    />
-    <motion.img
-      src={ano}
-      alt="Another Speaker"
-      className="w-full h-[140px] sm:h-[160px] md:h-[180px] object-cover rounded-2xl"
-      whileHover={{ scale: 1.05, rotate: 1 }}
-      transition={{ type: 'spring', stiffness: 300 }}
-    />
-    <motion.img
-      src={mic}
-      alt="Mic"
-      className="w-full h-[140px] sm:h-[160px] md:h-[180px] object-cover rounded-2xl"
-      whileHover={{ scale: 1.05, rotate: -1 }}
-      transition={{ type: 'spring', stiffness: 300 }}
-    />
-  </div>
-</motion.div>
+        initial={{ x: 50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.6, duration: 0.8, ease: 'easeOut' }}
+        className="w-full lg:w-1/2 flex justify-center mt-10 lg:mt-0"
+      >
+        <div className="grid grid-cols-2 gap-6 bg-[#BFDBFE] rounded-3xl p-4 sm:p-6 max-w-[500px]">
+          <motion.img
+            src={speaker}
+            alt="Speaker"
+            className="w-full h-auto object-contain rounded-2xl"
+            whileHover={{ scale: 1.05, rotate: 2 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+          />
+          <motion.img
+            src={speak}
+            alt="Speaking Practice"
+            className="w-full h-auto object-contain rounded-2xl"
+            whileHover={{ scale: 1.05, rotate: -2 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+          />
+          <motion.img
+            src={ano}
+            alt="Another Speaker"
+            className="w-full h-auto object-contain rounded-2xl"
+            whileHover={{ scale: 1.05, rotate: 1 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+          />
+          <motion.img
+            src={mic}
+            alt="Mic"
+            className="w-full h-auto object-contain rounded-2xl"
+            whileHover={{ scale: 1.05, rotate: -1 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+          />
+        </div>
+      </motion.div>
+
     </motion.div>
   );
 }
