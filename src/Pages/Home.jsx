@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
@@ -11,7 +11,7 @@ function Home() {
             </div>
             <div className="flex">
                 <Sidebar />
-                <div className="w-full px-4 py-10 relative">
+                <div className="w-full px-4 py-10">
                     {/* Tip of the Day on Top Left */}
                     <div className="bg-white/90 rounded-2xl p-4 shadow mb-10 w-fit h-50 mt-6 ml-6">
                         <h2 className="text-lg font-semibold mb-1 text-center">💡 Tip of the Day</h2>
@@ -20,7 +20,7 @@ function Home() {
                     </div>
 
                     {/* Welcome Section */}
-                    <div className="mb-10 ml-6 max-w-lg">
+                    <div className="text-center mb-10 ml-6 max-w-md mx-auto md:mx-0">
                         <h1 className="text-4xl font-bold mb-2">🎯 Welcome back, Kshitij!</h1>
                         <p className="text-lg text-gray-700">You’re 1 step closer to becoming a confident speaker.</p>
                         <Link
@@ -32,7 +32,7 @@ function Home() {
                     </div>
 
                     {/* Snapshot Section */}
-                    <div className="absolute right-6 top-24 z-10">
+                    <div className="absolute right-6 top-24 z-10 ">
                         <div className="flex flex-col gap-6 w-fit">
                             <div className="bg-white/80 rounded-xl p-6 shadow w-full h-105" style={{ width: '400px' }}>
                                 <h2 className="text-xl font-semibold mb-2">📊 Your Snapshot</h2>
@@ -45,9 +45,8 @@ function Home() {
                             </div>
                         </div>
                     </div>
-
                     {/* Survey Button */}
-                    <div className="mb-10 ml-6 max-w-lg">
+                    <div className="mb-10 text-center ">
                         <button
                             onClick={() => alert('Survey button clicked!')}
                             className="bg-blue-600 text-white px-6 py-2 rounded-full shadow-md hover:bg-blue-700 transition"
@@ -57,9 +56,9 @@ function Home() {
                     </div>
 
                     {/* Leaderboard Preview */}
-                    <div className="bg-white/80 rounded-xl p-6 shadow mb-10 ml-6 max-w-lg w-full">
+                    <div className="bg-white/80 rounded-xl p-6 shadow mb-10 mx-4 w-fit ">
                         <h2 className="text-xl font-semibold mb-2">👑 Top Performers</h2>
-                        <ul className="list-disc pl-5">
+                        <ul className="list-disc pl-5 ">
                             <li>Ananya — 800 XP</li>
                             <li>Rahul — 750 XP</li>
                             <li>Priya — 720 XP</li>
