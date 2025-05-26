@@ -5,7 +5,7 @@ function Signup() {
   return (
     <div className="flex items-center justify-center bg-white">
       <div className="scale-100 mt-10"> 
-        <SignUp afterSignUpUrl="/dashboard"/>
+        <SignUp afterSignUpUrl="/home"/>
       </div>
     </div>
   );
