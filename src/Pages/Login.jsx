@@ -1,15 +1,24 @@
 import React from 'react';
 import { SignIn } from '@clerk/clerk-react';
+import { motion } from 'framer-motion';
 
 function Login() {
   return (
-    <div className="flex items-center justify-center bg-white">
-      <div className="scale-100 mt-10"> 
-        <SignIn 
-          afterSignInUrl="/home"    
-          afterSignUpUrl="/survey"     
-        />
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-200 via-pink-100 to-yellow-100 p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="backdrop-blur-md bg-white/30 p-8 rounded-3xl shadow-2xl max-w-md w-full flex items-center justify-center"
+        style={{ minHeight: '400px' }} // ensures enough height to center the form
+      >
+        <div className="w-full flex items-center justify-center">
+          <SignIn 
+            afterSignInUrl="/home"    
+            afterSignUpUrl="/survey"     
+          />
+        </div>
+      </motion.div>
     </div>
   );
 }
