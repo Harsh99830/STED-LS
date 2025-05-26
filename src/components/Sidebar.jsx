@@ -27,11 +27,11 @@ export default function Sidebar() {
         initial={{ x: -300 }}
         animate={{ x: open ? 0 : -300 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="fixed top-0 left-0 h-full w-64 bg-white bg-opacity-90 backdrop-blur-md shadow-lg z-50 flex flex-col p-6"
+        className="fixed top-0 left-0 h-full w-64 bg-white bg-opacity-90 backdrop-blur-md shadow-lg z-50 flex flex-col p-6 border border-black/10"
         onClick={handleSidebarClick}  // <-- Prevent overlay close when clicking sidebar
       >
         {/* Profile icon and label */}
-        <div className="flex flex-col items-center mb-6">
+        <div className="flex flex-col items-center mb-6 ">
           <FaUserCircle className="text-gray-800" size={80} />
           <p className="mt-2 text-lg font-semibold text-gray-900">Profile</p>
         </div>
