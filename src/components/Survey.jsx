@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { ref, onValue, push } from 'firebase/database';
+import { useNavigate } from 'react-router-dom'; // ✅ Import useNavigate
 
 function Survey() {
   const [surveyQuestions, setSurveyQuestions] = useState([]);
   const [responses, setResponses] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const navigate = useNavigate(); // ✅ Initialize navigate
 
   // ✅ Fetch survey questions
   useEffect(() => {
@@ -34,6 +36,11 @@ function Survey() {
     const userResponseRef = ref(db, 'responses');
     push(userResponseRef, responses);
     setSubmitted(true);
+
+    // ✅ Wait for 2 seconds then redirect
+    setTimeout(() => {
+      navigate('/home'); // Change this path to match your Home route
+    }, 2000);
   };
 
   return (

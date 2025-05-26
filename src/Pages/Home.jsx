@@ -5,10 +5,12 @@ import Navbar from '../components/Navbar';
 import { useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react'; 
 import { motion } from 'framer-motion';
-
+import WelcomeIntro from '../components/WelcomeIntro'; 
+import { useState } from 'react';
 function Home() {
     const navigate = useNavigate();
     const { isLoaded, isSignedIn } = useUser(); 
+    const [showIntro, setShowIntro] = useState(false);
 
     useEffect(() => {
         if (isLoaded && !isSignedIn) {
@@ -16,8 +18,23 @@ function Home() {
         }
     }, [isLoaded, isSignedIn, navigate]);
 
+    useEffect(() => {
+    const shouldShowIntro = localStorage.getItem("showIntro");
+    if (shouldShowIntro === "true") {
+      setShowIntro(true);
+    }
+  }, []);
+
+
+    const handleCloseIntro = () => {
+    localStorage.removeItem("showIntro");
+    setShowIntro(false);
+  };
+
+
     return (
         <div className="min-h-screen bg-[#F4E7E1] relative pb-32">
+             {showIntro && <WelcomeIntro onClose={handleCloseIntro} />}
             {/* Navbar */}
             <div className="sticky top-0 z-50">
                 <Navbar />
