@@ -6,6 +6,7 @@ import Login from './Pages/Login'
 import Dashboard from './Pages/Dashboard';
 import Signup from './Pages/Signup';
 import Home from './Pages/Home';
+import Survey from './components/Survey';
 
 function App() {
 
@@ -18,6 +19,7 @@ function App() {
           <Route path="/login" element={<Login/>} />
           <Route path="/signup" element={<Signup/>} />
           <Route path='/home' element={<Home/>}/>
+          <Route path='/survey' element={<Survey/>}/>
         </Routes>
       </BrowserRouter>
     </>
