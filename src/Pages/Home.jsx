@@ -2,8 +2,17 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
-
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useUser } from '@clerk/clerk-react'; 
 function Home() {
+    const navigate = useNavigate();
+    const {isLoaded, isSignedIn } = useUser(); 
+    useEffect(() => {
+        if (isLoaded && !isSignedIn) {
+            navigate('/');
+        }
+    }, [isLoaded, isSignedIn, navigate]);
     return (
         <div className="min-h-screen bg-[#F4E7E1] pb-32">
             <div className="sticky top-0 z-50">
