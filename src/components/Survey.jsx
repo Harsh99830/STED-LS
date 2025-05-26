@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
 import { ref, onValue, push } from 'firebase/database';
-import { useNavigate } from 'react-router-dom'; // ✅ Import useNavigate
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function Survey() {
   const [surveyQuestions, setSurveyQuestions] = useState([]);
   const [responses, setResponses] = useState({});
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
-  const navigate = useNavigate(); // ✅ Initialize navigate
+  const navigate = useNavigate();
 
-  // ✅ Fetch survey questions
   useEffect(() => {
     const surveyRef = ref(db, 'survey');
     onValue(surveyRef, (snapshot) => {
@@ -32,51 +33,94 @@ function Survey() {
     }));
   };
 
+  const handleNext = () => {
+    if (currentQuestionIndex < surveyQuestions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    } else {
+      handleSubmit();
+    }
+  };
+
   const handleSubmit = () => {
     const userResponseRef = ref(db, 'responses');
     push(userResponseRef, responses);
     setSubmitted(true);
-
-    // ✅ Wait for 2 seconds then redirect
-    setTimeout(() => {
-      navigate('/home'); // Change this path to match your Home route
-    }, 2000);
+    localStorage.setItem("showIntro", "true");
+    setTimeout(() => navigate('/home'), 2000);
   };
 
+  const currentQuestion = surveyQuestions[currentQuestionIndex];
+
   return (
-    <div className="p-6 max-w-xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">🧠 Psychological Survey</h2>
-      {!submitted ? (
-        <>
-          {surveyQuestions.map((q, idx) => (
-            <div key={idx} className="mb-6">
-              <p className="font-semibold mb-2">{q.question}</p>
-              <div className="space-y-2">
-                {Object.entries(q.options).map(([key, value]) => (
-                  <label key={key} className="block">
-                    <input
-                      type="radio"
-                      name={q.question}
-                      value={value}
-                      onChange={() => handleChange(q.question, value)}
-                      className="mr-2"
-                    />
-                    {value}
-                  </label>
-                ))}
-              </div>
-            </div>
-          ))}
-          <button
-            onClick={handleSubmit}
-            className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-full shadow hover:bg-blue-700 transition"
+    <div className="min-h-screen bg-gradient-to-r from-purple-200 via-pink-100 to-yellow-100 flex items-center justify-center p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-2xl"
+      >
+        <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">
+          🧠 Public Speaking Survey
+        </h2>
+
+        {!submitted ? (
+          <AnimatePresence mode="wait">
+            {currentQuestion && (
+              <motion.div
+                key={currentQuestionIndex}
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ duration: 0.4 }}
+                className="mb-6 bg-blue-50 rounded-xl p-4 shadow"
+              >
+                <p className="font-semibold text-lg mb-3 text-blue-800">
+                  {currentQuestion.question}
+                </p>
+                <div className="space-y-2">
+                  {Object.entries(currentQuestion.options).map(([key, value]) => (
+                    <label
+                      key={key}
+                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name={currentQuestion.question}
+                        value={value}
+                        onChange={() => handleChange(currentQuestion.question, value)}
+                        checked={responses[currentQuestion.question] === value}
+                        className="accent-blue-600"
+                      />
+                      {value}
+                    </label>
+                  ))}
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleNext}
+                  disabled={!responses[currentQuestion.question]}
+                  className={`mt-4 w-full ${
+                    responses[currentQuestion.question]
+                      ? 'bg-blue-600 hover:bg-blue-700'
+                      : 'bg-gray-400 cursor-not-allowed'
+                  } text-white py-3 rounded-full font-semibold shadow-lg transition`}
+                >
+                  {currentQuestionIndex === surveyQuestions.length - 1 ? 'Submit' : 'Next'}
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        ) : (
+          <motion.p
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-green-600 font-semibold text-center text-xl"
           >
-            Submit
-          </button>
-        </>
-      ) : (
-        <p className="text-green-600 font-semibold">✅ Thank you! Your response has been recorded.</p>
-      )}
+            ✅ Thank you! Your response has been recorded.
+          </motion.p>
+        )}
+      </motion.div>
     </div>
   );
 }

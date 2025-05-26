@@ -61,21 +61,21 @@ function Start() {
             src={speak}
             alt="Speaking Practice"
             className="w-full h-auto object-contain rounded-2xl"
-            whileHover={{ scale: 1.05, rotate: -2 }}
+            whileHover={{ scale: 1.05, rotate: 2 }}
             transition={{ type: 'spring', stiffness: 300 }}
           />
           <motion.img
             src={ano}
             alt="Another Speaker"
             className="w-full h-auto object-contain rounded-2xl"
-            whileHover={{ scale: 1.05, rotate: 1 }}
+            whileHover={{ scale: 1.05, rotate: 2 }}
             transition={{ type: 'spring', stiffness: 300 }}
           />
           <motion.img
             src={mic}
             alt="Mic"
             className="w-full h-auto object-contain rounded-2xl"
-            whileHover={{ scale: 1.05, rotate: -1 }}
+            whileHover={{ scale: 1.05, rotate: 2 }}
             transition={{ type: 'spring', stiffness: 300 }}
           />
         </div>
