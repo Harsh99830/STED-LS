@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebase';
-import { ref, onValue, push } from 'firebase/database';
+import { ref, onValue, push, set } from 'firebase/database'; // 👈 added `set`
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useUser } from '@clerk/clerk-react'; // 👈 Clerk hook
 
 function Survey() {
   const [surveyQuestions, setSurveyQuestions] = useState([]);
@@ -10,6 +11,27 @@ function Survey() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
+  const { isSignedIn, user } = useUser();
+
+  useEffect(() => {
+    if (isSignedIn && user) {
+      const name = user.fullName || user.firstName || "Anonymous";
+      const email = user.primaryEmailAddress?.emailAddress || "no-email@example.com";
+      const userId = user.id;
+
+      // console.log("✅ New user signed up:");
+      // console.log("Name:", name);
+      // console.log("Email:", email);
+
+      // 👇 Save user info to Firebase
+      const userRef = ref(db, `users/${userId}`);
+      set(userRef, {
+        name,
+        email,
+        signedUpAt: new Date().toISOString()
+      });
+    }
+  }, [isSignedIn, user]);
 
   useEffect(() => {
     const surveyRef = ref(db, 'survey');
@@ -41,13 +63,19 @@ function Survey() {
     }
   };
 
-  const handleSubmit = () => {
-    const userResponseRef = ref(db, 'responses');
-    push(userResponseRef, responses);
-    setSubmitted(true);
-    localStorage.setItem("showIntro", "true");
-    setTimeout(() => navigate('/home'), 2000);
-  };
+const handleSubmit = () => {
+  if (isSignedIn && user) {
+    const userResponseRef = ref(db, `users/${user.id}/responses`);
+    set(userResponseRef, {
+      SurveyResponses: responses,
+      submittedAt: new Date().toISOString()
+    });
+  }
+
+  setSubmitted(true);
+  localStorage.setItem("showIntro", "true");
+  setTimeout(() => navigate('/home'), 2000);
+};
 
   const currentQuestion = surveyQuestions[currentQuestionIndex];
 
