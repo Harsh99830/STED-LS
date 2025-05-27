@@ -60,6 +60,7 @@ function Survey() {
         currentTask: "task1",
         xp: 0,
         level: 1,
+        tasksCompleted: 0,
         signedUpAt: new Date().toISOString()
       });
     }
