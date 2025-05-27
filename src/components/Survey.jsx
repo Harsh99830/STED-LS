@@ -11,13 +11,42 @@ function Survey() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
-  const { isSignedIn, user } = useUser();
+  const {isLoaded, isSignedIn, user } = useUser();
+
+   useEffect(() => {
+          if (isLoaded && !isSignedIn) {
+              navigate('/');
+          }
+      }, [isLoaded, isSignedIn, navigate]);
+
+
+    useEffect(() => {
+  const checkIfAlreadySubmitted = async () => {
+    if (isLoaded && isSignedIn && user) {
+      const userId = user.id;
+      const responseRef = ref(db, `users/${userId}/responses`);
+
+      onValue(responseRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          // If response already exists, redirect to home
+          navigate('/home');
+        }
+      });
+    }
+  };
+
+  checkIfAlreadySubmitted();
+}, [isLoaded, isSignedIn, user, navigate]);
+
+
 
   useEffect(() => {
     if (isSignedIn && user) {
       const name = user.fullName || user.firstName || "Anonymous";
       const email = user.primaryEmailAddress?.emailAddress || "no-email@example.com";
       const userId = user.id;
+      
 
       // console.log("✅ New user signed up:");
       // console.log("Name:", name);
@@ -28,6 +57,9 @@ function Survey() {
       set(userRef, {
         name,
         email,
+        currentTask: "task1",
+        xp: 0,
+        level: 1,
         signedUpAt: new Date().toISOString()
       });
     }
