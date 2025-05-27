@@ -195,8 +195,11 @@ export default function Dashboard() {
         </div>
       )}
 
-     <div className="flex flex-col justify-center items-center mt-8 h-145 w-306 mx-37 rounded-lg " style={{  animation: 'fadeIn 1s ease-in-out' }}>
-  {taskExists && task ? (
+     <div
+  className="flex flex-col justify-center items-center mt-8 h-145 w-306 mx-37 rounded-lg"
+  style={{ animation: 'fadeIn 1s ease-in-out' }}
+>
+  {userData?.currentTask && taskExists && task ? (
     <>
       <div className="flex md:flex-row justify-center">
         <TaskCard task={task} />
@@ -207,14 +210,21 @@ export default function Dashboard() {
         isStarted={!!startedTask}
       />
     </>
-    ) : (
+  ) : userData && userData.tasksCompleted > 0 ? (
     <div className="text-center">
       <h2 className="text-2xl font-bold text-green-700 mb-3">🎉 All Tasks Completed!</h2>
-      <p className="text-gray-700 mb-4">You’ve done a great job completing all your tasks.</p>
+      <p className="text-gray-700 mb-4">
+        You’ve done a great job completing all your tasks.
+      </p>
+    </div>
+  ) : (
+    <div className="text-center">
+      <h2 className="text-xl font-semibold text-blue-700 mb-2">Welcome!</h2>
+      <p className="text-gray-600">Loading your first task...</p>
     </div>
   )}
-
 </div>
+
 
 
       {showStartedModal && (
