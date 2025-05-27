@@ -216,7 +216,7 @@ const handleRestart = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#c2dbf7] to-[#2596be] text-black relative">
+    <div className="min-h-screen bg-gradient-to-r from-purple-200 via-pink-100 to-yellow-100 text-black relative">
       <Navbar onProgressClick={toggleProgress} showProgress={showProgress} />
 
       {showProgress && userData && (
@@ -225,7 +225,7 @@ const handleRestart = async () => {
         </div>
       )}
 
-     <div className="flex flex-col justify-center items-center mt-8 h-145 w-306 mx-37 rounded-lg bg-white bg-opacity-80 shadow-md">
+     <div className="flex flex-col justify-center items-center mt-8 h-145 w-306 mx-37 rounded-lg " style={{  animation: 'fadeIn 1s ease-in-out' }}>
   {taskExists && task ? (
     <>
       <div className="flex md:flex-row justify-center">
