@@ -1,20 +1,27 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { FaBars, FaUserCircle, FaTasks, FaChartLine, FaCog, FaQuestionCircle } from "react-icons/fa";
+import {
+  FaBars,
+  FaHome,
+  FaUserCircle,
+  FaTasks,
+  FaChartLine,
+  FaTrophy,
+  FaCog,
+  FaQuestionCircle,
+  FaPen
+} from "react-icons/fa";
 import { motion } from "framer-motion";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
 
-  // Close sidebar if clicking outside sidebar
   const handleOverlayClick = () => setOpen(false);
-
-  // Prevent sidebar clicks from closing sidebar
   const handleSidebarClick = (e) => e.stopPropagation();
 
   return (
     <>
-       <button
+      <button
         onClick={() => setOpen(!open)}
         className="fixed top-5 left-5 z-60 text-2xl text-black focus:outline-none"
         aria-label="Toggle Sidebar"
@@ -28,24 +35,30 @@ export default function Sidebar() {
         animate={{ x: open ? 0 : -300 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className="fixed top-0 left-0 h-full w-64 bg-white bg-opacity-90 backdrop-blur-md shadow-lg z-50 flex flex-col p-6 border border-black/10"
-        onClick={handleSidebarClick}  // <-- Prevent overlay close when clicking sidebar
+        onClick={handleSidebarClick}
       >
-        {/* Profile icon and label */}
-        <div className="flex flex-col items-center mb-6 ">
+        {/* Profile Icon with Pencil Edit at ~110° */}
+        <div className="relative flex flex-col items-center mb-6">
           <FaUserCircle className="text-gray-800" size={80} />
+          
+          {/* Pencil icon at ~110 degrees (bottom-left) */}
+          <div className="absolute top-[65px] left-[110px] bg-white p-[3px] rounded-full shadow border border-gray-300">
+            <FaPen className="text-blue-600 text-xs" />
+          </div>
+
           <p className="mt-2 text-lg font-semibold text-gray-900">Profile</p>
         </div>
 
         <hr className="border-gray-300 mb-6" />
 
-        {/* Upper menu items */}
+        {/* Upper menu */}
         <nav className="flex flex-col gap-4 mb-auto">
           <Link
             to="/profile"
             className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition"
           >
-            <FaUserCircle size={20} />
-            Profile
+            <FaHome size={20} />
+            Home
           </Link>
           <Link
             to="/mytasks"
@@ -65,12 +78,12 @@ export default function Sidebar() {
             to="/leaderboard"
             className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition"
           >
-            <FaChartLine size={20} />
+            <FaTrophy size={20} />
             Leaderboard
           </Link>
         </nav>
 
-        {/* Bottom menu items */}
+        {/* Bottom menu */}
         <nav className="flex flex-col gap-4 mt-auto pt-6 border-t border-gray-300">
           <Link
             to="/settings"
@@ -89,11 +102,11 @@ export default function Sidebar() {
         </nav>
       </motion.div>
 
-      {/* Overlay behind sidebar when open */}
+      {/* Overlay */}
       {open && (
         <div
           onClick={handleOverlayClick}
-          className="fixed top-0 left-64 right-0 bottom-0  bg-opacity-30 z-40"
+          className="fixed top-0 left-64 right-0 bottom-0 bg-opacity-30 z-40"
           aria-hidden="true"
         />
       )}
