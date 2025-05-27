@@ -15,9 +15,9 @@ function Home() {
     const { isLoaded, isSignedIn, user  } = useUser(); 
     const [showIntro, setShowIntro] = useState(false);
     const [userData, setUserData] = useState({
-    level: '',
-     xp: 0,
-     tasksCompleted: 0
+        level: '',
+        xp: 0,
+        tasksCompleted: 0
     });
 
     useEffect(() => {
@@ -39,30 +39,29 @@ function Home() {
     };
 
     useEffect(() => {
-  if (isLoaded && isSignedIn) {
-    const db = getDatabase();
-    const userRef = ref(db, 'users/' + user.id);
+        if (isLoaded && isSignedIn) {
+            const db = getDatabase();
+            const userRef = ref(db, 'users/' + user.id);
 
-    get(userRef).then((snapshot) => {
-      if (snapshot.exists()) {
-        setUserData(snapshot.val());
-      } else {
-        console.log('No data available');
-      }
-    }).catch((error) => {
-      console.error(error);
-    });
-  }
-}, [isLoaded, isSignedIn]);
-
+            get(userRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    setUserData(snapshot.val());
+                } else {
+                    console.log('No data available');
+                }
+            }).catch((error) => {
+                console.error(error);
+            });
+        }
+    }, [isLoaded, isSignedIn]);
 
     return (
         <div className="min-h-screen bg-[#F4E7E1] relative pb-32">
             {showIntro && <WelcomeIntro onClose={handleCloseIntro} />}
 
-            {/* Navbar */}
+            {/* Navbar with hideProgressButton prop */}
             <div className="sticky top-0 z-50">
-                <Navbar />
+                <Navbar hideProgressButton />
             </div>
 
             {/* Main content with sidebar */}
@@ -152,7 +151,7 @@ function Home() {
                             className="bg-white/80 rounded-xl p-6 shadow-xl w-full max-w-sm"
                         >
                             <h2 className="text-xl font-semibold mb-2">📊 Your Snapshot</h2>
-                           <p>Level: <strong>{userData.level}</strong></p>
+                            <p>Level: <strong>{userData.level}</strong></p>
                             <p>XP: <strong>{userData.xp} / 500 XP</strong></p>
                             <p>Tasks Completed: <strong>{userData.tasksCompleted}</strong></p>
                             <p>🔥 Streak: <strong>1 Day</strong></p>

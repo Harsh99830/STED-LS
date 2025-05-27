@@ -23,11 +23,12 @@ export default function Sidebar() {
     <>
       <button
         onClick={() => setOpen(!open)}
-        className="fixed top-5 left-5 z-60 text-2xl text-black focus:outline-none"
+        className="fixed top-5 left-5 z-60 text-2xl text-black focus:outline-none cursor-pointer"
         aria-label="Toggle Sidebar"
       >
         <FaBars />
       </button>
+
 
       {/* Sidebar */}
       <motion.div
@@ -40,7 +41,7 @@ export default function Sidebar() {
         {/* Profile Icon with Pencil Edit at ~110° */}
         <div className="relative flex flex-col items-center mb-6">
           <FaUserCircle className="text-gray-800" size={80} />
-          
+
           {/* Pencil icon at ~110 degrees (bottom-left) */}
           <div className="absolute top-[65px] left-[110px] bg-white p-[3px] rounded-full shadow border border-gray-300">
             <FaPen className="text-blue-600 text-xs" />
