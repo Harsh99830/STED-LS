@@ -170,37 +170,7 @@ export default function Dashboard() {
   setButtonLoading(false);
 };
 
-const handleRestart = async () => {
-  const userRef = ref(db, `users/${userId}`);
-  const startedRef = ref(db, `users/${userId}/startedTasks`);
 
-  // Remove any remaining started task (edge case cleanup)
-  await remove(startedRef);
-
-  // Set currentTask back to task1
-  const updatedUserData = {
-    ...userData,
-    currentTask: "task1",
-    startedTasks: {},
-  };
-  await set(userRef, updatedUserData);
-
-  // Fetch task1
-  const firstTaskRef = ref(db, `tasks/task1`);
-  const taskSnap = await get(firstTaskRef);
-
-  if (taskSnap.exists()) {
-    const taskData = taskSnap.val();
-    setTask({ id: "task1", ...taskData });
-    setTaskExists(true);
-  } else {
-    setTask(null);
-    setTaskExists(false);
-  }
-
-  setUserData(updatedUserData);
-  setStartedTask(null);
-};
 
 
   const toggleProgress = () => {
@@ -237,19 +207,13 @@ const handleRestart = async () => {
         isStarted={!!startedTask}
       />
     </>
-  ) : (
-    // 🎉 Completion message here instead of modal
+    ) : (
     <div className="text-center">
       <h2 className="text-2xl font-bold text-green-700 mb-3">🎉 All Tasks Completed!</h2>
       <p className="text-gray-700 mb-4">You’ve done a great job completing all your tasks.</p>
-      <button
-        onClick={handleRestart}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-      >
-        Restart from Task 1
-      </button>
     </div>
   )}
+
 </div>
 
 
