@@ -55,28 +55,25 @@ export default function Sidebar() {
         {/* Upper menu */}
         <nav className="flex flex-col gap-4 mb-auto">
           <Link
-            to="/profile"
+            to="/home"
             className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition"
           >
             <FaHome size={20} />
             Home
           </Link>
           <Link
-            to="/mytasks"
             className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition"
           >
             <FaTasks size={20} />
             My Tasks
           </Link>
           <Link
-            to="/progress"
             className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition"
           >
             <FaChartLine size={20} />
             Your Progress
           </Link>
           <Link
-            to="/leaderboard"
             className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition"
           >
             <FaTrophy size={20} />
@@ -87,14 +84,12 @@ export default function Sidebar() {
         {/* Bottom menu */}
         <nav className="flex flex-col gap-4 mt-auto pt-6 border-t border-gray-300">
           <Link
-            to="/settings"
             className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition"
           >
             <FaCog size={20} />
             Settings
           </Link>
           <Link
-            to="/help"
             className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition"
           >
             <FaQuestionCircle size={20} />

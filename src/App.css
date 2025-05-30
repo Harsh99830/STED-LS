@@ -40,4 +40,24 @@
   color: #888;
 }
 
+@media (max-width: 600px) {
+  body {
+    font-size: 14px;
+  }
+}
+
+/* For medium devices (tablets/laptops) */
+@media (min-width: 601px) and (max-width: 1200px) {
+  body {
+    font-size: 16px;
+  }
+}
+
+/* For large devices (desktops) */
+@media (min-width: 1201px) {
+  body {
+    font-size: 18px;
+  }
+}
+
 @import "tailwindcss";
