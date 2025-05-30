@@ -5,7 +5,7 @@ export default function TaskCard({ task }) {
     <div className="bg-gradient-to-br from-[#fefcea] via-[#e7f0fd] to-[#f5faff] backdrop-blur-md pl-4 pt-3 pb-4 rounded-3xl shadow-2xl w-180 border max-h-130 text-left animate-fade-in transition-all duration-500 ease-in-out hover:scale-105 hover:shadow-[0_10px_20px_rgba(0,0,0,0.2)] hover:border-[#60a5fa]">
       
       {/* Task ID */}
-      <h2 className="text-xl font-semibold mb-1 text-gray-800 tracking-wide">Task - {task.id[4]}</h2>
+      <h2 className="text-xl font-semibold mb-1 text-gray-800 tracking-wide">Task - {task.id.toString().replace(/\D/g, '')}</h2>
       
       {/* Title */}
       <h1 className="text-4xl font-extrabold text-[#1f2937] mb-3 drop-shadow-sm leading-tight">{task.title}</h1>
