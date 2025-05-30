@@ -15,4 +15,4 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app); // ✅ Use getDatabase, not getFirestore
 
-export { db };
+export { app,db };
