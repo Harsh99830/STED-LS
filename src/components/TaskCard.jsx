@@ -16,7 +16,7 @@ export default function TaskCard({ task }) {
           const data = snap.val();
           setHowToData({
             title: data.title || '',
-            description: data.description || '',
+            description: data.description || {},
           });
         }
       };
@@ -45,7 +45,7 @@ export default function TaskCard({ task }) {
               <div className="bg-white p-3 rounded-xl border w-80 shadow max-h-28 overflow-y-auto scroll-smooth">
                 <strong className="block mb-2">🎯 Objectives</strong>
                 <ul className="list-disc ml-5 space-y-1 text-sm">
-                  {Object.values(task.objective).map((obj, i) => (
+                  {Object.values(task.objective || {}).map((obj, i) => (
                     <li key={i}>{obj}</li>
                   ))}
                 </ul>
@@ -70,22 +70,20 @@ export default function TaskCard({ task }) {
             <h2 className="text-2xl font-bold mb-4">{howToData.title}</h2>
             <h1 className='font-bold'>🎯 What to Do:</h1>
             
-              <ul className="list-disc ml-5 space-y-1 ml-13">
-                {Object.values(howToData.description).map((obj, i) => (
-                  <li className='pt-2' key={i}>{obj}</li>
-                ))}
-              </ul>
-            
-         
+            <ul className="list-disc ml-5 space-y-1 ml-13">
+              {Object.values(howToData.description || {}).map((obj, i) => (
+                <li className='pt-2' key={i}>{obj}</li>
+              ))}
+            </ul>
           </div>
           <div className="mt-auto">
-          <button
-            onClick={() => setShowHowToDo(false)}
-            className="w-20 text-white px-4 py-2 bg-blue-500 rounded text-sm"
-          >
-            ← Back
-          </button>
-        </div>
+            <button
+              onClick={() => setShowHowToDo(false)}
+              className="w-20 text-white px-4 py-2 bg-blue-500 rounded text-sm"
+            >
+              ← Back
+            </button>
+          </div>
         </div>
       )}
     </div>
