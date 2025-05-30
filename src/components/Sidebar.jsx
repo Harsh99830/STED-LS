@@ -43,11 +43,11 @@ export default function Sidebar() {
           <FaUserCircle className="text-gray-800" size={80} />
 
           {/* Pencil icon at ~110 degrees (bottom-left) */}
-          <div className="absolute top-[65px] left-[110px] bg-white p-[3px] rounded-full shadow border border-gray-300">
-            <FaPen className="text-blue-600 text-xs" />
+          <div className="absolute top-[65px] left-[110px] bg-white p-[3px] rounded-full shadow border border-gray-300 cursor-pointer ;">
+            <FaPen className="text-blue-600 text-xs ;" />
           </div>
 
-          <p className="mt-2 text-lg font-semibold text-gray-900">Profile</p>
+          <p className="mt-2 text-lg font-semibold text-gray-900 ">Profile</p>
         </div>
 
         <hr className="border-gray-300 mb-6" />
