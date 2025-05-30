@@ -80,7 +80,11 @@ function Home() {
 
             {/* Navbar with hideProgressButton prop */}
             <div className="sticky top-0 z-50 bg-white shadow-sm">
-                <Navbar onProgressClick={toggleProgress} showProgress={showProgress} />
+                <Navbar 
+                    onProgressClick={toggleProgress} 
+                    showProgress={showProgress} 
+                    hideProgressButton={true} 
+                />
             </div>
 
             {/* Main content with sidebar */}
