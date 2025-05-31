@@ -7,16 +7,17 @@ const db = getDatabase(app);
 export default function TaskCard({ task }) {
   const [showHowToDo, setShowHowToDo] = useState(false);
   const [howToData, setHowToData] = useState({ title: '', description: '' });
+  const [allInformation, setAllInformation] = useState({ title: '', description: '' });
 
   useEffect(() => {
     if (showHowToDo) {
       const fetchHowTo = async () => {
-        const snap = await get(ref(db, `tasks/${task.id}/allInformation`));
+        const snap = await get(ref(db, `tasks/${task.id}/allInformation/howToDo`));
         if (snap.exists()) {
           const data = snap.val();
           setHowToData({
             title: data.title || '',
-            description: data.description || {},
+            description: data.description || '',
           });
         }
       };
@@ -24,6 +25,21 @@ export default function TaskCard({ task }) {
       fetchHowTo();
     }
   }, [showHowToDo, task.id]);
+
+  useEffect(() => {
+    const fetchAllInformation = async () => {
+      const snap = await get(ref(db, `tasks/${task.id}/allInformation/example`));
+      if (snap.exists()) {
+        const data = snap.val();
+        setAllInformation({
+          title: data.title || '',
+          description: data.description || '',
+        });
+      }
+    };
+
+    fetchAllInformation();
+  }, [task.id]);
 
   return (
     <div className="w-[720px] h-[560px] rounded-3xl shadow-2xl border overflow-hidden bg-white p-6 bg-gradient-to-br text-left from-[#fefcea] via-[#e7f0fd] to-[#f5faff]">
@@ -45,7 +61,7 @@ export default function TaskCard({ task }) {
               <div className="bg-white p-3 rounded-xl border w-80 shadow max-h-40">
                 <strong className="block mb-2">🎯 Objectives</strong>
                 <ul className="list-disc ml-5 space-y-1 text-sm">
-                  {Object.values(task.objective || {}).map((obj, i) => (
+                  {Object.values(task.objective).map((obj, i) => (
                     <li key={i}>{obj}</li>
                   ))}
                 </ul>
@@ -70,20 +86,37 @@ export default function TaskCard({ task }) {
             <h2 className="text-2xl font-bold underline mb-4">{howToData.title}</h2>
             <h1 className='font-bold mt-8'>🎯 What to Do:</h1>
             
-            <ul className="list-disc ml-5 space-y-1 ml-13">
-              {Object.values(howToData.description || {}).map((obj, i) => (
-                <li className='pt-2' key={i}>{obj}</li>
-              ))}
-            </ul>
+              <ul className="list-disc ml-5 space-y-1 ml-13">
+                {Object.values(howToData.description).map((obj, i) => (
+                  <li className='pt-2' key={i}>{obj}</li>
+                ))}
+              </ul>
+            
+         
           </div>
+
+
+            <div>
+            <h1 className='font-bold mt-8'>Example:</h1>
+            <h2 className="text-xl font-bold mb-4">{allInformation.title}</h2>
+            
+              <ul className="list-disc ml-5 space-y-1 ml-13">
+                {Object.values(allInformation.description).map((obj, i) => (
+                  <li className='pt-2' key={i}>{obj}</li>
+                ))}
+              </ul>
+            
+         
+          </div>
+
           <div className="mt-auto">
-            <button
-              onClick={() => setShowHowToDo(false)}
-              className="w-20 text-white px-4 py-2 bg-blue-500 rounded text-sm"
-            >
-              ← Back
-            </button>
-          </div>
+          <button
+            onClick={() => setShowHowToDo(false)}
+            className="w-20 text-white px-4 py-2 bg-blue-500 rounded text-sm"
+          >
+            ← Back
+          </button>
+        </div>
         </div>
       )}
     </div>
