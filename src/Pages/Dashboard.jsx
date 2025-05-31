@@ -117,63 +117,9 @@ export default function Dashboard() {
   };
 
   const handleDoneTask = async () => {
-  if (!startedTask) return;
-
-  setButtonLoading(true);
-
-  const startedRef = ref(db, `users/${userId}/startedTasks/${startedTask.id}`);
-  await remove(startedRef);
-
-  const currentNumber = parseInt(task.id.replace("task", ""));
-  const newTaskId = `task${currentNumber + 1}`;
-
-  const taskRef = ref(db, `tasks/${newTaskId}`);
-  const taskSnap = await get(taskRef);
-
-  const userRef = ref(db, `users/${userId}`);
-  const userSnap = await get(userRef);
-  let updatedData = userSnap.val() || {};
-
-  const taskXp = task.xp || 0;
-  let newXp = (updatedData.xp || 0) + taskXp;
-  let newLevel = updatedData.level || 1;
-  while (newXp >= 500) {
-    newXp -= 500;
-    newLevel += 1;
-  }
-
-  let tasksCompleted = (updatedData.tasksCompleted || 0) + 1;
-
-  // Update user progress regardless of whether next task exists
-  const newUserData = {
-    ...updatedData,
-    tasksCompleted: tasksCompleted,
-    xp: newXp,
-    level: newLevel,
+    if (!startedTask) return;
+    navigate('/done');
   };
-
-  if (taskSnap.exists()) {
-    const taskData = taskSnap.val();
-    newUserData.currentTask = newTaskId;
-    await set(userRef, newUserData);
-    setUserData(newUserData);
-    setTask({ id: newTaskId, ...taskData });
-    setTaskExists(true); // ✅ next task found
-  } else {
-    // No more tasks
-    newUserData.currentTask = null; // or keep the old task ID
-    await set(userRef, newUserData);
-    setUserData(newUserData);
-    setTask(null);
-    setTaskExists(false); // ❌ no next task
-  }
-
-  setStartedTask(null);
-  setButtonLoading(false);
-};
-
-
-
 
   const toggleProgress = () => {
     setShowProgress(!showProgress);
@@ -216,7 +162,7 @@ export default function Dashboard() {
     <div className="text-center">
       <h2 className="text-2xl font-bold text-green-700 mb-3">🎉 All Tasks Completed!</h2>
       <p className="text-gray-700 mb-4">
-        You’ve done a great job completing all your tasks.
+        You've done a great job completing all your tasks.
       </p>
     </div>
   ) : (
