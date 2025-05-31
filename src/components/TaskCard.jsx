@@ -99,13 +99,8 @@ export default function TaskCard({ task }) {
             <div>
             <h1 className='font-bold mt-8'>Example:</h1>
             <h2 className="text-xl font-bold mb-4">{allInformation.title}</h2>
-            
-              <ul className="list-disc ml-5 space-y-1 ml-13">
-                {Object.values(allInformation.description).map((obj, i) => (
-                  <li className='pt-2' key={i}>{obj}</li>
-                ))}
-              </ul>
-            
+            <h2 className='font-bold'>Right here, you speak:</h2>
+          <p className='text-gray-700'>{allInformation.description}</p>
          
           </div>
 
