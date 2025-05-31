@@ -8,6 +8,7 @@ import Dashboard from './Pages/Dashboard';
 import Signup from './Pages/Signup';
 import Home from './Pages/Home';
 import Survey from './components/Survey';
+import Done from './Pages/Done';
 
 import SurveyProtectedRoute from './components/SurveyProtectedRoute';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -33,6 +34,14 @@ function App() {
           element={
             <SurveyProtectedRoute>
               <Dashboard />
+            </SurveyProtectedRoute>
+          }
+        />
+        <Route
+          path="/done"
+          element={
+            <SurveyProtectedRoute>
+              <Done />
             </SurveyProtectedRoute>
           }
         />
