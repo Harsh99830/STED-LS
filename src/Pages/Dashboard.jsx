@@ -9,6 +9,8 @@ import React from "react";
 import Navbar from "../components/Navbar";
 import TaskPointsBox from "../components/TaskPointsBox";
 import { useNavigate } from "react-router-dom";
+import StartedModal from "../components/StartedModal";
+
 
 export default function Dashboard() {
   const { user, isLoaded, isSignedIn } = useUser(); // Clerk user
@@ -224,27 +226,7 @@ export default function Dashboard() {
     </div>
   )}
 </div>
-
-
-
-      {showStartedModal && (
-        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg p-6 text-center shadow-lg w-72">
-            <img
-              src="https://media.giphy.com/media/111ebonMs90YLu/giphy.gif"
-              alt="Started"
-              className="w-24 mx-auto mb-4"
-            />
-            <h2 className="text-xl font-bold text-green-600">Task Started!</h2>
-            <button
-              onClick={() => setShowStartedModal(false)}
-              className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+{showStartedModal && <StartedModal onClose={() => setShowStartedModal(false)} />}
     </div>
   );
 }
