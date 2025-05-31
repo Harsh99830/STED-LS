@@ -10,6 +10,8 @@ import TaskPointsBox from "../components/TaskPointsBox";
 import StartedModal from "../components/StartedModal";
 import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
+import { startRecording, stopAndDownload } from "../utils/mediaUtils";
+
 
 export default function Dashboard() {
   const { user, isLoaded, isSignedIn } = useUser();
@@ -92,83 +94,36 @@ export default function Dashboard() {
   }, [userId, user]);
 
   const handleStartTask = async () => {
-    if (startedTask || !task || !taskExists) return;
+  if (startedTask || !task || !taskExists) return;
+  setButtonLoading(true);
 
-    setButtonLoading(true);
+  try {
+    await startRecording(mediaRecorderRef, audioChunksRef);
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      audioChunksRef.current = [];
+    const newStartedTask = {
+      id: task.id,
+      name: task.title,
+      startedAt: new Date().toISOString(),
+    };
 
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
+    const startedRef = ref(db, `users/${userId}/startedTasks/${task.id}`);
+    await set(startedRef, newStartedTask);
 
-      recorder.start();
-      mediaRecorderRef.current = recorder;
+    setStartedTask(newStartedTask);
+    setShowStartedModal(true);
+  } catch (err) {
+    console.error("Mic access denied:", err);
+    alert("Microphone access is required to record.");
+  }
 
-      const newStartedTask = {
-        id: task.id,
-        name: task.title,
-        startedAt: new Date().toISOString(),
-      };
-
-      const startedRef = ref(db, `users/${userId}/startedTasks/${task.id}`);
-      await set(startedRef, newStartedTask);
-
-      setStartedTask(newStartedTask);
-      setShowStartedModal(true);
-    } catch (err) {
-      console.error("Mic access denied:", err);
-      alert("Microphone access is required to record.");
-    }
-
-    setButtonLoading(false);
-  };
+  setButtonLoading(false);
+};
 
   const handleDoneTask = async () => {
   if (!startedTask || !mediaRecorderRef.current) return;
-
-  const recorder = mediaRecorderRef.current;
-
-  recorder.onstop = async () => {
-    // Create and download the audio file
-    const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audioLink = document.createElement("a");
-    audioLink.href = audioUrl;
-    audioLink.download = "recording.webm";
-    document.body.appendChild(audioLink);
-    audioLink.click();
-    document.body.removeChild(audioLink);
-
-    // Capture screen image and download it
-    try {
-      const canvas = await html2canvas(document.body); // capture current screen
-      canvas.toBlob((blob) => {
-        const imageUrl = URL.createObjectURL(blob);
-        const imageLink = document.createElement("a");
-        imageLink.href = imageUrl;
-        imageLink.download = "snapshot.png";
-        document.body.appendChild(imageLink);
-        imageLink.click();
-        document.body.removeChild(imageLink);
-      });
-    } catch (error) {
-      console.error("Screenshot capture failed:", error);
-    }
-
-    mediaRecorderRef.current = null;
-    audioChunksRef.current = [];
-
-    navigate("/done");
-  };
-
-  recorder.stop();
+  await stopAndDownload(mediaRecorderRef, audioChunksRef, navigate);
 };
+
 
 
   const toggleProgress = () => {
