@@ -61,7 +61,7 @@ export default function TaskCard({ task }) {
               <div className="bg-white p-3 rounded-xl border w-80 shadow max-h-40">
                 <strong className="block mb-2">🎯 Objectives</strong>
                 <ul className="list-disc ml-5 space-y-1 text-sm">
-                  {task.objective && Object.values(task.objective).map((obj, i) => (
+                  {Object.values(task.objective).map((obj, i) => (
                     <li key={i}>{obj}</li>
                   ))}
                 </ul>
