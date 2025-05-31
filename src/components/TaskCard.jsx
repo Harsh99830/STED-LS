@@ -42,7 +42,7 @@ export default function TaskCard({ task }) {
                 <p className='pt-3'><strong>🔥 Difficulty:</strong> {task.difficulty}</p>
               </div>
 
-              <div className="bg-white p-3 rounded-xl border w-80 shadow max-h-28 overflow-y-auto scroll-smooth">
+              <div className="bg-white p-3 rounded-xl border w-80 shadow max-h-40">
                 <strong className="block mb-2">🎯 Objectives</strong>
                 <ul className="list-disc ml-5 space-y-1 text-sm">
                   {Object.values(task.objective).map((obj, i) => (
@@ -67,8 +67,8 @@ export default function TaskCard({ task }) {
         // --- Page 2: How To Do It ---
         <div className="flex flex-col justify-between h-full">
           <div>
-            <h2 className="text-2xl font-bold mb-4">{howToData.title}</h2>
-            <h1 className='font-bold'>🎯 What to Do:</h1>
+            <h2 className="text-2xl font-bold underline mb-4">{howToData.title}</h2>
+            <h1 className='font-bold mt-8'>🎯 What to Do:</h1>
             
               <ul className="list-disc ml-5 space-y-1 ml-13">
                 {Object.values(howToData.description).map((obj, i) => (

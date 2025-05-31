@@ -29,7 +29,7 @@ export default function TaskDetailsModal({ taskId, onClose }) {
         >
           &times;
         </button>
-        <h2 className="text-2xl font-bold mb-4 text-center">{taskDetails.title}</h2>
+        <h2 className="text-3xl font-bold mb-4  text-center">{taskDetails.title}</h2>
         <p className="mb-3 text-gray-800"><strong>Description:</strong> {taskDetails.description}</p>
         {taskDetails.points && (
           <p className="text-green-600 font-semibold">Points: {taskDetails.points}</p>
