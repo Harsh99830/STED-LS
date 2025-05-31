@@ -42,18 +42,19 @@ export default function TaskCard({ task }) {
   }, [task.id]);
 
   return (
-    <div className="w-[720px] h-[560px] rounded-3xl shadow-2xl border overflow-hidden bg-white p-6 bg-gradient-to-br text-left from-[#fefcea] via-[#e7f0fd] to-[#f5faff]">
+    <div className="max-w-230 h-[560px] rounded-3xl shadow-2xl border overflow-hidden bg-white p-6 bg-gradient-to-br text-left from-[#fefcea] via-[#e7f0fd] to-[#f5faff]">
       {!showHowToDo ? (
         // --- Page 1: Task Info ---
         <div className="flex flex-col justify-between h-full">
           <div>
             <h2 className="text-xl font-semibold text-gray-800">Task - {task.id.replace(/\D/g, '')}</h2>
             <h1 className="text-4xl font-extrabold text-[#1f2937] my-3">{task.title}</h1>
-            <p className="text-gray-700 font-medium text-lg">{task.description}</p>
+            <p className="text-gray-700 pt-2 text-lg">{task.description}</p>
 
             <div className="mt-13 flex justify-between">
               <div className="space-y-3">
                 <p><strong>📂 Category:</strong> {task.category}</p>
+                <p className='pt-3'><strong>⌛ Duration:</strong> <span className="">{task.duration}</span></p>
                 <p className='pt-3'><strong>🏆 Reward:</strong> <span className="text-green-600 font-semibold">+{task.xp} XP</span></p>
                 <p className='pt-3'><strong>🔥 Difficulty:</strong> {task.difficulty}</p>
               </div>

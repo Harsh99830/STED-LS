@@ -201,7 +201,7 @@ export default function Dashboard() {
 >
   {userData?.currentTask && taskExists && task ? (
     <>
-      <div className="flex md:flex-row justify-center">
+      <div className="flex w-400 ml-50">
         <TaskCard task={task} />
         <TaskPointsBox points={task.points} />
       </div>
