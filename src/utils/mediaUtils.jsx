@@ -1,3 +1,8 @@
+// src/utils/mediaUtils.js
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db } from "../firebase"; // Import your Firebase Realtime Database instance
+import { ref as dbRef, update } from "firebase/database";
+
 // Start audio recording
 export const startRecording = async (mediaRecorderRef, audioChunksRef) => {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -14,42 +19,48 @@ export const startRecording = async (mediaRecorderRef, audioChunksRef) => {
   mediaRecorderRef.current = recorder;
 };
 
-// Stop and download the recording + screenshot
-export const stopAndDownload = async (mediaRecorderRef, audioChunksRef, navigate) => {
+// Stop and upload the recording to Firebase
+export const stopAndUpload = async (mediaRecorderRef, audioChunksRef, navigate, userId, taskId) => {
   const recorder = mediaRecorderRef.current;
 
   if (!recorder) return;
 
   recorder.onstop = async () => {
-    // 1. Download audio
+    // Create audio blob from recorded chunks
     const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audioLink = document.createElement("a");
-    audioLink.href = audioUrl;
-    audioLink.download = "recording.webm";
-    document.body.appendChild(audioLink);
-    audioLink.click();
-    document.body.removeChild(audioLink);
+    const storage = getStorage();
 
-    // 2. Download screenshot
+    // Define storage path for the audio file
+    const timestamp = Date.now();
+    const audioPath = `recordings/${userId}/${taskId}/recording-${timestamp}.webm`;
+    const audioStorageRef = storageRef(storage, audioPath);
+
     try {
-      const canvas = await html2canvas(document.body);
-      canvas.toBlob((blob) => {
-        const imageUrl = URL.createObjectURL(blob);
-        const imageLink = document.createElement("a");
-        imageLink.href = imageUrl;
-        imageLink.download = "snapshot.png";
-        document.body.appendChild(imageLink);
-        imageLink.click();
-        document.body.removeChild(imageLink);
+      // Upload audio to Firebase Storage
+      await uploadBytes(audioStorageRef, audioBlob);
+      console.log("Audio uploaded to Firebase Storage");
+
+      // Get the download URL of the uploaded audio
+      const downloadURL = await getDownloadURL(audioStorageRef);
+
+      // Store completion record in Realtime Database
+      const taskCompletionRef = dbRef(db, `users/${userId}/taskCompletions/${taskId}`);
+      await update(taskCompletionRef, {
+        audioUrl: downloadURL,
+        completedAt: new Date().toISOString(),
       });
-    } catch (error) {
-      console.error("Screenshot capture failed:", error);
+
+      console.log("Audio URL and completion timestamp saved to Realtime Database");
+    } catch (err) {
+      console.error("Error during audio upload or database update:", err);
+      // Optionally, you could throw the error or handle it to inform the user
     }
 
+    // Clean up
     mediaRecorderRef.current = null;
     audioChunksRef.current = [];
 
+    // Navigate to the 'done' page
     navigate("/done");
   };
 

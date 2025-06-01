@@ -10,7 +10,7 @@ import TaskPointsBox from "../components/TaskPointsBox";
 import StartedModal from "../components/StartedModal";
 import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
-import { startRecording, stopAndDownload } from "../utils/mediaUtils";
+import { startRecording, stopAndUpload } from "../utils/mediaUtils";
 
 
 export default function Dashboard() {
@@ -121,8 +121,9 @@ export default function Dashboard() {
 
   const handleDoneTask = async () => {
   if (!startedTask || !mediaRecorderRef.current) return;
-  await stopAndDownload(mediaRecorderRef, audioChunksRef, navigate);
+  await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, userId, task.id);
 };
+
 
 
 

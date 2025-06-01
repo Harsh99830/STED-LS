@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ref as dbRef, update, remove, get, set } from 'firebase/database';
 import { db } from '../firebase';
 import { useUser } from '@clerk/clerk-react';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebase';  
 
 export default function Done() {
   const { user } = useUser();
@@ -279,37 +281,48 @@ export default function Done() {
 
   // Submit handler
   const handleSubmit = async () => {
-    if (!uploadedImage && !capturedImage) {
-      setError('Please upload or capture an image');
-      return;
-    }
+  if (!uploadedImage && !capturedImage) {
+    setError('Please upload or capture an image');
+    return;
+  }
 
-    setIsProcessing(true);
-    setError('');
+  setIsProcessing(true);
+  setError('');
 
-    try {
-      const imageFile = uploadedImage || capturedImage;
-      const savedFileName = await saveImageLocally(imageFile);
+  try {
+    const imageFile = uploadedImage || capturedImage;
 
-      // Save completion record
-      const taskCompletionRef = dbRef(db, `users/${user.id}/taskCompletions/${Date.now()}`);
-      await update(taskCompletionRef, {
-        localFileName: savedFileName,
-        completedAt: new Date().toISOString(),
-      });
+    // 🔧 Get current taskId from Realtime Database, NOT from Clerk user object
+    const userRef = dbRef(db, `users/${user.id}`);
+    const userSnap = await get(userRef);
+    if (!userSnap.exists()) throw new Error('User data not found');
+    const userData = userSnap.val();
+    const taskId = userData.currentTask;
 
-      // Complete current task and move to next
-      await completeTaskAndMoveNext();
+    const timestamp = Date.now();
+    const fileName = `images/${user.id}/task-completion-${timestamp}.jpg`;
+    const imageRef = storageRef(storage, fileName);
 
-      // Navigate back to task page
-      navigate('/task');
-    } catch (err) {
-      setError('Failed to complete task. Please try again.');
-      console.error('Task completion error:', err);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+    await uploadBytes(imageRef, imageFile);
+    const downloadURL = await getDownloadURL(imageRef);
+
+    // ✅ Store completion record
+    const taskCompletionRef = dbRef(db, `users/${user.id}/taskCompletions/${taskId}`);
+    await update(taskCompletionRef, {
+      imageUrl: downloadURL,
+      completedAt: new Date().toISOString(),
+    });
+
+    await completeTaskAndMoveNext();
+    navigate('/task');
+  } catch (err) {
+    setError('Failed to complete task. Please try again.');
+    console.error('Task completion error:', err);
+  } finally {
+    setIsProcessing(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
