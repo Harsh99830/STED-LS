@@ -11,7 +11,7 @@ import StartedModal from "../components/StartedModal";
 import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import { startRecording, stopAndUpload } from "../utils/mediaUtils";
-
+import TaskStartButton from "../components/TaskStartButton";
 
 export default function Dashboard() {
   const { user, isLoaded, isSignedIn } = useUser();
@@ -110,7 +110,6 @@ export default function Dashboard() {
     await set(startedRef, newStartedTask);
 
     setStartedTask(newStartedTask);
-    setShowStartedModal(true);
   } catch (err) {
     console.error("Mic access denied:", err);
     alert("Microphone access is required to record.");
@@ -118,6 +117,13 @@ export default function Dashboard() {
 
   setButtonLoading(false);
 };
+
+
+  const handleStartTaskWithModal = async () => {
+       setShowStartedModal(true);
+  }
+
+
 
   const handleDoneTask = async () => {
   if (!startedTask || !mediaRecorderRef.current) return;
@@ -159,6 +165,8 @@ export default function Dashboard() {
               <TaskCard task={task} />
               <TaskPointsBox points={task.points} />
             </div>
+            <TaskStartButton
+             onClick={handleStartTaskWithModal} />
             <StartButton
               onClick={startedTask ? handleDoneTask : handleStartTask}
               isStarted={!!startedTask}
