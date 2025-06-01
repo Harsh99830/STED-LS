@@ -167,11 +167,7 @@ export default function Dashboard() {
             </div>
             <TaskStartButton
              onClick={handleStartTaskWithModal} />
-            <StartButton
-              onClick={startedTask ? handleDoneTask : handleStartTask}
-              isStarted={!!startedTask}
-              isLoading={buttonLoading}
-            />
+            
           </>
         ) : userData && userData.tasksCompleted > 0 ? (
           <div className="text-center">
