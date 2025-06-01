@@ -1,29 +1,50 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { db } from "../firebase"; // Import your Firebase Realtime Database instance
-import { ref as dbRef, get, set } from "firebase/database";
+import { db } from "../firebase";
+import { ref as dbRef, get, set, remove } from "firebase/database";
 import { startRecording, stopAndUpload } from "../utils/mediaUtils";
 import { useNavigate } from "react-router-dom";
+import StartButton from "./StartButton";
 
 export default function StartedModal({ onClose }) {
-  const { user } = useUser(); // Get current user from Clerk
-  const [taskTitle, setTaskTitle] = useState(""); // State to store task title
-  const [taskDescription, setTaskDescription] = useState(""); // State to store task description
-  const [error, setError] = useState(""); // State for error handling
-  const [startedTask, setStartedTask] = useState(null); // State to track started task
-  const [buttonLoading, setButtonLoading] = useState(false); // State for button loading
-  const [micStatus, setMicStatus] = useState("checking"); // State for microphone permission
-  const [userData, setUserData] = useState(null); // State to store user data
-  const mediaRecorderRef = useRef(null); // Ref for media recorder
-  const audioChunksRef = useRef([]); // Ref for audio chunks
-  const navigate = useNavigate(); // For navigation after task completion
+  const { user } = useUser();
+  const [taskTitle, setTaskTitle] = useState("");
+  const [taskDescription, setTaskDescription] = useState("");
+  const [randomWord, setRandomWord] = useState("");
+  const [error, setError] = useState("");
+  const [startedTask, setStartedTask] = useState(null);
+  const [buttonLoading, setButtonLoading] = useState(false);
+  const [micStatus, setMicStatus] = useState("checking");
+  const [userData, setUserData] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const navigate = useNavigate();
+
+  // Timer for recording duration and auto-stop for task1
+  useEffect(() => {
+    let timer;
+    if (isRecording) {
+      timer = setInterval(() => {
+        setRecordingTime((prev) => {
+          const newTime = prev + 1;
+          if (userData?.currentTask === "task1" && newTime >= 30) {
+            handleAutoStop();
+          }
+          return newTime;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isRecording, userData]);
 
   // Check microphone permission status
   useEffect(() => {
     const checkMicPermission = async () => {
       try {
         const permissionStatus = await navigator.permissions.query({ name: "microphone" });
-        setMicStatus(permissionStatus.state); // "granted", "denied", or "prompt"
+        setMicStatus(permissionStatus.state);
         permissionStatus.onchange = () => {
           setMicStatus(permissionStatus.state);
         };
@@ -37,6 +58,29 @@ export default function StartedModal({ onClose }) {
     checkMicPermission();
   }, []);
 
+  // Clean up interrupted tasks from localStorage
+  const cleanupInterruptedTask = async (userId) => {
+    try {
+      const interrupted = localStorage.getItem(`interruptedTask_${userId}`);
+      if (interrupted) {
+        const { taskId, timestamp } = JSON.parse(interrupted);
+        const now = Date.now();
+        const oneHour = 60 * 60 * 1000; // 1 hour in ms
+        if (now - timestamp < oneHour) {
+          const startedRef = dbRef(db, `users/${userId}/startedTasks/${taskId}`);
+          const snap = await get(startedRef);
+          if (snap.exists()) {
+            await remove(startedRef);
+            console.log(`Cleaned up interrupted task ${taskId} for user ${userId}`);
+          }
+        }
+        localStorage.removeItem(`interruptedTask_${userId}`);
+      }
+    } catch (err) {
+      console.error("Error cleaning up interrupted task:", err);
+    }
+  };
+
   // Fetch task title, description, and started task status
   useEffect(() => {
     const fetchTaskData = async () => {
@@ -46,7 +90,8 @@ export default function StartedModal({ onClose }) {
           return;
         }
 
-        // Get current task ID from users/{user.id}
+        await cleanupInterruptedTask(user.id);
+
         const userRef = dbRef(db, `users/${user.id}`);
         const userSnap = await get(userRef);
         if (!userSnap.exists()) {
@@ -55,14 +100,13 @@ export default function StartedModal({ onClose }) {
         }
 
         const fetchedUserData = userSnap.val();
-        setUserData(fetchedUserData); // Store user data in state
+        setUserData(fetchedUserData);
         const currentTaskId = fetchedUserData.currentTask;
         if (!currentTaskId) {
           setError("No current task assigned");
           return;
         }
 
-        // Fetch task data from tasks/{currentTaskId}
         const taskRef = dbRef(db, `tasks/${currentTaskId}`);
         const taskSnap = await get(taskRef);
         if (!taskSnap.exists()) {
@@ -71,10 +115,9 @@ export default function StartedModal({ onClose }) {
         }
 
         const taskData = taskSnap.val();
-        setTaskTitle(taskData.title || "Untitled Task"); // Set task title, fallback if undefined
-        setTaskDescription(taskData.description || "No description available"); // Set task description, fallback if undefined
+        setTaskTitle(taskData.title || "Untitled Task");
+        setTaskDescription(taskData.description || "No description available");
 
-        // Check if task is started
         const startedRef = dbRef(db, `users/${user.id}/startedTasks`);
         const startedSnap = await get(startedRef);
         if (startedSnap.exists()) {
@@ -83,7 +126,7 @@ export default function StartedModal({ onClose }) {
           setStartedTask(started[firstId]);
         }
 
-        setError(""); // Clear any previous errors
+        setError("");
       } catch (err) {
         console.error("Error fetching task data:", err);
         setError("Failed to load task data");
@@ -92,6 +135,58 @@ export default function StartedModal({ onClose }) {
 
     fetchTaskData();
   }, [user]);
+
+  // Handle beforeunload event for tab closure
+  useEffect(() => {
+    if (!isRecording || !startedTask || !user) return;
+
+    const handleBeforeUnload = () => {
+      localStorage.setItem(
+        `interruptedTask_${user.id}`,
+        JSON.stringify({
+          taskId: startedTask.id,
+          timestamp: Date.now(),
+        })
+      );
+      console.log(`Marked task ${startedTask.id} as interrupted for user ${user.id}`);
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isRecording, startedTask, user]);
+
+  // Fetch random word for task1 only when recording starts
+  const fetchRandomWord = async () => {
+    try {
+      if (!userData || userData.currentTask !== "task1") {
+        setRandomWord("");
+        return;
+      }
+
+      const randomWordRef = dbRef(db, `tasks/task1/randomWord`);
+      const randomWordSnap = await get(randomWordRef);
+      if (!randomWordSnap.exists()) {
+        setError("No random words found for task1");
+        return;
+      }
+
+      const randomWords = randomWordSnap.val();
+      const wordArray = Object.values(randomWords);
+      if (wordArray.length === 0) {
+        setError("No random words available for task1");
+        return;
+      }
+
+      const randomIndex = Math.floor(Math.random() * wordArray.length);
+      setRandomWord(wordArray[randomIndex] || "No word available");
+      setError("");
+    } catch (err) {
+      console.error("Error fetching random word:", err);
+      setError("Failed to load random word for task1");
+    }
+  };
 
   // Handle starting a task
   const handleStartTask = async () => {
@@ -106,9 +201,12 @@ export default function StartedModal({ onClose }) {
       }
 
       await startRecording(mediaRecorderRef, audioChunksRef);
+      setIsRecording(true);
+
+      await fetchRandomWord();
 
       const newStartedTask = {
-        id: userData.currentTask, // Use userData from state
+        id: userData.currentTask,
         name: taskTitle,
         startedAt: new Date().toISOString(),
       };
@@ -117,7 +215,7 @@ export default function StartedModal({ onClose }) {
       await set(startedRef, newStartedTask);
 
       setStartedTask(newStartedTask);
-      setError(""); // Clear any errors on success
+      setError("");
     } catch (err) {
       console.error("Mic access error:", err);
       setError(
@@ -130,68 +228,215 @@ export default function StartedModal({ onClose }) {
     setButtonLoading(false);
   };
 
-  // Handle completing a task
-  const handleDoneTask = async () => {
+  // Handle auto-stop for task1 at 30 seconds
+  const handleAutoStop = async () => {
     if (!startedTask || !mediaRecorderRef.current) return;
     setButtonLoading(true);
 
     try {
-      await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, user.id, startedTask.id);
-      setError(""); // Clear any errors on success
+      const audioUrl = await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, user.id, startedTask.id);
+      if (!audioUrl) {
+        const startedRef = dbRef(db, `users/${user.id}/startedTasks/${startedTask.id}`);
+        await remove(startedRef);
+        console.log("Started task removed due to missing audio URL");
+        setStartedTask(null);
+      } else {
+        console.log("Audio uploaded successfully, URL:", audioUrl);
+      }
+      setIsRecording(false);
+      setRecordingTime(0);
+      setRandomWord("");
+      localStorage.removeItem(`interruptedTask_${user.id}`);
     } catch (err) {
-      console.error("Error completing task:", err);
-      setError("Failed to complete task. Please try again.");
+      console.error("Error stopping task:", err);
+      const startedRef = dbRef(db, `users/${user.id}/startedTasks/${startedTask.id}`);
+      await remove(startedRef);
+      console.log("Started task removed due to error in stopAndUpload");
+      setStartedTask(null);
+      setError("Failed to stop task.");
+      localStorage.removeItem(`interruptedTask_${user.id}`);
     }
 
     setButtonLoading(false);
   };
 
-  return (
-    <div className="fixed inset-0 flex justify-center items-center bg-opacity-50 z-50">
-      {/* Background overlay with blur */}
-      <div className="fixed inset-0 backdrop-blur-lg z-40"></div>
-      
-      {/* Modal content */}
-      <div className="relative bg-black rounded-lg p-6 text-center shadow-lg w-300 h-170 z-50 flex flex-col justify-between">
-        <div className="flex flex-col space-y-2">
-          <h2 className="text-3xl font-bold text-white">
-            {error ? error : `${taskTitle}`}
-          </h2>
-          <p className="text-sm text-gray-300">
-            {error ? "" : taskDescription}
-          </p>
-          {micStatus === "denied" && (
-            <p className="text-sm text-red-400">
-              Microphone access denied. Please allow in browser settings.
-            </p>
-          )}
-          {micStatus === "error" && (
-            <p className="text-sm text-red-400">
-              Unable to check microphone permission. Check your device.
-            </p>
-          )}
-        </div>
+  // Handle manual "Done" or tick button click
+  const handleDoneTask = async () => {
+    if (!startedTask || !mediaRecorderRef.current) return;
+    setButtonLoading(true);
 
-        <div className="flex justify-between items-end">
-          <button
-            onClick={onClose}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-          >
-            Back
-          </button>
-          <button
-            onClick={startedTask ? handleDoneTask : handleStartTask}
-            className={`${
-              buttonLoading || micStatus === "denied"
-                ? "bg-gray-500 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
-            } text-white px-4 py-2 rounded`}
-            disabled={buttonLoading || micStatus === "denied"}
-          >
-            {buttonLoading ? "Loading..." : startedTask ? "Done" : "Start"}
-          </button>
+    try {
+      const audioUrl = await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, user.id, startedTask.id);
+      if (!audioUrl) {
+        const startedRef = dbRef(db, `users/${user.id}/startedTasks/${startedTask.id}`);
+        await remove(startedRef);
+        console.log("Started task removed due to missing audio URL");
+        setStartedTask(null);
+      } else {
+        console.log("Audio uploaded successfully, URL:", audioUrl);
+      }
+    } catch (err) {
+      console.error("Error completing task:", err);
+      const startedRef = dbRef(db, `users/${user.id}/startedTasks/${startedTask.id}`);
+      await remove(startedRef);
+      console.log("Started task removed due to error in stopAndUpload");
+      setStartedTask(null);
+      setError("Failed to complete task.");
+    } finally {
+      setIsRecording(false);
+      setRecordingTime(0);
+      setRandomWord("");
+      localStorage.removeItem(`interruptedTask_${user.id}`);
+    }
+  };
+
+  // Handle cancel button click
+  const handleCancel = async () => {
+    setButtonLoading(true);
+
+    try {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.stop();
+        audioChunksRef.current = [];
+        console.log("Recording stopped on cancel");
+      }
+
+      if (startedTask) {
+        const startedRef = dbRef(db, `users/${user.id}/startedTasks/${startedTask.id}`);
+        await remove(startedRef);
+        console.log("Started task removed from Firebase");
+        setStartedTask(null);
+      }
+
+      setIsRecording(false);
+      setRecordingTime(0);
+      setRandomWord("");
+      setError("");
+      localStorage.removeItem(`interruptedTask_${user.id}`);
+      onClose();
+    } catch (err) {
+      console.error("Error canceling task:", err);
+      setError("Failed to cancel task.");
+    }
+
+    setButtonLoading(false);
+  };
+
+  // Format recording time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const secs = (seconds % 60).toString().padStart(2, "0");
+    return `${mins}:${secs}`;
+  };
+
+  return (
+    <>
+      {buttonLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-60 flex items-center justify-center">
+          <div className="flex flex-col items-center space-y-4">
+            <svg
+              className="w-12 h-12 text-white animate-spin"
+              fill="none"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+            <span className="text-2xl text-white font-semibold">Processing...</span>
+          </div>
+        </div>
+      )}
+      <div className="fixed inset-0 flex justify-center items-center bg-opacity-50 z-50">
+        <div className="fixed inset-0 backdrop-blur"></div>
+        <div
+          className={`relative bg-gray-800 rounded-lg p-6 text-center shadow-lg w-300 h-170 z-50 flex flex-col justify-between ${
+            buttonLoading ? "pointer-events-none opacity-50" : ""
+          }`}
+        >
+          <div className="flex flex-col space-y-2">
+            <h2 className="text-2xl font-semibold text-white">{error ? error : taskTitle}</h2>
+            <p className="text-sm text-gray-400">{error ? "" : taskDescription}</p>
+            {isRecording && userData?.currentTask === "task1" && recordingTime < 30 && (
+              <p className="text-sm text-yellow-400">{error ? "" : `Random word: ${randomWord}`}</p>
+            )}
+            {micStatus === "denied" && (
+              <p className="text-sm text-red-600">Microphone access denied.</p>
+            )}
+            {micStatus === "error" && (
+              <p className="text-sm text-red-600">Unable to check microphone.</p>
+            )}
+            {isRecording && recordingTime < 30 && (
+              <div className="flex items-center justify-center space-x-4">
+                <svg
+                  className="w-5 h-5 text-red-400 animate-pulse"
+                  fill="currentColor"
+                    viewBox="0 0 24 24">
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0 1.66-1.34 3-3 3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5c0"/>
+                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.24 2.61 6.43 6 6.92V24h2v-3.24 2c3.39-.49 6-3.24 6-6.92h-2"/>
+                </svg>
+                <span className="text-sm text-red-400">Recording...</span>
+                <span className="text-sm text-red-400">{formatTime(recordingTime)}</span>
+              </div>
+            )}
+            {userData?.currentTask === "task1" && recordingTime >= 30 && (
+              <div className="flex flex-col items-center justify-between space-y-2">
+                <button
+                  onClick={handleDoneTask}
+                  className="bg-green-500 hover:bg-green-600 text-white rounded-full p-24 p-3 transition-colors duration-200"
+                  disabled={buttonLoading}
+                >
+                  <svg
+                    className="w-24 w-8 h-8"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="none 0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 24l4 4L19 7"
+                      />
+                    </svg>
+                </button>
+                <span className="text-sm text-green-400">Time complete!</span>
+              </div>
+            )}
+          </div>
+          <div className="flex flex justify-between items-end">
+            <div>
+              <button
+                onClick={handleCancel}
+                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 px-2 py-2 rounded-lg transition-colors duration-300"
+                disabled={buttonLoading}
+              >
+                Cancel
+              </button>
+            </div>
+            <div>
+              <StartButton
+                isStarted={!!startedTask}
+                onClick={startedTask ? handleDoneTask : handleStartTask}
+                onStartRecording={handleStartTask}
+                onStopRecording={handleDoneTask}
+                disabled={buttonLoading || micStatus === "denied" || (startedTask && userData?.currentTask === "task1" && recordingTime < 30)}
+              />
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
