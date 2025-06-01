@@ -153,7 +153,7 @@ function Home() {
                                         visible: { opacity: 1, y: 0 },
                                     }}
                                 >
-                                    Welcome back, <span className="text-blue-700">Kshitij!</span>
+                                    Welcome back, <span className="text-blue-700">{userData.name}!</span>
                                 </motion.h1>
 
                                 <motion.p
