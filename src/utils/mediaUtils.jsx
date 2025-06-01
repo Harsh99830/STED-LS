@@ -1,4 +1,3 @@
-// src/utils/mediaUtils.js
 // Start audio recording
 export const startRecording = async (mediaRecorderRef, audioChunksRef) => {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
