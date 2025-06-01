@@ -1,37 +1,38 @@
-import { useEffect, useState } from "react";
+import React from "react";
+import { useEffect, useState, useRef } from "react";
 import { db } from "../firebase";
-import { ref, get, set, remove } from "firebase/database";
+import { ref, get, set } from "firebase/database";
 import TaskCard from "../components/TaskCard";
 import ProgressCard from "../components/ProgressCard";
 import StartButton from "../components/StartButton";
-import { useUser, useAuth } from "@clerk/clerk-react"; // Clerk import
-import React from "react";
 import Navbar from "../components/Navbar";
 import TaskPointsBox from "../components/TaskPointsBox";
-import { useNavigate } from "react-router-dom";
 import StartedModal from "../components/StartedModal";
+import { useUser } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
+import { startRecording, stopAndDownload } from "../utils/mediaUtils";
 
 
 export default function Dashboard() {
-  const { user, isLoaded, isSignedIn } = useUser(); // Clerk user
+  const { user, isLoaded, isSignedIn } = useUser();
   const [task, setTask] = useState(null);
   const [userData, setUserData] = useState(null);
   const [startedTask, setStartedTask] = useState(null);
   const [showStartedModal, setShowStartedModal] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // For page loading
-  const [buttonLoading, setButtonLoading] = useState(false); // For button loading
-  const [taskExists, setTaskExists] = useState(true); // 🔹 new
+  const [isLoading, setIsLoading] = useState(true);
+  const [buttonLoading, setButtonLoading] = useState(false);
+  const [taskExists, setTaskExists] = useState(true);
+
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   const userId = user?.id;
   const navigate = useNavigate();
 
- useEffect(() => {
-  if (isLoaded && !isSignedIn) {
-    navigate("/");
-  }
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) navigate("/");
   }, [isLoaded, isSignedIn, navigate]);
-
 
   useEffect(() => {
     if (!userId || !user) return;
@@ -49,11 +50,7 @@ export default function Dashboard() {
         const data = userSnap.val();
 
         if (!data.name || !data.email) {
-          await set(userRef, {
-            ...data,
-            name: clerkName,
-            email: clerkEmail,
-          });
+          await set(userRef, { ...data, name: clerkName, email: clerkEmail });
         }
 
         setUserData({ ...data, name: clerkName, email: clerkEmail });
@@ -63,20 +60,19 @@ export default function Dashboard() {
         const taskSnap = await get(taskRef);
 
         if (taskSnap.exists()) {
-          const taskData = taskSnap.val();
-          setTask({ id: taskId, ...taskData });
-          setTaskExists(true); // ✅ task found
+          setTask({ id: taskId, ...taskSnap.val() });
+          setTaskExists(true);
         } else {
           setTask(null);
-          setTaskExists(false); // ❌ task not found
+          setTaskExists(false);
         }
 
         const startedRef = ref(db, `users/${userId}/startedTasks`);
         const startedSnap = await get(startedRef);
         if (startedSnap.exists()) {
-          const data = startedSnap.val();
-          const firstId = Object.keys(data)[0];
-          setStartedTask(data[firstId]);
+          const started = startedSnap.val();
+          const firstId = Object.keys(started)[0];
+          setStartedTask(started[firstId]);
         }
       } else {
         const newUser = {
@@ -98,9 +94,11 @@ export default function Dashboard() {
   }, [userId, user]);
 
   const handleStartTask = async () => {
-    if (startedTask || !task || !taskExists) return;
+  if (startedTask || !task || !taskExists) return;
+  setButtonLoading(true);
 
-    setButtonLoading(true);
+  try {
+    await startRecording(mediaRecorderRef, audioChunksRef);
 
     const newStartedTask = {
       id: task.id,
@@ -110,16 +108,23 @@ export default function Dashboard() {
 
     const startedRef = ref(db, `users/${userId}/startedTasks/${task.id}`);
     await set(startedRef, newStartedTask);
+
     setStartedTask(newStartedTask);
     setShowStartedModal(true);
+  } catch (err) {
+    console.error("Mic access denied:", err);
+    alert("Microphone access is required to record.");
+  }
 
-    setButtonLoading(false);
-  };
+  setButtonLoading(false);
+};
 
   const handleDoneTask = async () => {
-    if (!startedTask) return;
-    navigate('/done');
-  };
+  if (!startedTask || !mediaRecorderRef.current) return;
+  await stopAndDownload(mediaRecorderRef, audioChunksRef, navigate);
+};
+
+
 
   const toggleProgress = () => {
     setShowProgress(!showProgress);
@@ -143,36 +148,36 @@ export default function Dashboard() {
         </div>
       )}
 
-     <div
-  className="flex flex-col justify-center items-center mt-8 h-145 w-306 mx-37 rounded-lg"
-  style={{ animation: 'fadeIn 1s ease-in-out' }}
->
-  {userData?.currentTask && taskExists && task ? (
-    <>
-      <div className="flex w-400 ml-50">
-        <TaskCard task={task} />
-        <TaskPointsBox points={task.points} />
+      <div
+        className="flex flex-col justify-center items-center mt-8 h-145 w-306 mx-37 rounded-lg"
+        style={{ animation: "fadeIn 1s ease-in-out" }}
+      >
+        {userData?.currentTask && taskExists && task ? (
+          <>
+            <div className="flex w-400 ml-50">
+              <TaskCard task={task} />
+              <TaskPointsBox points={task.points} />
+            </div>
+            <StartButton
+              onClick={startedTask ? handleDoneTask : handleStartTask}
+              isStarted={!!startedTask}
+              isLoading={buttonLoading}
+            />
+          </>
+        ) : userData && userData.tasksCompleted > 0 ? (
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-green-700 mb-3">🎉 All Tasks Completed!</h2>
+            <p className="text-gray-700 mb-4">You've done a great job completing all your tasks.</p>
+          </div>
+        ) : (
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-blue-700 mb-2">Welcome!</h2>
+            <p className="text-gray-600">Loading your first task...</p>
+          </div>
+        )}
       </div>
-      <StartButton
-        onClick={startedTask ? handleDoneTask : handleStartTask}
-        isStarted={!!startedTask}
-      />
-    </>
-  ) : userData && userData.tasksCompleted > 0 ? (
-    <div className="text-center">
-      <h2 className="text-2xl font-bold text-green-700 mb-3">🎉 All Tasks Completed!</h2>
-      <p className="text-gray-700 mb-4">
-        You've done a great job completing all your tasks.
-      </p>
-    </div>
-  ) : (
-    <div className="text-center">
-      <h2 className="text-xl font-semibold text-blue-700 mb-2">Welcome!</h2>
-      <p className="text-gray-600">Loading your first task...</p>
-    </div>
-  )}
-</div>
-{showStartedModal && <StartedModal onClose={() => setShowStartedModal(false)} />}
+
+      {showStartedModal && <StartedModal onClose={() => setShowStartedModal(false)} />}
     </div>
   );
 }
