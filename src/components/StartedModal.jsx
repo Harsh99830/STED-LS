@@ -140,7 +140,7 @@ export default function StartedModal({ onClose }) {
     };
   }, [isRecording, startedTask, user]);
 
-  // Recording timer for task1 and task2
+  // Recording timer for task1, task2 and task3
   useEffect(() => {
     let timer;
     if (isRecording) {
@@ -151,8 +151,8 @@ export default function StartedModal({ onClose }) {
           if (userData?.currentTask === "task1" && newTime >= 30) {
             handleAutoStop();
           }
-          // For task2: 2 minutes (120 seconds) limit
-          else if (userData?.currentTask === "task2" && newTime >= 120) {
+          // For task2 and task3: 2 minutes (120 seconds) limit
+          else if ((userData?.currentTask === "task2" || userData?.currentTask === "task3") && newTime >= 120) {
             handleAutoStop();
           }
           return newTime;
@@ -458,6 +458,7 @@ export default function StartedModal({ onClose }) {
             )}
             {userData?.currentTask === "task1" && handleTask1()}
             {userData?.currentTask === "task2" && handleTask2()}
+            {userData?.currentTask === "task3" && handleTask2()}
           </div>
           <div className="flex justify-between items-end">
             <button
@@ -475,8 +476,9 @@ export default function StartedModal({ onClose }) {
               disabled={
                 buttonLoading ||
                 micStatus === "denied" ||
+                isRecording ||
                 (startedTask && userData?.currentTask === "task1" && recordingTime < 30) ||
-                (startedTask && userData?.currentTask === "task2" && recordingTime < 120)
+                (startedTask && (userData?.currentTask === "task2" || userData?.currentTask === "task3") && recordingTime < 120)
               }
             />
           </div>
