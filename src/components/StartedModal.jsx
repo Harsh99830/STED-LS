@@ -22,23 +22,6 @@ export default function StartedModal({ onClose }) {
   const audioChunksRef = useRef([]);
   const navigate = useNavigate();
 
-  // Timer for recording duration and auto-stop for task1
-  useEffect(() => {
-    let timer;
-    if (isRecording) {
-      timer = setInterval(() => {
-        setRecordingTime((prev) => {
-          const newTime = prev + 1;
-          if (userData?.currentTask === "task1" && newTime >= 30) {
-            handleAutoStop();
-          }
-          return newTime;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isRecording, userData]);
-
   // Check microphone permission status
   useEffect(() => {
     const checkMicPermission = async () => {
@@ -65,7 +48,7 @@ export default function StartedModal({ onClose }) {
       if (interrupted) {
         const { taskId, timestamp } = JSON.parse(interrupted);
         const now = Date.now();
-        const oneHour = 60 * 60 * 1000; // 1 hour in ms
+        const oneHour = 60 * 60 * 1000;
         if (now - timestamp < oneHour) {
           const startedRef = dbRef(db, `users/${userId}/startedTasks/${taskId}`);
           const snap = await get(startedRef);
@@ -157,6 +140,23 @@ export default function StartedModal({ onClose }) {
     };
   }, [isRecording, startedTask, user]);
 
+  // Recording timer for task1 and task2
+  useEffect(() => {
+    let timer;
+    if (isRecording) {
+      timer = setInterval(() => {
+        setRecordingTime((prev) => {
+          const newTime = prev + 1;
+          if (userData?.currentTask === "task1" && newTime >= 30) {
+            handleAutoStop();
+          }
+          return newTime;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isRecording, userData]);
+
   // Fetch random word for task1 only when recording starts
   const fetchRandomWord = async () => {
     try {
@@ -203,7 +203,9 @@ export default function StartedModal({ onClose }) {
       await startRecording(mediaRecorderRef, audioChunksRef);
       setIsRecording(true);
 
-      await fetchRandomWord();
+      if (userData.currentTask === "task1") {
+        await fetchRandomWord();
+      }
 
       const newStartedTask = {
         id: userData.currentTask,
@@ -228,7 +230,7 @@ export default function StartedModal({ onClose }) {
     setButtonLoading(false);
   };
 
-  // Handle auto-stop for task1 at 30 seconds
+  // Handle auto-stop for tasks
   const handleAutoStop = async () => {
     if (!startedTask || !mediaRecorderRef.current) return;
     setButtonLoading(true);
@@ -329,6 +331,75 @@ export default function StartedModal({ onClose }) {
     return `${mins}:${secs}`;
   };
 
+  // Task1 UI (random word, tick button at 30s)
+  const handleTask1 = () => {
+    return (
+      <>
+        {isRecording && recordingTime < 30 && (
+          <p className="text-sm text-yellow-400">{error ? "" : `Random word: ${randomWord}`}</p>
+        )}
+        {recordingTime >= 30 && (
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <button
+              onClick={handleDoneTask}
+              className="bg-green-500 hover:bg-green-600 text-white rounded-full p-3 transition-colors duration-200"
+              disabled={buttonLoading}
+            >
+              <svg
+                className="w-8 h-8"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </button>
+            <span className="text-sm text-green-400">Time complete!</span>
+          </div>
+        )}
+      </>
+    );
+  };
+
+  // Task2 UI (tick button at 120s)
+  const handleTask2 = () => {
+    return (
+      <>
+        {recordingTime >= 120 && (
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <button
+              onClick={handleDoneTask}
+              className="bg-green-500 hover:bg-green-600 text-white rounded-full p-3 transition-colors duration-200"
+              disabled={buttonLoading}
+            >
+              <svg
+                className="w-8 h-8"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </button>
+            <span className="text-sm text-green-400">Time complete!</span>
+          </div>
+        )}
+      </>
+    );
+  };
+
   return (
     <>
       {buttonLoading && (
@@ -368,72 +439,50 @@ export default function StartedModal({ onClose }) {
           <div className="flex flex-col space-y-2">
             <h2 className="text-2xl font-semibold text-white">{error ? error : taskTitle}</h2>
             <p className="text-sm text-gray-400">{error ? "" : taskDescription}</p>
-            {isRecording && userData?.currentTask === "task1" && recordingTime < 30 && (
-              <p className="text-sm text-yellow-400">{error ? "" : `Random word: ${randomWord}`}</p>
-            )}
             {micStatus === "denied" && (
               <p className="text-sm text-red-600">Microphone access denied.</p>
             )}
             {micStatus === "error" && (
               <p className="text-sm text-red-600">Unable to check microphone.</p>
             )}
-            {isRecording && recordingTime < 30 && (
+            {isRecording && (
               <div className="flex items-center justify-center space-x-4">
                 <svg
                   className="w-5 h-5 text-red-400 animate-pulse"
                   fill="currentColor"
-                    viewBox="0 0 24 24">
-                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0 1.66-1.34 3-3 3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5c0"/>
-                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.24 2.61 6.43 6 6.92V24h2v-3.24 2c3.39-.49 6-3.24 6-6.92h-2"/>
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5z" />
+                  <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
                 </svg>
                 <span className="text-sm text-red-400">Recording...</span>
                 <span className="text-sm text-red-400">{formatTime(recordingTime)}</span>
               </div>
             )}
-            {userData?.currentTask === "task1" && recordingTime >= 30 && (
-              <div className="flex flex-col items-center justify-between space-y-2">
-                <button
-                  onClick={handleDoneTask}
-                  className="bg-green-500 hover:bg-green-600 text-white rounded-full p-24 p-3 transition-colors duration-200"
-                  disabled={buttonLoading}
-                >
-                  <svg
-                    className="w-24 w-8 h-8"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="none 0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M5 24l4 4L19 7"
-                      />
-                    </svg>
-                </button>
-                <span className="text-sm text-green-400">Time complete!</span>
-              </div>
-            )}
+            {userData?.currentTask === "task1" && handleTask1()}
+            {userData?.currentTask === "task2" && handleTask2()}
           </div>
-          <div className="flex flex justify-between items-end">
-            <div>
-              <button
-                onClick={handleCancel}
-                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 px-2 py-2 rounded-lg transition-colors duration-300"
-                disabled={buttonLoading}
-              >
-                Cancel
-              </button>
-            </div>
-            <div>
-              <StartButton
-                isStarted={!!startedTask}
-                onClick={startedTask ? handleDoneTask : handleStartTask}
-                onStartRecording={handleStartTask}
-                onStopRecording={handleDoneTask}
-                disabled={buttonLoading || micStatus === "denied" || (startedTask && userData?.currentTask === "task1" && recordingTime < 30)}
-              />
-            </div>
+          <div className="flex justify-between items-end">
+            <button
+              onClick={handleCancel}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-300"
+              disabled={buttonLoading}
+            >
+              Cancel
+            </button>
+            <StartButton
+              isStarted={!!startedTask}
+              onClick={startedTask ? handleDoneTask : handleStartTask}
+              onStartRecording={handleStartTask}
+              onStopRecording={handleDoneTask}
+              disabled={
+                buttonLoading ||
+                micStatus === "denied" ||
+                (startedTask && userData?.currentTask === "task1" && recordingTime < 30) ||
+                (startedTask && userData?.currentTask === "task2" && recordingTime < 120)
+              }
+            />
           </div>
         </div>
       </div>
