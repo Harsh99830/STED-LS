@@ -147,7 +147,12 @@ export default function StartedModal({ onClose }) {
       timer = setInterval(() => {
         setRecordingTime((prev) => {
           const newTime = prev + 1;
+          // For task1: 30 seconds limit
           if (userData?.currentTask === "task1" && newTime >= 30) {
+            handleAutoStop();
+          }
+          // For task2: 2 minutes (120 seconds) limit
+          else if (userData?.currentTask === "task2" && newTime >= 120) {
             handleAutoStop();
           }
           return newTime;
@@ -230,65 +235,56 @@ export default function StartedModal({ onClose }) {
     setButtonLoading(false);
   };
 
-  // Handle auto-stop for tasks
+  // Handle auto-stop of recording
   const handleAutoStop = async () => {
-    if (!startedTask || !mediaRecorderRef.current) return;
-    setButtonLoading(true);
-
+    if (!isRecording || !mediaRecorderRef.current) return;
+    
+    setIsRecording(false);
     try {
-      const audioUrl = await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, user.id, startedTask.id);
-      if (!audioUrl) {
-        const startedRef = dbRef(db, `users/${user.id}/startedTasks/${startedTask.id}`);
-        await remove(startedRef);
-        console.log("Started task removed due to missing audio URL");
-        setStartedTask(null);
+      const audioUrl = await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, user.id, userData.currentTask);
+      if (audioUrl) {
+        console.log("Recording stopped automatically, waiting for user to click Done");
       } else {
-        console.log("Audio uploaded successfully, URL:", audioUrl);
+        setError("Failed to upload recording");
       }
-      setIsRecording(false);
-      setRecordingTime(0);
-      setRandomWord("");
-      localStorage.removeItem(`interruptedTask_${user.id}`);
     } catch (err) {
-      console.error("Error stopping task:", err);
-      const startedRef = dbRef(db, `users/${user.id}/startedTasks/${startedTask.id}`);
-      await remove(startedRef);
-      console.log("Started task removed due to error in stopAndUpload");
-      setStartedTask(null);
-      setError("Failed to stop task.");
-      localStorage.removeItem(`interruptedTask_${user.id}`);
+      console.error("Error stopping recording:", err);
+      setError("Failed to stop recording");
     }
-
-    setButtonLoading(false);
   };
 
   // Handle manual "Done" or tick button click
   const handleDoneTask = async () => {
-    if (!startedTask || !mediaRecorderRef.current) return;
+    if (!startedTask) return;
     setButtonLoading(true);
 
     try {
-      const audioUrl = await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, user.id, startedTask.id);
-      if (!audioUrl) {
-        const startedRef = dbRef(db, `users/${user.id}/startedTasks/${startedTask.id}`);
-        await remove(startedRef);
-        console.log("Started task removed due to missing audio URL");
-        setStartedTask(null);
-      } else {
-        console.log("Audio uploaded successfully, URL:", audioUrl);
+      // If still recording (manual stop before time limit), stop the recording
+      if (mediaRecorderRef.current?.state === "recording") {
+        const audioUrl = await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, user.id, startedTask.id);
+        if (!audioUrl) {
+          throw new Error("Failed to upload audio");
+        }
       }
-    } catch (err) {
-      console.error("Error completing task:", err);
+
+      // Clean up the started task
       const startedRef = dbRef(db, `users/${user.id}/startedTasks/${startedTask.id}`);
       await remove(startedRef);
-      console.log("Started task removed due to error in stopAndUpload");
       setStartedTask(null);
-      setError("Failed to complete task.");
-    } finally {
+      
+      // Reset states
       setIsRecording(false);
       setRecordingTime(0);
       setRandomWord("");
       localStorage.removeItem(`interruptedTask_${user.id}`);
+      
+      // Navigate to done page
+      navigate("/done");
+    } catch (err) {
+      console.error("Error completing task:", err);
+      setError("Failed to complete task.");
+    } finally {
+      setButtonLoading(false);
     }
   };
 

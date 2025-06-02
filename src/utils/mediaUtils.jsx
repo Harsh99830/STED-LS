@@ -25,44 +25,45 @@ export const stopAndUpload = async (mediaRecorderRef, audioChunksRef, navigate, 
 
   if (!recorder) return;
 
-  recorder.onstop = async () => {
-    // Create audio blob from recorded chunks
-    const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-    const storage = getStorage();
+  return new Promise((resolve) => {
+    recorder.onstop = async () => {
+      // Create audio blob from recorded chunks
+      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      const storage = getStorage();
 
-    // Define storage path for the audio file
-    const timestamp = Date.now();
-    const audioPath = `recordings/${userId}/${taskId}/recording-${timestamp}.webm`;
-    const audioStorageRef = storageRef(storage, audioPath);
+      // Define storage path for the audio file
+      const timestamp = Date.now();
+      const audioPath = `recordings/${userId}/${taskId}/recording-${timestamp}.webm`;
+      const audioStorageRef = storageRef(storage, audioPath);
 
-    try {
-      // Upload audio to Firebase Storage
-      await uploadBytes(audioStorageRef, audioBlob);
-      console.log("Audio uploaded to Firebase Storage");
+      try {
+        // Upload audio to Firebase Storage
+        await uploadBytes(audioStorageRef, audioBlob);
+        console.log("Audio uploaded to Firebase Storage");
 
-      // Get the download URL of the uploaded audio
-      const downloadURL = await getDownloadURL(audioStorageRef);
+        // Get the download URL of the uploaded audio
+        const downloadURL = await getDownloadURL(audioStorageRef);
 
-      // Store completion record in Realtime Database
-      const taskCompletionRef = dbRef(db, `users/${userId}/taskCompletions/${taskId}`);
-      await update(taskCompletionRef, {
-        audioUrl: downloadURL,
-        completedAt: new Date().toISOString(),
-      });
+        // Store completion record in Realtime Database
+        const taskCompletionRef = dbRef(db, `users/${userId}/taskCompletions/${taskId}`);
+        await update(taskCompletionRef, {
+          audioUrl: downloadURL,
+          completedAt: new Date().toISOString(),
+        });
 
-      console.log("Audio URL and completion timestamp saved to Realtime Database");
-    } catch (err) {
-      console.error("Error during audio upload or database update:", err);
-      // Optionally, you could throw the error or handle it to inform the user
-    }
+        console.log("Audio URL and completion timestamp saved to Realtime Database");
+        
+        // Clean up
+        mediaRecorderRef.current = null;
+        audioChunksRef.current = [];
 
-    // Clean up
-    mediaRecorderRef.current = null;
-    audioChunksRef.current = [];
+        resolve(downloadURL);
+      } catch (err) {
+        console.error("Error during audio upload or database update:", err);
+        resolve(null);
+      }
+    };
 
-    // Navigate to the 'done' page
-    navigate("/done");
-  };
-
-  recorder.stop();
+    recorder.stop();
+  });
 };
