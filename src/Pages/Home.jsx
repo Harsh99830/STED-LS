@@ -94,113 +94,74 @@ function Home() {
             <div className="flex flex-col lg:flex-row">
                 <Sidebar />
                 <div className="w-full relative px-4 lg:px-8 pb-12">
-                    {/* Responsive container for all 3 blocks */}
-                    <div className="flex flex-col-reverse lg:flex-row items-start justify-between gap-6 mt-8">
-                        {/* Tip of the Day */}
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.5 }}
-                            className="bg-white rounded-lg shadow-md border-t border-blue-100 p-6 w-full max-w-sm"
-                        >
-                            <div className="flex items-center mb-4 pb-4 border-b border-slate-100">
-                                <div className="bg-slate-50 rounded-lg p-2 mr-3">
-                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                                    </svg>
+                    {/* Subject Cards */}
+                    <div className="mt-8">
+                        <h2 className="text-2xl font-semibold text-slate-800 mb-6">Available Subjects</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Public Speaking Card */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5 }}
+                                className="bg-white rounded-lg shadow-md border-t border-blue-100 p-6 hover:shadow-lg transition-shadow duration-200"
+                            >
+                                <div className="flex items-center mb-4">
+                                    <div className="bg-blue-50 rounded-full p-3">
+                                        <span className="text-2xl">🎤</span>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-slate-800 ml-4">Public Speaking</h3>
                                 </div>
-                                <h2 className="text-lg font-semibold text-slate-800">Tip of the Day</h2>
-                            </div>
-                            <p className="text-slate-600 mb-4 text-sm leading-relaxed">"Public speaking boosts your confidence, career, and memory!"</p>
-                            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                                <p className="text-sm text-slate-600">Growth is a daily habit. One task a day keeps fear away.</p>
-                            </div>
-                        </motion.div>
+                                <p className="text-slate-600 mb-4">Master the art of public speaking with our comprehensive curriculum. Build confidence and communication skills.</p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-slate-500">12 Lessons</span>
+                                        <span className="text-sm text-slate-500">•</span>
+                                        <span className="text-sm text-slate-500">4 Projects</span>
+                                    </div>
+                                    <Link
+                                        to="/public-speaking"
+                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    >
+                                        Start Learning
+                                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Link>
+                                </div>
+                            </motion.div>
 
-                        {/* Welcome Message */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5 }}
-                            className="w-full max-w-xl bg-white rounded-lg shadow-md border-t border-blue-100 p-8"
-                        >
-                            <div className="text-center">
-                                
-                                <h1 className="text-2xl font-semibold text-slate-800 mb-3">
-                                    Welcome back, <span className="text-blue-600">{userData.name}</span>
-                                </h1>
-
-                                <p className="text-slate-600 mb-6">
-                                    You're 1 step closer to becoming a confident speaker.
-                                </p>
-
-                                <Link
-                                    to="/task"
-                                    className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium text-sm transition-all duration-200"
-                                >
-                                    Start Task
-                                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </Link>
-                            </div>
-                        </motion.div>
-
-                        {/* Snapshot */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.5 }}
-                            className="bg-white rounded-lg shadow-md border-t border-blue-100 p-6 w-full max-w-sm"
-                        >
-                            <div className="flex items-center mb-4 pb-4 border-b border-slate-100">
-                                <div className="bg-slate-50 rounded-lg p-2 mr-3">
-                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                    </svg>
+                            {/* Data Science Card */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: 0.2 }}
+                                className="bg-white rounded-lg shadow-md border-t border-blue-100 p-6 hover:shadow-lg transition-shadow duration-200"
+                            >
+                                <div className="flex items-center mb-4">
+                                    <div className="bg-blue-50 rounded-full p-3">
+                                        <span className="text-2xl">📊</span>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-slate-800 ml-4">Data Science</h3>
                                 </div>
-                                <h2 className="text-lg font-semibold text-slate-800">Your Snapshot</h2>
-                            </div>
-                            
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                    <span className="text-sm text-slate-600">Level</span>
-                                    <span className="font-medium text-slate-800">{userData.level}</span>
+                                <p className="text-slate-600 mb-4">Learn data analysis, visualization, and machine learning. Transform raw data into meaningful insights.</p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-slate-500">15 Lessons</span>
+                                        <span className="text-sm text-slate-500">•</span>
+                                        <span className="text-sm text-slate-500">6 Projects</span>
+                                    </div>
+                                    <Link
+                                        to="/data-science"
+                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    >
+                                        Start Learning
+                                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Link>
                                 </div>
-                                
-                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                    <span className="text-sm text-slate-600">XP</span>
-                                    <span className="font-medium text-slate-800">{userData.xp} / 500 XP</span>
-                                </div>
-                                
-                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                    <span className="text-sm text-slate-600">Tasks Completed</span>
-                                    <span className="font-medium text-slate-800">{userData.tasksCompleted}</span>
-                                </div>
-                                
-                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                    <span className="text-sm text-slate-600">Streak</span>
-                                    <span className="font-medium text-slate-800">1 Day</span>
-                                </div>
-                                
-                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-200">
-                                    <span className="text-sm text-slate-600">Leaderboard</span>
-                                    <span className="font-medium text-slate-800">#17</span>
-                                </div>
-                            </div>
-
-                            <div className="mt-6 pt-4 border-t border-slate-100">
-                                <Link 
-                                    to="/progress" 
-                                    className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors duration-200"
-                                >
-                                    View Full Progress
-                                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </Link>
-                            </div>
-                        </motion.div>
+                            </motion.div>
+                        </div>
                     </div>
                 </div>
             </div>

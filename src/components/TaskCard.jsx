@@ -83,8 +83,8 @@ export default function TaskCard({ task }) {
 
             <div className="mt-13 flex justify-between">
               <div className="space-y-3">
-                <p><strong>📂 Category:</strong> {task.category || 'Uncategorized'}</p>
                 <p className='pt-3'><strong>⌛ Duration:</strong> <span>{task.duration || 'Not specified'}</span></p>
+                <p><strong>📂 Category:</strong> {task.category || 'Uncategorized'}</p>
                 <p className='pt-3'><strong>🏆 Reward:</strong> <span className="text-green-600 font-semibold">+{task.xp || 0} XP</span></p>
                 <p className='pt-3'><strong>🔥 Difficulty:</strong> {task.difficulty || 'Not specified'}</p>
               </div>
