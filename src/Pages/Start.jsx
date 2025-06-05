@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import speaker from '../assets/speaker.jpg';
-import speak from '../assets/speak.jpg';
-import ano from '../assets/ano.jpg';
-import mic from '../assets/mic.jpg';
+import speaker from '../assets/Photo1.jpeg';
+import mic from '../assets/Photo2.webp';
+import ano from '../assets/Photo3.webp';
+import speak from '../assets/Photo4.jpeg';
 
 function Start() {
   return (
@@ -36,20 +36,19 @@ function Start() {
             className="inline-block bg-blue-50 rounded-lg px-6 py-3 mb-6"
           >
             <span className="text-blue-700 font-semibold text-lg">
-              Master Public Speaking
+              Master Real World Skills
             </span>
           </motion.div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-slate-800 mb-6 leading-tight">
-            <span className="block">Become a</span>
+            <span className="block">Grow through</span>
             <span className="block text-blue-700">
-              confident speaker
+             real practice
             </span>
           </h1>
 
           <p className="text-lg text-slate-600 mb-10 max-w-xl leading-relaxed">
-            Develop your public speaking skills through structured practice and actionable micro-tasks. 
-            Learn by doing, not just watching.
+          Master essential skills with action-based tasks. Learn by doing, not just watching.
           </p>
 
           <Link to="/login">
