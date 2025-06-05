@@ -133,15 +133,15 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#A4CCD9]">
-        <div className="text-gray-800 text-2xl">Loading...</div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="text-black text-2xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#A4CCD9] via-[#b5d7e3] to-[#A4CCD9] text-black relative">
-      <div className="absolute top-0 left-0 w-full h-1 bg-[#8ab3c2]" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 text-black relative">
+      <div className="absolute top-0 left-0 w-full h-1 bg-blue-600" />
 
       <Navbar onProgressClick={toggleProgress} showProgress={showProgress} />
 
@@ -166,7 +166,7 @@ export default function Dashboard() {
             />
           </>
         ) : userData && userData.tasksCompleted > 0 ? (
-          <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl shadow-md p-8 border border-[#8ab3c2]">
+          <div className="text-center bg-white rounded-xl shadow-md p-8 border border-gray-100">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
@@ -176,7 +176,7 @@ export default function Dashboard() {
             <p className="text-gray-600">You've done a great job completing all your tasks.</p>
           </div>
         ) : (
-          <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl shadow-md p-8 border border-[#8ab3c2]">
+          <div className="text-center bg-white rounded-xl shadow-md p-8 border border-gray-100">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -194,7 +194,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-[#8ab3c2]" />
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600" />
     </div>
   );
 }
