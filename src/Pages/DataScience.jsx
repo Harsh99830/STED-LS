@@ -156,7 +156,7 @@ function DataScience() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-slate-600">Learning Streak</p>
-                                    <h3 className="text-2xl font-bold text-slate-800 mt-1">5 Days</h3>
+                                    <h3 className="text-2xl font-bold text-slate-800 mt-1">0 Days</h3>
                                 </div>
                                 <div className="bg-purple-50 p-3 rounded-full">
                                     <span className="text-2xl">🔥</span>

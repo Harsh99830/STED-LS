@@ -10,7 +10,6 @@ export default function StartedModal({ onClose }) {
   const { user } = useUser();
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
-  const [randomWord, setRandomWord] = useState("");
   const [error, setError] = useState("");
   const [startedTask, setStartedTask] = useState(null);
   const [buttonLoading, setButtonLoading] = useState(false);
@@ -41,75 +40,36 @@ export default function StartedModal({ onClose }) {
     checkMicPermission();
   }, []);
 
-  // Clean up interrupted tasks from localStorage
-  const cleanupInterruptedTask = async (userId) => {
-    try {
-      const interrupted = localStorage.getItem(`interruptedTask_${userId}`);
-      if (interrupted) {
-        const { taskId, timestamp } = JSON.parse(interrupted);
-        const now = Date.now();
-        const oneHour = 60 * 60 * 1000;
-        if (now - timestamp < oneHour) {
-          const startedRef = dbRef(db, `users/${userId}/startedTasks/${taskId}`);
-          const snap = await get(startedRef);
-          if (snap.exists()) {
-            await remove(startedRef);
-            console.log(`Cleaned up interrupted task ${taskId} for user ${userId}`);
-          }
-        }
-        localStorage.removeItem(`interruptedTask_${userId}`);
-      }
-    } catch (err) {
-      console.error("Error cleaning up interrupted task:", err);
-    }
-  };
-
-  // Fetch task title, description, and started task status
+  // Fetch task data
   useEffect(() => {
     const fetchTaskData = async () => {
+      if (!user) return;
+
       try {
-        if (!user) {
-          setError("User not logged in");
-          return;
-        }
-
-        await cleanupInterruptedTask(user.id);
-
         const userRef = dbRef(db, `users/${user.id}`);
         const userSnap = await get(userRef);
+        
         if (!userSnap.exists()) {
           setError("User data not found");
           return;
         }
 
-        const fetchedUserData = userSnap.val();
-        setUserData(fetchedUserData);
-        const currentTaskId = fetchedUserData.currentTask;
-        if (!currentTaskId) {
-          setError("No current task assigned");
-          return;
-        }
+        const userData = userSnap.val();
+        setUserData(userData);
 
-        const taskRef = dbRef(db, `tasks/${currentTaskId}`);
+        const taskRef = dbRef(db, `tasks/${userData.currentTask}`);
         const taskSnap = await get(taskRef);
+
         if (!taskSnap.exists()) {
-          setError("Task data not found");
+          setError("Task not found");
           return;
         }
 
         const taskData = taskSnap.val();
         setTaskTitle(taskData.title || "Untitled Task");
         setTaskDescription(taskData.description || "No description available");
-
-        const startedRef = dbRef(db, `users/${user.id}/startedTasks`);
-        const startedSnap = await get(startedRef);
-        if (startedSnap.exists()) {
-          const started = startedSnap.val();
-          const firstId = Object.keys(started)[0];
-          setStartedTask(started[firstId]);
-        }
-
         setError("");
+
       } catch (err) {
         console.error("Error fetching task data:", err);
         setError("Failed to load task data");
@@ -119,77 +79,27 @@ export default function StartedModal({ onClose }) {
     fetchTaskData();
   }, [user]);
 
-  // Handle beforeunload event for tab closure
+  // Update recording time
   useEffect(() => {
-    if (!isRecording || !startedTask || !user) return;
-
-    const handleBeforeUnload = () => {
-      localStorage.setItem(
-        `interruptedTask_${user.id}`,
-        JSON.stringify({
-          taskId: startedTask.id,
-          timestamp: Date.now(),
-        })
-      );
-      console.log(`Marked task ${startedTask.id} as interrupted for user ${user.id}`);
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [isRecording, startedTask, user]);
-
-  // Recording timer effect
-  useEffect(() => {
-    let timer;
+    let interval;
     if (isRecording) {
-      timer = setInterval(() => {
-        setRecordingTime((prev) => {
-          const newTime = prev + 1;
+      interval = setInterval(() => {
+        setRecordingTime((prevTime) => {
+          const newTime = prevTime + 1;
           const timeLimit = getTimeLimit();
           
           // Auto stop recording when time limit is reached
           if (newTime >= timeLimit) {
-            handleAutoStop();
+            if (mediaRecorderRef.current?.state === "recording") {
+              handleDoneTask();
+            }
           }
           return newTime;
         });
       }, 1000);
     }
-    return () => clearInterval(timer);
-  }, [isRecording, userData]);
-
-  // Fetch random word for task1 only when recording starts
-  const fetchRandomWord = async () => {
-    try {
-      if (!userData || userData.currentTask !== "task1") {
-        setRandomWord("");
-        return;
-      }
-
-      const randomWordRef = dbRef(db, `tasks/task1/randomWord`);
-      const randomWordSnap = await get(randomWordRef);
-      if (!randomWordSnap.exists()) {
-        setError("No random words found for task1");
-        return;
-      }
-
-      const randomWords = randomWordSnap.val();
-      const wordArray = Object.values(randomWords);
-      if (wordArray.length === 0) {
-        setError("No random words available for task1");
-        return;
-      }
-
-      const randomIndex = Math.floor(Math.random() * wordArray.length);
-      setRandomWord(wordArray[randomIndex] || "No word available");
-      setError("");
-    } catch (err) {
-      console.error("Error fetching random word:", err);
-      setError("Failed to load random word for task1");
-    }
-  };
+    return () => clearInterval(interval);
+  }, [isRecording]);
 
   // Handle starting a task
   const handleStartTask = async () => {
@@ -206,10 +116,6 @@ export default function StartedModal({ onClose }) {
       await startRecording(mediaRecorderRef, audioChunksRef);
       setIsRecording(true);
 
-      if (userData.currentTask === "task1") {
-        await fetchRandomWord();
-      }
-
       const newStartedTask = {
         id: userData.currentTask,
         name: taskTitle,
@@ -221,56 +127,23 @@ export default function StartedModal({ onClose }) {
 
       setStartedTask(newStartedTask);
       setError("");
-    } catch (err) {
-      console.error("Mic access error:", err);
-      setError(
-        err.name === "NotAllowedError" || err.name === "PermissionDeniedError"
-          ? "Microphone access denied. Please allow in browser settings."
-          : "Failed to start recording. Check your microphone and try again."
-      );
-    }
 
-    setButtonLoading(false);
-  };
-
-  // Handle auto-stop of recording
-  const handleAutoStop = async () => {
-    if (!isRecording || !mediaRecorderRef.current) return;
-    
-    try {
-      setIsRecording(false);
-      const audioUrl = await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, user.id, userData.currentTask);
-      if (audioUrl) {
-        console.log("Recording stopped automatically");
-        // Set startedTask to trigger the checkmark display
-        setStartedTask({
-          id: userData.currentTask,
-          name: taskTitle,
-          startedAt: new Date().toISOString(),
-        });
-      } else {
-        setError("Failed to upload recording");
-      }
     } catch (err) {
-      console.error("Error stopping recording:", err);
-      setError("Failed to stop recording");
+      console.error("Error starting task:", err);
+      setError("Failed to start task. Please try again.");
+    } finally {
+      setButtonLoading(false);
     }
   };
 
-  // Handle manual "Done" or tick button click
+  // Handle completing a task
   const handleDoneTask = async () => {
-    if (!startedTask) return;
+    if (!startedTask || !mediaRecorderRef.current) return;
     setButtonLoading(true);
 
     try {
-      // If still recording (manual stop before time limit), stop the recording
-      if (mediaRecorderRef.current?.state === "recording") {
-        const audioUrl = await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, user.id, startedTask.id);
-        if (!audioUrl) {
-          throw new Error("Failed to upload audio");
-        }
-      }
-
+      await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, user.id, startedTask.id);
+      
       // Clean up the started task
       const startedRef = dbRef(db, `users/${user.id}/startedTasks/${startedTask.id}`);
       await remove(startedRef);
@@ -279,7 +152,6 @@ export default function StartedModal({ onClose }) {
       // Reset states
       setIsRecording(false);
       setRecordingTime(0);
-      setRandomWord("");
       localStorage.removeItem(`interruptedTask_${user.id}`);
       
       // Navigate to done page
@@ -312,7 +184,6 @@ export default function StartedModal({ onClose }) {
 
       setIsRecording(false);
       setRecordingTime(0);
-      setRandomWord("");
       setError("");
       localStorage.removeItem(`interruptedTask_${user.id}`);
       onClose();
@@ -360,14 +231,10 @@ export default function StartedModal({ onClose }) {
   // Task UI with checkmark button
   const handleTaskUI = () => {
     const timeLimit = getTimeLimit();
-    const showRandomWord = userData?.currentTask === "task1" && isRecording && recordingTime < timeLimit;
     const showCheckmark = !isRecording && recordingTime >= timeLimit;
 
     return (
       <>
-        {showRandomWord && (
-          <p className="text-sm text-yellow-400">{error ? "" : `Random word: ${randomWord}`}</p>
-        )}
         {showCheckmark && (
           <div className="flex flex-col items-center justify-center space-y-2">
             <button
@@ -459,26 +326,22 @@ export default function StartedModal({ onClose }) {
             )}
             {handleTaskUI()}
           </div>
-          <div className="flex justify-between items-end">
+
+          <div className="flex justify-between mt-4">
             <button
               onClick={handleCancel}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-300"
+              className="px-4 py-2 text-sm text-gray-400 hover:text-gray-300 transition-colors"
               disabled={buttonLoading}
             >
               Cancel
             </button>
-            <StartButton
-              isStarted={!!startedTask}
-              onClick={startedTask ? handleDoneTask : handleStartTask}
-              onStartRecording={handleStartTask}
-              onStopRecording={handleDoneTask}
-              disabled={
-                buttonLoading ||
-                micStatus === "denied" ||
-                isRecording ||
-                (startedTask && recordingTime < getTimeLimit())
-              }
-            />
+            {!startedTask && (
+              <StartButton
+                isStarted={false}
+                onClick={handleStartTask}
+                disabled={buttonLoading || !taskTitle || micStatus === "denied"}
+              />
+            )}
           </div>
         </div>
       </div>
