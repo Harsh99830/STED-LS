@@ -94,44 +94,38 @@ export default function Dashboard() {
   }, [userId, user]);
 
   const handleStartTask = async () => {
-  if (startedTask || !task || !taskExists) return;
-  setButtonLoading(true);
+    if (startedTask || !task || !taskExists) return;
+    setButtonLoading(true);
 
-  try {
-    await startRecording(mediaRecorderRef, audioChunksRef);
+    try {
+      await startRecording(mediaRecorderRef, audioChunksRef);
 
-    const newStartedTask = {
-      id: task.id,
-      name: task.title,
-      startedAt: new Date().toISOString(),
-    };
+      const newStartedTask = {
+        id: task.id,
+        name: task.title,
+        startedAt: new Date().toISOString(),
+      };
 
-    const startedRef = ref(db, `users/${userId}/startedTasks/${task.id}`);
-    await set(startedRef, newStartedTask);
+      const startedRef = ref(db, `users/${userId}/startedTasks/${task.id}`);
+      await set(startedRef, newStartedTask);
 
-    setStartedTask(newStartedTask);
-  } catch (err) {
-    console.error("Mic access denied:", err);
-    alert("Microphone access is required to record.");
-  }
+      setStartedTask(newStartedTask);
+    } catch (err) {
+      console.error("Mic access denied:", err);
+      alert("Microphone access is required to record.");
+    }
 
-  setButtonLoading(false);
-};
-
+    setButtonLoading(false);
+  };
 
   const handleStartTaskWithModal = async () => {
-       setShowStartedModal(true);
-  }
-
-
+    setShowStartedModal(true);
+  };
 
   const handleDoneTask = async () => {
-  if (!startedTask || !mediaRecorderRef.current) return;
-  await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, userId, task.id);
-};
-
-
-
+    if (!startedTask || !mediaRecorderRef.current) return;
+    await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, userId, task.id);
+  };
 
   const toggleProgress = () => {
     setShowProgress(!showProgress);
@@ -139,14 +133,16 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#c2dbf7] to-[#2596be]">
-        <div className="text-black text-2xl">Loading...</div>
+      <div className="flex items-center justify-center min-h-screen bg-[#A4CCD9]">
+        <div className="text-gray-800 text-2xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-purple-200 via-pink-100 to-yellow-100 text-black relative">
+    <div className="min-h-screen bg-gradient-to-br from-[#A4CCD9] via-[#b5d7e3] to-[#A4CCD9] text-black relative">
+      <div className="absolute top-0 left-0 w-full h-1 bg-[#8ab3c2]" />
+
       <Navbar onProgressClick={toggleProgress} showProgress={showProgress} />
 
       {showProgress && userData && (
@@ -166,23 +162,39 @@ export default function Dashboard() {
               <TaskPointsBox points={task.points} />
             </div>
             <TaskStartButton
-             onClick={handleStartTaskWithModal} />
-            
+              onClick={handleStartTaskWithModal}
+            />
           </>
         ) : userData && userData.tasksCompleted > 0 ? (
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-green-700 mb-3">🎉 All Tasks Completed!</h2>
-            <p className="text-gray-700 mb-4">You've done a great job completing all your tasks.</p>
+          <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl shadow-md p-8 border border-[#8ab3c2]">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">All Tasks Completed!</h2>
+            <p className="text-gray-600">You've done a great job completing all your tasks.</p>
           </div>
         ) : (
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-blue-700 mb-2">Welcome!</h2>
+          <div className="text-center bg-white/95 backdrop-blur-sm rounded-xl shadow-md p-8 border border-[#8ab3c2]">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Welcome!</h2>
             <p className="text-gray-600">Loading your first task...</p>
           </div>
         )}
       </div>
 
-      {showStartedModal && <StartedModal onClose={() => setShowStartedModal(false)} />}
+      {showStartedModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <StartedModal onClose={() => setShowStartedModal(false)} />
+        </div>
+      )}
+
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-[#8ab3c2]" />
     </div>
   );
 }

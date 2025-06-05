@@ -140,19 +140,17 @@ export default function StartedModal({ onClose }) {
     };
   }, [isRecording, startedTask, user]);
 
-  // Recording timer for task1, task2 and task3
+  // Recording timer effect
   useEffect(() => {
     let timer;
     if (isRecording) {
       timer = setInterval(() => {
         setRecordingTime((prev) => {
           const newTime = prev + 1;
-          // For task1: 30 seconds limit
-          if (userData?.currentTask === "task1" && newTime >= 30) {
-            handleAutoStop();
-          }
-          // For task2 and task3: 2 minutes (120 seconds) limit
-          else if ((userData?.currentTask === "task2" || userData?.currentTask === "task3") && newTime >= 120) {
+          const timeLimit = getTimeLimit();
+          
+          // Auto stop recording when time limit is reached
+          if (newTime >= timeLimit) {
             handleAutoStop();
           }
           return newTime;
@@ -239,11 +237,17 @@ export default function StartedModal({ onClose }) {
   const handleAutoStop = async () => {
     if (!isRecording || !mediaRecorderRef.current) return;
     
-    setIsRecording(false);
     try {
+      setIsRecording(false);
       const audioUrl = await stopAndUpload(mediaRecorderRef, audioChunksRef, navigate, user.id, userData.currentTask);
       if (audioUrl) {
-        console.log("Recording stopped automatically, waiting for user to click Done");
+        console.log("Recording stopped automatically");
+        // Set startedTask to trigger the checkmark display
+        setStartedTask({
+          id: userData.currentTask,
+          name: taskTitle,
+          startedAt: new Date().toISOString(),
+        });
       } else {
         setError("Failed to upload recording");
       }
@@ -327,47 +331,44 @@ export default function StartedModal({ onClose }) {
     return `${mins}:${secs}`;
   };
 
-  // Task1 UI (random word, tick button at 30s)
-  const handleTask1 = () => {
-    return (
-      <>
-        {isRecording && recordingTime < 30 && (
-          <p className="text-sm text-yellow-400">{error ? "" : `Random word: ${randomWord}`}</p>
-        )}
-        {recordingTime >= 30 && (
-          <div className="flex flex-col items-center justify-center space-y-2">
-            <button
-              onClick={handleDoneTask}
-              className="bg-green-500 hover:bg-green-600 text-white rounded-full p-3 transition-colors duration-200"
-              disabled={buttonLoading}
-            >
-              <svg
-                className="w-8 h-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </button>
-            <span className="text-sm text-green-400">Time complete!</span>
-          </div>
-        )}
-      </>
-    );
+  // Get time limit based on task
+  const getTimeLimit = () => {
+    switch (userData?.currentTask) {
+      case "task1":
+      case "task5":
+      case "task8":
+      case "task11":
+      case "task14":
+        return 30;
+      case "task2":
+      case "task3":
+        return 120;
+      case "task4":
+      case "task7":
+      case "task10":
+      case "task13":
+        return 180;
+      case "task6":
+      case "task9":
+      case "task12":
+        return 240;
+      default:
+        return 0;
+    }
   };
 
-  // Task2 UI (tick button at 120s)
-  const handleTask2 = () => {
+  // Task UI with checkmark button
+  const handleTaskUI = () => {
+    const timeLimit = getTimeLimit();
+    const showRandomWord = userData?.currentTask === "task1" && isRecording && recordingTime < timeLimit;
+    const showCheckmark = !isRecording && recordingTime >= timeLimit;
+
     return (
       <>
-        {recordingTime >= 120 && (
+        {showRandomWord && (
+          <p className="text-sm text-yellow-400">{error ? "" : `Random word: ${randomWord}`}</p>
+        )}
+        {showCheckmark && (
           <div className="flex flex-col items-center justify-center space-y-2">
             <button
               onClick={handleDoneTask}
@@ -456,9 +457,7 @@ export default function StartedModal({ onClose }) {
                 <span className="text-sm text-red-400">{formatTime(recordingTime)}</span>
               </div>
             )}
-            {userData?.currentTask === "task1" && handleTask1()}
-            {userData?.currentTask === "task2" && handleTask2()}
-            {userData?.currentTask === "task3" && handleTask2()}
+            {handleTaskUI()}
           </div>
           <div className="flex justify-between items-end">
             <button
@@ -477,8 +476,7 @@ export default function StartedModal({ onClose }) {
                 buttonLoading ||
                 micStatus === "denied" ||
                 isRecording ||
-                (startedTask && userData?.currentTask === "task1" && recordingTime < 30) ||
-                (startedTask && (userData?.currentTask === "task2" || userData?.currentTask === "task3") && recordingTime < 120)
+                (startedTask && recordingTime < getTimeLimit())
               }
             />
           </div>

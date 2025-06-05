@@ -103,73 +103,70 @@ function Survey() {
   const currentQuestion = surveyQuestions[currentQuestionIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 text-slate-800 relative">
-      {/* Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500" />
-      <div className="absolute top-10 right-10 w-32 h-32 bg-blue-200 rounded-full opacity-20 blur-3xl" />
-      <div className="absolute bottom-10 left-10 w-40 h-40 bg-purple-200 rounded-full opacity-20 blur-3xl" />
+    <div className="min-h-screen bg-slate-50 relative overflow-hidden">
+      {/* Professional top accent line */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-blue-600" />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl relative z-10">
+      {/* Subtle background decorations */}
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-50 to-transparent opacity-50" />
+
+      <div className="container mx-auto px-6 py-12 max-w-3xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/50 p-8 relative overflow-hidden"
+          transition={{ duration: 0.5 }}
+          className="bg-white rounded-lg shadow-md border-t border-blue-100 p-8"
         >
-          {/* Decorative corner accents */}
-          <div className="absolute top-0 left-0 w-20 h-20 border-t-4 border-l-4 border-blue-500/20 rounded-tl-3xl" />
-          <div className="absolute bottom-0 right-0 w-20 h-20 border-b-4 border-r-4 border-blue-500/20 rounded-br-3xl" />
-
           {!submitted ? (
             <AnimatePresence mode="wait">
               {currentQuestion && (
                 <motion.div
                   key={currentQuestionIndex}
-                  initial={{ opacity: 0, x: 50 }}
+                  initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.5 }}
-                  className="space-y-8 relative z-10"
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
                 >
-                  <div className="flex items-center justify-between mb-8">
-                    <span className="text-sm font-medium text-slate-500 bg-slate-100 px-4 py-2 rounded-full">
-                      Question {currentQuestionIndex + 1} of {surveyQuestions.length}
-                    </span>
-                    <div className="flex-1 mx-4">
-                      <motion.div
-                        className="h-2 bg-slate-100 rounded-full overflow-hidden"
-                        initial={{ width: 0 }}
-                        animate={{
-                          width: '100%'
-                        }}
-                        transition={{ duration: 0.5 }}
-                      >
+                  {/* Progress indicator */}
+                  <div className="flex items-center justify-between mb-8 border-b border-slate-100 pb-6">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-slate-600">
+                        Question {currentQuestionIndex + 1} of {surveyQuestions.length}
+                      </span>
+                      <span className="text-slate-300">|</span>
+                      <span className="text-sm text-slate-500">
+                        {Math.round(((currentQuestionIndex + 1) / surveyQuestions.length) * 100)}% Complete
+                      </span>
+                    </div>
+                    <div className="w-32">
+                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <motion.div
-                          className="h-full bg-gradient-to-r from-sky-400 to-blue-400 rounded-full"
+                          className="h-full bg-blue-600"
                           initial={{ width: 0 }}
                           animate={{
                             width: `${((currentQuestionIndex + 1) / surveyQuestions.length) * 100}%`
                           }}
-                          transition={{ duration: 0.5 }}
+                          transition={{ duration: 0.3 }}
                         />
-                      </motion.div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="bg-gradient-to-br from-blue-50 to-sky-50 rounded-2xl p-8 shadow-inner">
-                    <h3 className="text-3xl font-bold text-slate-800 mb-8 leading-relaxed">
+                  <div className="bg-white rounded-lg">
+                    <h3 className="text-2xl font-semibold text-slate-800 mb-6">
                       {currentQuestion.question}
                     </h3>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {Object.entries(currentQuestion.options).map(([key, value]) => (
                         <motion.label
                           key={key}
-                          whileHover={{ scale: 1.02, translateX: 8 }}
-                          whileTap={{ scale: 0.98 }}
-                          className={`flex items-center p-4 rounded-xl cursor-pointer transition-all duration-200 ${
+                          whileHover={{ translateX: 2 }}
+                          whileTap={{ scale: 0.995 }}
+                          className={`flex items-center p-4 rounded-lg cursor-pointer transition-all duration-200 ${
                             responses[currentQuestion.question] === value
-                              ? 'bg-gradient-to-r from-sky-400 to-blue-400 text-white shadow-lg'
-                              : 'bg-white hover:bg-white/80 shadow-md'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-slate-50 hover:bg-slate-100 border border-slate-200'
                           }`}
                         >
                           <input
@@ -180,70 +177,102 @@ function Survey() {
                             checked={responses[currentQuestion.question] === value}
                             className="hidden"
                           />
-                          <span className="ml-3 text-lg">{value}</span>
-                          {responses[currentQuestion.question] === value && (
-                            <motion.span
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              className="ml-auto text-xl"
-                            >
-                              ✨
-                            </motion.span>
-                          )}
+                          <div className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
+                            responses[currentQuestion.question] === value
+                              ? 'border-white'
+                              : 'border-slate-400'
+                          }`}>
+                            {responses[currentQuestion.question] === value && (
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="w-2 h-2 bg-white rounded-full"
+                              />
+                            )}
+                          </div>
+                          <span className="text-base">{value}</span>
                         </motion.label>
                       ))}
                     </div>
                   </div>
 
-                  <motion.button
-                    whileHover={{ scale: 1.02, translateY: -2 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleNext}
-                    disabled={!responses[currentQuestion.question]}
-                    className={`w-full ${
-                      responses[currentQuestion.question]
-                        ? 'bg-gradient-to-r from-sky-400 to-blue-400 hover:from-sky-500 hover:to-blue-500'
-                        : 'bg-slate-200 cursor-not-allowed'
-                    } text-white py-4 rounded-xl font-semibold shadow-lg transition-all duration-300 text-lg`}
-                  >
-                    {currentQuestionIndex === surveyQuestions.length - 1 ? 'Submit Survey' : 'Next Question'}
-                  </motion.button>
+                  <div className="flex justify-end pt-6 border-t border-slate-100">
+                    <motion.button
+                      whileHover={{ translateY: -1 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleNext}
+                      disabled={!responses[currentQuestion.question]}
+                      className={`${
+                        responses[currentQuestion.question]
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                          : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                      } px-6 py-3 rounded-lg font-medium text-sm transition-all duration-200 flex items-center`}
+                    >
+                      {currentQuestionIndex === surveyQuestions.length - 1 ? (
+                        <>
+                          Submit Survey
+                          <svg 
+                            className="w-4 h-4 ml-2" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </>
+                      ) : (
+                        <>
+                          Continue
+                          <svg 
+                            className="w-4 h-4 ml-2" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
           ) : (
             <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
+              initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="text-center py-16"
+              transition={{ duration: 0.4 }}
+              className="text-center py-12"
             >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 260,
-                  damping: 20,
-                  delay: 0.2
-                }}
-                className="w-24 h-24 bg-gradient-to-br from-sky-100 to-blue-100 rounded-full mx-auto mb-8 flex items-center justify-center shadow-xl"
-              >
-                <span className="text-5xl">✨</span>
-              </motion.div>
-              <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-400 mb-4">
-                Thank you for completing the survey!
+              <div className="w-16 h-16 bg-blue-50 rounded-full mx-auto mb-6 flex items-center justify-center">
+                <svg 
+                  className="w-8 h-8 text-blue-600" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth="2" 
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-semibold text-slate-800 mb-2">
+                Survey Completed
               </h3>
-              <p className="text-slate-600 text-lg">
-                Redirecting you to your personalized dashboard...
+              <p className="text-slate-600">
+                Thank you for your responses. You will be redirected shortly.
               </p>
             </motion.div>
           )}
         </motion.div>
       </div>
 
-      {/* Bottom accent line */}
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-600" />
+      {/* Professional bottom accent line */}
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-600" />
     </div>
   );
 }
