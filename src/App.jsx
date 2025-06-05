@@ -9,6 +9,8 @@ import Signup from './Pages/Signup';
 import Home from './Pages/Home';
 import Survey from './components/Survey';
 import Done from './Pages/Done';
+import PublicSpeaking from './Pages/PublicSpeaking';
+import DataScience from './Pages/DataScience';
 
 import SurveyProtectedRoute from './components/SurveyProtectedRoute';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -26,6 +28,22 @@ function App() {
           element={
             <SurveyProtectedRoute>
               <Home />
+            </SurveyProtectedRoute>
+          }
+        />
+        <Route
+          path="/public-speaking"
+          element={
+            <SurveyProtectedRoute>
+              <PublicSpeaking />
+            </SurveyProtectedRoute>
+          }
+        />
+        <Route
+          path="/data-science"
+          element={
+            <SurveyProtectedRoute>
+              <DataScience />
             </SurveyProtectedRoute>
           }
         />
