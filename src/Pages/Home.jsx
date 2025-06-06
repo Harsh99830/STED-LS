@@ -97,7 +97,7 @@ function Home() {
                     {/* Subject Cards */}
                     <div className="mt-8">
                         <h2 className="text-2xl font-semibold text-slate-800 mb-6">Available Subjects</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {/* Public Speaking Card */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
@@ -152,6 +152,134 @@ function Home() {
                                     </div>
                                     <Link
                                         to="/data-science"
+                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    >
+                                        Start Learning
+                                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Link>
+                                </div>
+                            </motion.div>
+
+                            {/* Web Development Card */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: 0.3 }}
+                                className="bg-white rounded-lg shadow-md border-t border-blue-100 p-6 hover:shadow-lg transition-shadow duration-200"
+                            >
+                                <div className="flex items-center mb-4">
+                                    <div className="bg-blue-50 rounded-full p-3">
+                                        <span className="text-2xl">💻</span>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-slate-800 ml-4">Web Development</h3>
+                                </div>
+                                <p className="text-slate-600 mb-4">Build modern websites and web applications using HTML, CSS, JavaScript, and React. Learn full-stack development.</p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-slate-500">20 Lessons</span>
+                                        <span className="text-sm text-slate-500">•</span>
+                                        <span className="text-sm text-slate-500">8 Projects</span>
+                                    </div>
+                                    <Link
+                                        to="/web-devlopment"
+                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    >
+                                        Start Learning
+                                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Link>
+                                </div>
+                            </motion.div>
+
+                            {/* Ethical Hacking Card */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: 0.4 }}
+                                className="bg-white rounded-lg shadow-md border-t border-blue-100 p-6 hover:shadow-lg transition-shadow duration-200"
+                            >
+                                <div className="flex items-center mb-4">
+                                    <div className="bg-blue-50 rounded-full p-3">
+                                        <span className="text-2xl">🔒</span>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-slate-800 ml-4">Ethical Hacking</h3>
+                                </div>
+                                <p className="text-slate-600 mb-4">Learn cybersecurity fundamentals, penetration testing, and secure coding practices to protect systems.</p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-slate-500">18 Lessons</span>
+                                        <span className="text-sm text-slate-500">•</span>
+                                        <span className="text-sm text-slate-500">5 Projects</span>
+                                    </div>
+                                    <Link
+                                        to="/ethical-hacking"
+                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    >
+                                        Start Learning
+                                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Link>
+                                </div>
+                            </motion.div>
+
+                            {/* Decision Making Card */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: 0.5 }}
+                                className="bg-white rounded-lg shadow-md border-t border-blue-100 p-6 hover:shadow-lg transition-shadow duration-200"
+                            >
+                                <div className="flex items-center mb-4">
+                                    <div className="bg-blue-50 rounded-full p-3">
+                                        <span className="text-2xl">🎯</span>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-slate-800 ml-4">Decision Making</h3>
+                                </div>
+                                <p className="text-slate-600 mb-4">Develop critical thinking and analytical skills to make informed decisions in both personal and professional life.</p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-slate-500">14 Lessons</span>
+                                        <span className="text-sm text-slate-500">•</span>
+                                        <span className="text-sm text-slate-500">3 Projects</span>
+                                    </div>
+                                    <Link
+                                        to="/decision-making"
+                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    >
+                                        Start Learning
+                                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Link>
+                                </div>
+                            </motion.div>
+
+                            {/* Problem Solving Card */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: 0.6 }}
+                                className="bg-white rounded-lg shadow-md border-t border-blue-100 p-6 hover:shadow-lg transition-shadow duration-200"
+                            >
+                                <div className="flex items-center mb-4">
+                                    <div className="bg-blue-50 rounded-full p-3">
+                                        <span className="text-2xl">🔍</span>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-slate-800 ml-4">Problem Solving</h3>
+                                </div>
+                                <p className="text-slate-600 mb-4">Enhance your problem-solving skills with structured approaches and creative thinking techniques.</p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-slate-500">16 Lessons</span>
+                                        <span className="text-sm text-slate-500">•</span>
+                                        <span className="text-sm text-slate-500">4 Projects</span>
+                                    </div>
+                                    <Link
+                                        to="/problem-solving"
                                         className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
                                     >
                                         Start Learning

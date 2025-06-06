@@ -11,6 +11,10 @@ import Survey from './components/Survey';
 import Done from './Pages/Done';
 import PublicSpeaking from './Pages/PublicSpeaking';
 import DataScience from './Pages/DataScience';
+import WebDevlopment from './Pages/WebDevlopment';
+import EthicalHacking from './Pages/EthicalHacking';
+import DecisionMaking from './Pages/DecisionMaking';
+import ProblemSolving from './Pages/ProblemSolving';
 
 import SurveyProtectedRoute from './components/SurveyProtectedRoute';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -44,6 +48,38 @@ function App() {
           element={
             <SurveyProtectedRoute>
               <DataScience />
+            </SurveyProtectedRoute>
+          }
+        />
+        <Route
+          path="/web-devlopment"
+          element={
+            <SurveyProtectedRoute>
+              <WebDevlopment />
+            </SurveyProtectedRoute>
+          }
+        />
+        <Route
+          path="/ethical-hacking"
+          element={
+            <SurveyProtectedRoute>
+              <EthicalHacking />
+            </SurveyProtectedRoute>
+          }
+        />
+        <Route
+          path="/decision-making"
+          element={
+            <SurveyProtectedRoute>
+              <DecisionMaking />
+            </SurveyProtectedRoute>
+          }
+        />
+        <Route
+          path="/problem-solving"
+          element={
+            <SurveyProtectedRoute>
+              <ProblemSolving />
             </SurveyProtectedRoute>
           }
         />

@@ -1,6 +1,7 @@
 import React from 'react';
 import Sidebar from './Sidebar';
 import { UserButton } from "@clerk/clerk-react";
+import { Link } from 'react-router-dom';
 
 function Navbar({ onProgressClick, showProgress, hideProgressButton }) {
   return (
@@ -13,9 +14,9 @@ function Navbar({ onProgressClick, showProgress, hideProgressButton }) {
       </div>
 
       {/* Logo */}
-      <p className="text-xl font-semibold text-gray-800 ml-16 flex items-center h-full select-none">
+      <Link to="/home" className="text-xl font-semibold text-gray-800 ml-16 flex items-center h-full select-none">
         STED LS
-      </p>
+      </Link>
 
       {/* Right Side */}
       <div className="flex items-center gap-6 h-full">

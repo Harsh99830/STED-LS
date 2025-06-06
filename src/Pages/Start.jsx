@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import speaker from '../assets/Photo1.jpeg';
 import mic from '../assets/Photo2.webp';
 import ano from '../assets/Photo3.webp';
-import speak from '../assets/Photo4.jpeg';
+import speak from '../assets/Photo5.jpg';
 
 function Start() {
   return (
