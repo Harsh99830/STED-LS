@@ -3,16 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import { useEffect, useState } from 'react';
-import { useUser } from '@clerk/clerk-react'; 
+import { useUser } from '@clerk/clerk-react';
 import { motion } from 'framer-motion';
-import WelcomeIntro from '../components/WelcomeIntro'; 
+import WelcomeIntro from '../components/WelcomeIntro';
 import { getDatabase, ref, get } from 'firebase/database';
 import { db } from '../firebase'; // make sure this path is correct
 
 
 function Home() {
     const navigate = useNavigate();
-    const { isLoaded, isSignedIn, user  } = useUser(); 
+    const { isLoaded, isSignedIn, user } = useUser();
     const [showIntro, setShowIntro] = useState(false);
     const [userData, setUserData] = useState({
         level: '',
@@ -83,10 +83,10 @@ function Home() {
 
             {/* Navbar with hideProgressButton prop */}
             <div className="sticky top-1 z-50 bg-white shadow-sm">
-                <Navbar 
-                    onProgressClick={toggleProgress} 
-                    showProgress={showProgress} 
-                    hideProgressButton={true} 
+                <Navbar
+                    onProgressClick={toggleProgress}
+                    showProgress={showProgress}
+                    hideProgressButton={true}
                 />
             </div>
 
@@ -99,7 +99,7 @@ function Home() {
                         <h2 className="text-2xl font-semibold text-slate-800 mb-6">Available Subjects</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {/* Public Speaking Card */}
-                            <motion.div
+                            {/* <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5 }}
@@ -128,9 +128,9 @@ function Home() {
                                         </svg>
                                     </Link>
                                 </div>
-                            </motion.div>
+                            </motion.div> */}
 
-                            {/* Data Science Card */}
+                            {/* Data Science Card
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -160,9 +160,9 @@ function Home() {
                                         </svg>
                                     </Link>
                                 </div>
-                            </motion.div>
+                            </motion.div> */}
 
-                            {/* Web Development Card */}
+                            {/* Web Development Card
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -192,9 +192,9 @@ function Home() {
                                         </svg>
                                     </Link>
                                 </div>
-                            </motion.div>
+                            </motion.div> */}
 
-                            {/* Ethical Hacking Card */}
+                            {/* Ethical Hacking Card
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -224,9 +224,9 @@ function Home() {
                                         </svg>
                                     </Link>
                                 </div>
-                            </motion.div>
+                            </motion.div> */}
 
-                            {/* Decision Making Card */}
+                            {/* Decision Making Card
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -256,10 +256,10 @@ function Home() {
                                         </svg>
                                     </Link>
                                 </div>
-                            </motion.div>
+                            </motion.div> */}
 
                             {/* Problem Solving Card */}
-                            <motion.div
+                            {/* <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5, delay: 0.6 }}
@@ -280,6 +280,38 @@ function Home() {
                                     </div>
                                     <Link
                                         to="/problem-solving"
+                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    >
+                                        Start Learning
+                                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Link>
+                                </div>
+                            </motion.div> */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: 0.7 }}
+                                className="bg-white rounded-lg shadow-md border-t border-blue-100 p-6 hover:shadow-lg transition-shadow duration-200"
+                            >
+                                <div className="flex items-center mb-4">
+                                    <div className="bg-blue-50 rounded-full p-3">
+                                        <span className="text-2xl">🖥️</span>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-slate-800 ml-4">C Programming</h3>
+                                </div>
+                                <p className="text-slate-600 mb-4">
+                                    Master C fundamentals, pointers, memory management, and algorithms with practical projects.
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-slate-500">14 Lessons</span>
+                                        <span className="text-sm text-slate-500">•</span>
+                                        <span className="text-sm text-slate-500">5 Projects</span>
+                                    </div>
+                                    <Link
+                                        to="/c"
                                         className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
                                     >
                                         Start Learning

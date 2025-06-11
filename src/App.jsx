@@ -15,7 +15,7 @@ import WebDevlopment from './Pages/WebDevlopment';
 import EthicalHacking from './Pages/EthicalHacking';
 import DecisionMaking from './Pages/DecisionMaking';
 import ProblemSolving from './Pages/ProblemSolving';
-
+import C from './Pages/C';
 import SurveyProtectedRoute from './components/SurveyProtectedRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -83,6 +83,7 @@ function App() {
             </SurveyProtectedRoute>
           }
         />
+        <Route path="/c" element={<C />} />
         <Route
           path="/task"
           element={
