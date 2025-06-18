@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { getDatabase, ref, get } from 'firebase/database';
 import { db } from '../firebase';
 
-function DataScience() {
+function Python() {
     const navigate = useNavigate();
     const { isLoaded, isSignedIn, user } = useUser();
     const [userData, setUserData] = useState({
@@ -81,8 +81,8 @@ function DataScience() {
                     {/* Header Section */}
                     <div className="mt-8">
                         <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold text-slate-800">Data Science Learning Path</h1>
+                            <div className='text-left'>
+                                <h1 className="text-3xl font-bold text-slate-800">Python</h1>
                                 <p className="text-slate-600 mt-2">Master Python, SQL, and Machine Learning</p>
                             </div>
                             {/* <Link
@@ -165,36 +165,43 @@ function DataScience() {
                         </motion.div>
                     </div>
 
-                    {/* Main Content Grid */}
+ {/* Main Content Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-                        {/* Next Project Card */}
                        
+ {/* Next Project Card */}
                             <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.5 }}
-                            className="bg-gradient-to-r from-[#c22ae0] to-[#a01ac0] rounded-2xl shadow-xl p-6 transform transition-transform hover:scale-[1.015]"
-                            >
-                            <h2 className="text-xl font-semibold text-white mb-4">Next Project</h2>
-                            <div className=" rounded-lg p-4 mb-4 border border-white">
-                                <p className="text-purple-100 mt-2">Analyze a real-world dataset using Python and Pandas</p>
-                                <p className="text-purple-100 mt-2">Analyze a real-world dataset using Python and Pandas</p>
-                                <div className="flex items-center mt-4">
-                                    <span className="text-sm text-purple-100">+100 XP</span>
-                                    <span className="mx-2 text-purple-200">•</span>
-                                    <span className="text-sm text-purple-100">45 minutes</span>
-                                </div>
-                            </div>
-                            <Link
-                                to="/task"
-                                className="inline-flex items-center text-white hover:text-purple-200 font-medium"
-                            >
-                                Start Project
-                                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </Link>
-                        </motion.div>
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6, ease: 'easeOut' }}
+  className="bg-gradient-to-br from-[#C642F5] via-[#A633D9] to-[#8C1EB6] rounded-2xl shadow-2xl p-6 hover:scale-[1.02] transition-transform"
+>
+  <h2 className="text-2xl font-bold text-white mb-6">🔥 Your Next Project</h2>
+
+  <div className="bg-[#3B3B3F] bg-opacity-30 rounded-xl p-5 mb-6 border border-purple-400 shadow-inner">
+    <h3 className="text-xl font-semibold text-white mb-2">📊 Personal Finance Tracker</h3>
+    <p className="text-purple-100 text-sm leading-relaxed">
+      Build a Python console app that helps manage your income, expenses, and calculate balance easily.
+    </p>
+
+    <div className="mt-4 space-y-1">
+      <p className="text-purple-200 text-xs">💡 Concepts: Functions, Lists, Dictionaries, Loops</p>
+      <div className="flex items-center gap-3 text-purple-100 text-sm pt-2">
+        <span className="bg-purple-800 bg-opacity-50 rounded-full px-3 py-1">🎯 +400 XP</span>
+      </div>
+    </div>
+  </div>
+
+  <Link
+    to="/python/project"
+    className="inline-flex items-center gap-2 bg-purple-900 text-white hover:bg-purple-700 font-semibold px-4 py-2 rounded-lg shadow-md transition-colors"
+  >
+    🚀 Start Project
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+    </svg>
+  </Link>
+</motion.div>
+
 
 
 
@@ -321,4 +328,4 @@ function DataScience() {
     );
 }
 
-export default DataScience; 
+export default Python; 

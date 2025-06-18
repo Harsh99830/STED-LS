@@ -22,7 +22,7 @@ export default function Sidebar() {
 
   const menuItems = [
     { icon: FaHome, text: "Home", path: "/home" },
-    { icon: FaTasks, text: "My Tasks", path: "/tasks" },
+    { icon: FaTasks, text: "All skills", path: "/all-skills" },
     { icon: FaChartLine, text: "Your Progress", path: "/progress" },
     { icon: FaTrophy, text: "Leaderboard", path: "/leaderboard" },
   ];

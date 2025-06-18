@@ -1,8 +1,9 @@
 import React from 'react';
 import Sidebar from './Sidebar';
 import { UserButton } from "@clerk/clerk-react";
+import { Link } from 'react-router-dom';
 
-function Navbar({ onProgressClick, showProgress, hideProgressButton }) {
+function Navbar() {
   return (
     <div className="w-full h-20 bg-white shadow-md flex items-center justify-between px-6
                     animate-[fadeIn_0.8s_ease-out] transition-all duration-500 z-50">
@@ -13,15 +14,17 @@ function Navbar({ onProgressClick, showProgress, hideProgressButton }) {
       </div>
 
       {/* Logo */}
+     <Link to={"/home"}>
       <p className="text-xl font-semibold text-gray-800 ml-16 flex items-center h-full select-none">
         STED LS
       </p>
+     </Link>
 
       {/* Right Side */}
       <div className="flex items-center gap-6 h-full">
 
         {/* Progress Button (conditionally rendered) */}
-        {!hideProgressButton && (
+        {/* {!hideProgressButton && (
           <button
             onClick={onProgressClick}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 
@@ -31,7 +34,7 @@ function Navbar({ onProgressClick, showProgress, hideProgressButton }) {
           >
             {showProgress ? "Close" : "Your Progress"}
           </button>
-        )}
+        )} */}
 
         {/* User Button */}
         <div className="transform scale-110 hover:scale-125 transition-transform duration-300 mr-2 flex items-center">

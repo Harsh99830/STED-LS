@@ -1,19 +1,19 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
-
 import Start from './Pages/Start';
 import Login from './Pages/Login';
-import Dashboard from './Pages/Dashboard';
 import Signup from './Pages/Signup';
 import Home from './Pages/Home';
 import Survey from './components/Survey';
 import Done from './Pages/Done';
 import PublicSpeaking from './Pages/PublicSpeaking';
 import DataScience from './Pages/DataScience';
-
+import Python from './Pages/Python';
 import SurveyProtectedRoute from './components/SurveyProtectedRoute';
 import ProtectedRoute from './components/ProtectedRoute';
+import AllSkills from './Pages/AllSkills';
+import Project from './PythonProject/Project';
 
 function App() {
   return (
@@ -48,10 +48,26 @@ function App() {
           }
         />
         <Route
-          path="/task"
+          path="/python"
           element={
             <SurveyProtectedRoute>
-              <Dashboard />
+              <Python />
+            </SurveyProtectedRoute>
+          }
+        />
+         <Route
+          path="/python/project"
+          element={
+            <SurveyProtectedRoute>
+              <Project />
+            </SurveyProtectedRoute>
+          }
+        />
+         <Route
+          path="/All-skills"
+          element={
+            <SurveyProtectedRoute>
+              <AllSkills />
             </SurveyProtectedRoute>
           }
         />
