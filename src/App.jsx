@@ -6,7 +6,6 @@ import Login from './Pages/Login';
 import Signup from './Pages/Signup';
 import Home from './Pages/Home';
 import Survey from './components/Survey';
-import Done from './Pages/Done';
 import PublicSpeaking from './Pages/PublicSpeaking';
 import DataScience from './Pages/DataScience';
 import Python from './Pages/Python';
@@ -14,6 +13,7 @@ import SurveyProtectedRoute from './components/SurveyProtectedRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import AllSkills from './Pages/AllSkills';
 import Project from './PythonProject/Project';
+import PowerBi from './Pages/PowerBi';
 
 function App() {
   return (
@@ -55,6 +55,14 @@ function App() {
             </SurveyProtectedRoute>
           }
         />
+        <Route
+          path="/powerbi"
+          element={
+            <SurveyProtectedRoute>
+              <PowerBi />
+            </SurveyProtectedRoute>
+          }
+        />
          <Route
           path="/python/project"
           element={
@@ -71,14 +79,7 @@ function App() {
             </SurveyProtectedRoute>
           }
         />
-        <Route
-          path="/done"
-          element={
-            <SurveyProtectedRoute>
-              <Done />
-            </SurveyProtectedRoute>
-          }
-        />
+        
         <Route
           path="/survey"
           element={

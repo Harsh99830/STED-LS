@@ -7,16 +7,16 @@ import { motion } from 'framer-motion';
 import { getDatabase, ref, get } from 'firebase/database';
 import { db } from '../firebase';
 
-function EthicalHacking() {
+function PowerBi() {
     const navigate = useNavigate();
     const { isLoaded, isSignedIn, user } = useUser();
     const [userData, setUserData] = useState({
         level: '',
         xp: 0,
         tasksCompleted: 0,
-        networkingSkill: 0,
-        securitySkill: 0,
-        penetrationSkill: 0
+        PowerBiSkill: 0,
+        sqlSkill: 0,
+        mlSkill: 0
     });
     const [isLoading, setIsLoading] = useState(true);
     const [showProgress, setShowProgress] = useState(false);
@@ -81,16 +81,16 @@ function EthicalHacking() {
                     {/* Header Section */}
                     <div className="mt-8">
                         <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold text-slate-800">Ethical Hacking Learning Path</h1>
-                                <p className="text-slate-600 mt-2">Learn cybersecurity, penetration testing, and network security</p>
+                            <div className='text-left'>
+                                <h1 className="text-3xl font-bold text-slate-800">PowerBi</h1>
+                                <p className="text-slate-600 mt-2">Master PowerBi.</p>
                             </div>
-                            <Link
+                            {/* <Link
                                 to="/task"
                                 className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
                             >
                                 Start Next Challenge
-                            </Link>
+                            </Link> */}
                         </div>
                     </div>
 
@@ -156,7 +156,7 @@ function EthicalHacking() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-slate-600">Learning Streak</p>
-                                    <h3 className="text-2xl font-bold text-slate-800 mt-1">5 Days</h3>
+                                    <h3 className="text-2xl font-bold text-slate-800 mt-1">0 Days</h3>
                                 </div>
                                 <div className="bg-purple-50 p-3 rounded-full">
                                     <span className="text-2xl">🔥</span>
@@ -165,35 +165,45 @@ function EthicalHacking() {
                         </motion.div>
                     </div>
 
-                    {/* Main Content Grid */}
+ {/* Main Content Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-                        {/* Next Project Card */}
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.5 }}
-                            className="bg-white rounded-lg shadow-md p-6"
-                        >
-                            <h2 className="text-xl font-semibold text-slate-800 mb-4">Next Project</h2>
-                            <div className="bg-purple-50 rounded-lg p-4 mb-4">
-                                <h3 className="font-medium text-purple-900">Network Security Audit</h3>
-                                <p className="text-purple-700 mt-2">Conduct a security audit of a network infrastructure</p>
-                                <div className="flex items-center mt-4">
-                                    <span className="text-sm text-purple-600">+150 XP</span>
-                                    <span className="mx-2">•</span>
-                                    <span className="text-sm text-purple-600">60 minutes</span>
-                                </div>
-                            </div>
-                            <Link
-                                to="/task"
-                                className="inline-flex items-center text-purple-600 hover:text-purple-700 font-medium"
-                            >
-                                Start Project
-                                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </Link>
-                        </motion.div>
+                       
+ {/* Next Project Card */}
+                            <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6, ease: 'easeOut' }}
+  className="bg-gradient-to-br from-[#C642F5] via-[#A633D9] to-[#8C1EB6] rounded-2xl shadow-2xl p-6 hover:scale-[1.02] transition-transform"
+>
+  <h2 className="text-2xl font-bold text-white mb-6">🔥 Your Next Project</h2>
+
+  <div className="bg-[#3B3B3F] bg-opacity-30 rounded-xl p-5 mb-6 border border-purple-400 shadow-inner">
+    <h3 className="text-xl font-semibold text-white mb-2">📊 Personal Finance Tracker</h3>
+    <p className="text-purple-100 text-sm leading-relaxed">
+      Build a PowerBi console app that helps manage your income, expenses, and calculate balance easily.
+    </p>
+
+    <div className="mt-4 space-y-1">
+      <p className="text-purple-200 text-xs">💡 Concepts: Functions, Lists, Dictionaries, Loops</p>
+      <div className="flex items-center gap-3 text-purple-100 text-sm pt-2">
+        <span className="bg-purple-800 bg-opacity-50 rounded-full px-3 py-1">🎯 +400 XP</span>
+      </div>
+    </div>
+  </div>
+
+  <Link
+    to="/PowerBi/project"
+    className="inline-flex items-center gap-2 bg-purple-900 text-white hover:bg-purple-700 font-semibold px-4 py-2 rounded-lg shadow-md transition-colors"
+  >
+    🚀 Start Project
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+    </svg>
+  </Link>
+</motion.div>
+
+
+
 
                         {/* Skill Progress */}
                         <motion.div
@@ -206,29 +216,29 @@ function EthicalHacking() {
                             <div className="space-y-4">
                                 <div>
                                     <div className="flex justify-between mb-2">
-                                        <span className="text-sm text-slate-600">Network Security</span>
-                                        <span className="text-sm font-medium text-slate-800">{userData.networkSkill || 45}%</span>
+                                        <span className="text-sm text-slate-600">PowerBi</span>
+                                        <span className="text-sm font-medium text-slate-800">{userData.PowerBiSkill || 45}%</span>
                                     </div>
                                     <div className="w-full bg-slate-200 rounded-full h-2">
-                                        <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${userData.networkSkill || 45}%` }}></div>
+                                        <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${userData.PowerBiSkill || 45}%` }}></div>
                                     </div>
                                 </div>
                                 <div>
                                     <div className="flex justify-between mb-2">
-                                        <span className="text-sm text-slate-600">Penetration Testing</span>
-                                        <span className="text-sm font-medium text-slate-800">{userData.penTestSkill || 30}%</span>
+                                        <span className="text-sm text-slate-600">SQL</span>
+                                        <span className="text-sm font-medium text-slate-800">{userData.sqlSkill || 30}%</span>
                                     </div>
                                     <div className="w-full bg-slate-200 rounded-full h-2">
-                                        <div className="bg-green-600 h-2 rounded-full" style={{ width: `${userData.penTestSkill || 30}%` }}></div>
+                                        <div className="bg-green-600 h-2 rounded-full" style={{ width: `${userData.sqlSkill || 30}%` }}></div>
                                     </div>
                                 </div>
                                 <div>
                                     <div className="flex justify-between mb-2">
-                                        <span className="text-sm text-slate-600">Security Analysis</span>
-                                        <span className="text-sm font-medium text-slate-800">{userData.secAnalysisSkill || 20}%</span>
+                                        <span className="text-sm text-slate-600">Machine Learning</span>
+                                        <span className="text-sm font-medium text-slate-800">{userData.mlSkill || 20}%</span>
                                     </div>
                                     <div className="w-full bg-slate-200 rounded-full h-2">
-                                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${userData.secAnalysisSkill || 20}%` }}></div>
+                                        <div className="bg-yellow-500 h-2 rounded-full" style={{ width: `${userData.mlSkill || 20}%` }}></div>
                                     </div>
                                 </div>
                             </div>
@@ -245,11 +255,11 @@ function EthicalHacking() {
                             <div className="space-y-4">
                                 <div className="flex items-start">
                                     <div className="bg-purple-50 p-2 rounded-full mr-3">
-                                        <span className="text-lg">🛡️</span>
+                                        <span className="text-lg">📚</span>
                                     </div>
                                     <div>
-                                        <h3 className="font-medium text-slate-800">Network Security Fundamentals</h3>
-                                        <p className="text-slate-600 text-sm mt-1">Learn about network protocols and security</p>
+                                        <h3 className="font-medium text-slate-800">PowerBi Documentation</h3>
+                                        <p className="text-slate-600 text-sm mt-1">Official PowerBi documentation and tutorials</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start">
@@ -257,17 +267,17 @@ function EthicalHacking() {
                                         <span className="text-lg">🔍</span>
                                     </div>
                                     <div>
-                                        <h3 className="font-medium text-slate-800">Penetration Testing Tools</h3>
-                                        <p className="text-slate-600 text-sm mt-1">Guide to using security testing tools</p>
+                                        <h3 className="font-medium text-slate-800">SQL Practice</h3>
+                                        <p className="text-slate-600 text-sm mt-1">Interactive SQL exercises and challenges</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start">
                                     <div className="bg-purple-50 p-2 rounded-full mr-3">
-                                        <span className="text-lg">🔍</span>
+                                        <span className="text-lg">🤖</span>
                                     </div>
                                     <div>
-                                        <h3 className="font-medium text-slate-800">Vulnerability Assessment</h3>
-                                        <p className="text-slate-600 text-sm mt-1">Techniques for identifying security weaknesses</p>
+                                        <h3 className="font-medium text-slate-800">ML Fundamentals</h3>
+                                        <p className="text-slate-600 text-sm mt-1">Basic concepts and algorithms in ML</p>
                                     </div>
                                 </div>
                             </div>
@@ -287,8 +297,8 @@ function EthicalHacking() {
                                         <span className="text-lg">🏆</span>
                                     </div>
                                     <div>
-                                        <h3 className="font-medium text-slate-800">Python Basics Mastered</h3>
-                                        <p className="text-slate-600 text-sm">Completed the Python fundamentals course</p>
+                                        <h3 className="font-medium text-slate-800">PowerBi Basics Mastered</h3>
+                                        <p className="text-slate-600 text-sm">Completed the PowerBi fundamentals course</p>
                                     </div>
                                     <div className="ml-auto">
                                         <span className="text-sm font-medium text-yellow-600">+200 XP</span>
@@ -318,4 +328,4 @@ function EthicalHacking() {
     );
 }
 
-export default EthicalHacking; 
+export default PowerBi; 

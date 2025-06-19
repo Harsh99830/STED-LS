@@ -9,6 +9,7 @@ import WelcomeIntro from '../components/WelcomeIntro';
 import { getDatabase, ref, get } from 'firebase/database';
 import { db } from '../firebase'; // make sure this path is correct
 import python from "../assets/python.png"
+import PowerBi from "../assets/PowerBi.png"
 
 
 function AllSkills() {
@@ -179,6 +180,37 @@ function AllSkills() {
                                     </div>
                                     <Link
                                         to="/python"
+                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    >
+                                        Start Learning
+                                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Link>
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5, delay: 0.2 }}
+                                className="bg-white rounded-lg shadow-md border-t border-blue-100 p-6 hover:shadow-lg transition-shadow duration-200"
+                            >
+                                <div className="flex items-center mb-4">
+                                    <div className="bg-blue-50 rounded-full p-3">
+                                        <span className="text-2xl"><img style={{width:"25px"}} src={PowerBi} alt="" /></span>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-slate-800 ml-4">Power Bi</h3>
+                                </div>
+                                <p className="text-slate-600 mb-4">Learn Power Bi. Build projects by learning them.</p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-slate-500">15 Lessons</span>
+                                        <span className="text-sm text-slate-500">•</span>
+                                        <span className="text-sm text-slate-500">6 Projects</span>
+                                    </div>
+                                    <Link
+                                        to="/powerbi"
                                         className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
                                     >
                                         Start Learning
