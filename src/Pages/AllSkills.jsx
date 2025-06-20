@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/clerk-react'; 
 import { motion } from 'framer-motion';
 import WelcomeIntro from '../components/WelcomeIntro'; 
-import { getDatabase, ref, get } from 'firebase/database';
+import { getDatabase, ref, get, update } from 'firebase/database';
 import { db } from '../firebase'; // make sure this path is correct
 import python from "../assets/python.png"
 import PowerBi from "../assets/PowerBi.png"
@@ -23,6 +23,10 @@ function AllSkills() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [showProgress, setShowProgress] = useState(false);
+    const [showOverlay, setShowOverlay] = useState(false);
+    const [pendingSkill, setPendingSkill] = useState(null);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
 
     useEffect(() => {
         if (isLoaded && !isSignedIn) {
@@ -65,6 +69,70 @@ function AllSkills() {
         setShowProgress(!showProgress);
     };
 
+    // Map skill to route and Firebase field
+    const skillMap = {
+        'python': {
+            route: '/python',
+            field: 'PythonStartedProject',
+            value: 'Project1',
+        },
+        'data-science': {
+            route: '/data-science',
+            field: 'DataScienceStartedProject',
+            value: 'Project1',
+        },
+        'public-speaking': {
+            route: '/public-speaking',
+            field: 'PublicSpeakingStartedProject',
+            value: 'Project1',
+        },
+        'powerbi': {
+            route: '/powerbi',
+            field: 'PowerBiStartedProject',
+            value: 'Project1',
+        },
+    };
+
+    const handleStartLearning = (skillKey) => {
+        const skill = skillMap[skillKey];
+        if (userData && skill && userData[skill.field]) {
+            // Already started, go directly
+            navigate(skill.route);
+            return;
+        }
+        setPendingSkill(skillKey);
+        setShowOverlay(true);
+        setErrorMsg('');
+    };
+
+    const handleOverlayNo = () => {
+        setShowOverlay(false);
+        setPendingSkill(null);
+        setErrorMsg('');
+    };
+
+    const handleOverlayYes = async () => {
+        if (!pendingSkill || !user) return;
+        setIsUpdating(true);
+        setErrorMsg('');
+        try {
+            const skill = skillMap[pendingSkill];
+            if (!skill) throw new Error('Unknown skill');
+            // Use user.id for path, but check user.email for logic if needed
+            const userRef = ref(db, 'users/' + user.id);
+            await update(userRef, {
+                [skill.field]: skill.value,
+            });
+            setShowOverlay(false);
+            setPendingSkill(null);
+            setIsUpdating(false);
+            navigate(skill.route);
+        } catch (err) {
+            setErrorMsg('Failed to update: ' + err.message);
+            setIsUpdating(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-slate-50">
@@ -79,6 +147,25 @@ function AllSkills() {
     return (
         <div className="min-h-screen bg-slate-50 relative">
             {showIntro && <WelcomeIntro onClose={handleCloseIntro} />}
+
+            {/* Overlay for confirmation */}
+            {showOverlay && pendingSkill && (
+                <div style={{position:'fixed',top:0,left:0,width:'100vw',height:'100vh',background:'rgba(0,0,0,0.5)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <div style={{background:'white',padding:32,borderRadius:12,minWidth:320,textAlign:'center',boxShadow:'0 2px 16px #0003'}}>
+                        <h2 className="text-xl font-semibold mb-4">Start Learning?</h2>
+                        <p className="mb-4">Do you want to start learning <b>{pendingSkill.replace(/-/g,' ').replace(/\b\w/g, l => l.toUpperCase())}</b>?</p>
+                        {errorMsg && <div className="text-red-600 mb-2">{errorMsg}</div>}
+                        {isUpdating ? (
+                            <div className="text-blue-600">Updating...</div>
+                        ) : (
+                            <div className="flex gap-4 justify-center mt-4">
+                                <button onClick={handleOverlayYes} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Yes</button>
+                                <button onClick={handleOverlayNo} className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400">No</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Professional top accent line */}
             <div className="absolute top-0 left-0 w-full h-1 bg-blue-600" />
@@ -115,15 +202,15 @@ function AllSkills() {
                                         <span className="text-sm text-slate-500">•</span>
                                         <span className="text-sm text-slate-500">4 Projects</span>
                                     </div>
-                                    <Link
-                                        to="/public-speaking"
-                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    <button
+                                        onClick={() => handleStartLearning('public-speaking')}
+                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData[skillMap['public-speaking'].field] ? 'font-bold' : ''}`}
                                     >
-                                        Start Learning
+                                        {userData && userData[skillMap['public-speaking'].field] ? 'Continue Learning' : 'Start Learning'}
                                         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                         </svg>
-                                    </Link>
+                                    </button>
                                 </div>
                             </motion.div>
 
@@ -147,15 +234,15 @@ function AllSkills() {
                                         <span className="text-sm text-slate-500">•</span>
                                         <span className="text-sm text-slate-500">6 Projects</span>
                                     </div>
-                                    <Link
-                                        to="/data-science"
-                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    <button
+                                        onClick={() => handleStartLearning('data-science')}
+                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData[skillMap['data-science'].field] ? 'font-bold' : ''}`}
                                     >
-                                        Start Learning
+                                        {userData && userData[skillMap['data-science'].field] ? 'Continue Learning' : 'Start Learning'}
                                         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                         </svg>
-                                    </Link>
+                                    </button>
                                 </div>
                             </motion.div>
 
@@ -178,15 +265,15 @@ function AllSkills() {
                                         <span className="text-sm text-slate-500">•</span>
                                         <span className="text-sm text-slate-500">6 Projects</span>
                                     </div>
-                                    <Link
-                                        to="/python"
-                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    <button
+                                        onClick={() => handleStartLearning('python')}
+                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData[skillMap['python'].field] ? 'font-bold' : ''}`}
                                     >
-                                        Start Learning
+                                        {userData && userData[skillMap['python'].field] ? 'Continue Learning' : 'Start Learning'}
                                         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                         </svg>
-                                    </Link>
+                                    </button>
                                 </div>
                             </motion.div>
 
@@ -209,15 +296,15 @@ function AllSkills() {
                                         <span className="text-sm text-slate-500">•</span>
                                         <span className="text-sm text-slate-500">6 Projects</span>
                                     </div>
-                                    <Link
-                                        to="/powerbi"
-                                        className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
+                                    <button
+                                        onClick={() => handleStartLearning('powerbi')}
+                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData[skillMap['powerbi'].field] ? 'font-bold' : ''}`}
                                     >
-                                        Start Learning
+                                        {userData && userData[skillMap['powerbi'].field] ? 'Continue Learning' : 'Start Learning'}
                                         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                         </svg>
-                                    </Link>
+                                    </button>
                                 </div>
                             </motion.div>
                         </div>

@@ -20,6 +20,9 @@ function Python() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [showProgress, setShowProgress] = useState(false);
+  const [projectData, setProjectData] = useState(null);
+  const [projectLoading, setProjectLoading] = useState(false);
+  const [projectError, setProjectError] = useState("");
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -47,6 +50,31 @@ function Python() {
         });
     }
   }, [isLoaded, isSignedIn, user]);
+
+  useEffect(() => {
+    if (userData.PythonStartedProject === "Project1") {
+      setProjectLoading(true);
+      setProjectError("");
+      const projectRef = ref(db, "PythonProject/Project1");
+      get(projectRef)
+        .then((snapshot) => {
+          if (snapshot.exists()) {
+            setProjectData(snapshot.val());
+          } else {
+            setProjectError("Project not found.");
+          }
+        })
+        .catch((err) => {
+          setProjectError("Failed to fetch project: " + err.message);
+        })
+        .finally(() => {
+          setProjectLoading(false);
+        });
+    } else {
+      setProjectData(null);
+      setProjectError("");
+    }
+  }, [userData.PythonStartedProject]);
 
   const toggleProgress = () => {
     setShowProgress(!showProgress);
@@ -192,47 +220,94 @@ function Python() {
               <h2 className="text-2xl font-bold text-white mb-6">
                 🔥 Your Next Project
               </h2>
-
-              <div className="bg-[#3B3B3F] bg-opacity-30 rounded-xl p-5 mb-6 border border-purple-400 shadow-inner">
-                <h3 className="text-xl font-semibold text-white mb-2">
-                  📊 Personal Finance Tracker
-                </h3>
-                <p className="text-purple-100 text-sm leading-relaxed">
-                  Build a Python console app that helps manage your income,
-                  expenses, and calculate balance easily.
-                </p>
-
-                <div className="mt-4 space-y-1">
-                  <p className="text-purple-200 text-xs">
-                    💡 Concepts: <span className="text-black bg-white rounded">Functions</span>, Lists, Dictionaries, Loops
-                  </p>
-                  <div className="flex items-center gap-3 text-purple-100 text-sm pt-2">
-                    <span className="bg-purple-800 bg-opacity-50 rounded-full px-3 py-1">
-                      🎯 +400 XP
-                    </span>
+              {userData.PythonStartedProject === 'Project1' ? (
+                projectLoading ? (
+                  <div className="text-white">Loading project...</div>
+                ) : projectError ? (
+                  <div className="text-red-300">{projectError}</div>
+                ) : projectData ? (
+                  <>
+                    <div className="bg-[#3B3B3F] bg-opacity-30 rounded-xl p-5 mb-6 border border-purple-400 shadow-inner">
+                      <h3 className="text-xl font-semibold text-white mb-2">
+                        {projectData.title}
+                      </h3>
+                      <p className="text-purple-100 text-sm leading-relaxed">
+                        {projectData.description}
+                      </p>
+                      <div className="mt-4 space-y-1">
+                        <p className="text-purple-200 text-xs">
+                          💡 Concepts: <span className="text-black bg-white rounded">{projectData.Concept}</span>
+                        </p>
+                        <div className="flex items-center gap-3 text-purple-100 text-sm pt-2">
+                          <span className="bg-purple-800 bg-opacity-50 rounded-full px-3 py-1">
+                            🎯 +{projectData.XP} XP
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <Link
+                      to="/python/project"
+                      className="inline-flex items-center gap-2 bg-purple-900 text-white hover:bg-purple-700 font-semibold px-4 py-2 rounded-lg shadow-md transition-colors"
+                    >
+                      🚀 Start Project
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </Link>
+                  </>
+                ) : null
+              ) : (
+                <>
+                  <div className="bg-[#3B3B3F] bg-opacity-30 rounded-xl p-5 mb-6 border border-purple-400 shadow-inner">
+                    <h3 className="text-xl font-semibold text-white mb-2">
+                      📊 Personal Finance Tracker
+                    </h3>
+                    <p className="text-purple-100 text-sm leading-relaxed">
+                      Build a Python console app that helps manage your income,
+                      expenses, and calculate balance easily.
+                    </p>
+                    <div className="mt-4 space-y-1">
+                      <p className="text-purple-200 text-xs">
+                        💡 Concepts: <span className="text-black bg-white rounded">Functions</span>, Lists, Dictionaries, Loops
+                      </p>
+                      <div className="flex items-center gap-3 text-purple-100 text-sm pt-2">
+                        <span className="bg-purple-800 bg-opacity-50 rounded-full px-3 py-1">
+                          🎯 +400 XP
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              <Link
-                to="/python/project"
-                className="inline-flex items-center gap-2 bg-purple-900 text-white hover:bg-purple-700 font-semibold px-4 py-2 rounded-lg shadow-md transition-colors"
-              >
-                🚀 Start Project
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </Link>
+                  <Link
+                    to="/python/project"
+                    className="inline-flex items-center gap-2 bg-purple-900 text-white hover:bg-purple-700 font-semibold px-4 py-2 rounded-lg shadow-md transition-colors"
+                  >
+                    🚀 Start Project
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </Link>
+                </>
+              )}
             </motion.div>
 
             {/* Skill Progress */}

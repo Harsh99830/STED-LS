@@ -131,14 +131,37 @@ builtins.input = input_async
           }}
         />
       </div>
-      <div style={{ display: 'flex', padding: '10px', background: '#1e1e1e' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#1e1e1e' }}>
         <button
           onClick={runPython}
-          style={{ background: '#007acc', color: 'white', padding: '8px 16px', border: 'none', cursor: 'pointer', borderRadius: '5px' }}
+          style={{
+            background: '#007acc',
+            color: 'white',
+            padding: '8px 16px',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '5px'
+          }}
         >
-           Run
+          Run
+        </button>
+
+        <button
+          onClick={() => alert('Need help?')}
+          style={{
+            background: '#222',
+            color: '#fff',
+            padding: '8px 16px',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '5px',
+            borderLeft: '2px solid #007acc'
+          }}
+        >
+          Stuck?
         </button>
       </div>
+
       <div className='text-left' style={{ background: 'black', color: '#dcdcdc', padding: '10px', height: '250px', overflowY: 'auto', borderTop: '1px solid #555' }}>
         <strong>Terminal:</strong>
         <pre style={{ whiteSpace: 'pre-wrap', marginTop: '10px' }}>
