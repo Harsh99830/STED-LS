@@ -131,7 +131,7 @@ builtins.input = input_async
           }}
         />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#1e1e1e' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#1e1e1e', borderTop: '1px solid #555' }}>
         <button
           onClick={runPython}
           style={{

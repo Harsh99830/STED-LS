@@ -17,16 +17,16 @@ function Statement() {
       setLoading(true);
       setError('');
       try {
-        // Get user's PythonStartedProject
-        const userRef = ref(db, 'users/' + user.id);
+        // Get user's python.PythonCurrentProject
+        const userRef = ref(db, 'users/' + user.id + '/python');
         const userSnap = await get(userRef);
         if (!userSnap.exists()) {
-          setError('User not found.');
+          setError('No Python project started.');
           setLoading(false);
           return;
         }
         const userData = userSnap.val();
-        const startedKey = userData.PythonStartedProject;
+        const startedKey = userData.PythonCurrentProject;
         setProjectKey(startedKey);
         if (!startedKey) {
           setError('No Python project started.');

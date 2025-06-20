@@ -73,30 +73,33 @@ function AllSkills() {
     const skillMap = {
         'python': {
             route: '/python',
-            field: 'PythonStartedProject',
             value: 'Project1',
+            node: 'python',
+            currentProjectField: 'PythonCurrentProject',
         },
         'data-science': {
             route: '/data-science',
-            field: 'DataScienceStartedProject',
             value: 'Project1',
+            node: 'data-science',
+            currentProjectField: 'DataScienceCurrentProject',
         },
         'public-speaking': {
             route: '/public-speaking',
-            field: 'PublicSpeakingStartedProject',
             value: 'Project1',
+            node: 'public-speaking',
+            currentProjectField: 'PublicSpeakingCurrentProject',
         },
         'powerbi': {
             route: '/powerbi',
-            field: 'PowerBiStartedProject',
             value: 'Project1',
+            node: 'powerbi',
+            currentProjectField: 'PowerBiCurrentProject',
         },
     };
 
     const handleStartLearning = (skillKey) => {
         const skill = skillMap[skillKey];
-        if (userData && skill && userData[skill.field]) {
-            // Already started, go directly
+        if (userData && skill && userData[skill.node] && userData[skill.node][skill.currentProjectField]) {
             navigate(skill.route);
             return;
         }
@@ -118,11 +121,11 @@ function AllSkills() {
         try {
             const skill = skillMap[pendingSkill];
             if (!skill) throw new Error('Unknown skill');
-            // Use user.id for path, but check user.email for logic if needed
             const userRef = ref(db, 'users/' + user.id);
-            await update(userRef, {
-                [skill.field]: skill.value,
-            });
+            const updates = {
+                [`${skill.node}/${skill.currentProjectField}`]: skill.value,
+            };
+            await update(userRef, updates);
             setShowOverlay(false);
             setPendingSkill(null);
             setIsUpdating(false);
@@ -204,9 +207,9 @@ function AllSkills() {
                                     </div>
                                     <button
                                         onClick={() => handleStartLearning('public-speaking')}
-                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData[skillMap['public-speaking'].field] ? 'font-bold' : ''}`}
+                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData['public-speaking'] && userData['public-speaking']['PublicSpeakingCurrentProject'] ? 'font-bold' : ''}`}
                                     >
-                                        {userData && userData[skillMap['public-speaking'].field] ? 'Continue Learning' : 'Start Learning'}
+                                        {userData && userData['public-speaking'] && userData['public-speaking']['PublicSpeakingCurrentProject'] ? 'Continue Learning' : 'Start Learning'}
                                         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                         </svg>
@@ -236,9 +239,9 @@ function AllSkills() {
                                     </div>
                                     <button
                                         onClick={() => handleStartLearning('data-science')}
-                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData[skillMap['data-science'].field] ? 'font-bold' : ''}`}
+                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData['data-science'] && userData['data-science']['DataScienceCurrentProject'] ? 'font-bold' : ''}`}
                                     >
-                                        {userData && userData[skillMap['data-science'].field] ? 'Continue Learning' : 'Start Learning'}
+                                        {userData && userData['data-science'] && userData['data-science']['DataScienceCurrentProject'] ? 'Continue Learning' : 'Start Learning'}
                                         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                         </svg>
@@ -267,9 +270,9 @@ function AllSkills() {
                                     </div>
                                     <button
                                         onClick={() => handleStartLearning('python')}
-                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData[skillMap['python'].field] ? 'font-bold' : ''}`}
+                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData['python'] && userData['python']['PythonCurrentProject'] ? 'font-bold' : ''}`}
                                     >
-                                        {userData && userData[skillMap['python'].field] ? 'Continue Learning' : 'Start Learning'}
+                                        {userData && userData['python'] && userData['python']['PythonCurrentProject'] ? 'Continue Learning' : 'Start Learning'}
                                         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                         </svg>
@@ -298,9 +301,9 @@ function AllSkills() {
                                     </div>
                                     <button
                                         onClick={() => handleStartLearning('powerbi')}
-                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData[skillMap['powerbi'].field] ? 'font-bold' : ''}`}
+                                        className={`inline-flex items-center text-blue-600 hover:text-blue-700 font-medium ${userData && userData['powerbi'] && userData['powerbi']['PowerBiCurrentProject'] ? 'font-bold' : ''}`}
                                     >
-                                        {userData && userData[skillMap['powerbi'].field] ? 'Continue Learning' : 'Start Learning'}
+                                        {userData && userData['powerbi'] && userData['powerbi']['PowerBiCurrentProject'] ? 'Continue Learning' : 'Start Learning'}
                                         <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                                         </svg>

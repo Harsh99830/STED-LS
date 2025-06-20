@@ -8,14 +8,15 @@ function Project() {
   const [isExplaining, setIsExplaining] = useState(false);
 
   return (
-    <div className="flex h-screen w-screen">
-      {/* Left side - Code Editor */}
-      <div className="w-280 h-full">
+      <div className="flex h-screen bg-gray-900 w-screen">
+        <div className="w-280 h-190 text-white pt-5 border-l border-white">
         <CodeEditor />
-      </div>
+        </div>
+      {/* Left side - Code Editor */}
+     
 
       {/* Right side - Statement / AI Panel */}
-      <div className="w-150 h-full bg-zinc-700 text-white p-5 border-l border-white">
+      <div className="w-150 h-190 bg-zinc-700 text-white p-5 border-l border-white">
         {/* Toggle Buttons */}
         <div className="flex gap-4 mb-4">
           <button
