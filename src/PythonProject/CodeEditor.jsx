@@ -6,7 +6,7 @@ const defaultCode = `async def __main__():
 
 await __main__()`;
 
-function CodeEditor() {
+function CodeEditor({ onCodeChange, onStuckClick, onOutputChange }) {
   const [code, setCode] = useState(defaultCode);
   const [outputLines, setOutputLines] = useState([]);
   const [pyodide, setPyodide] = useState(null);
@@ -15,6 +15,18 @@ function CodeEditor() {
   const [promptText, setPromptText] = useState('');
   const stdinHandler = useRef(null);
   const outputBuffer = useRef('');
+
+  useEffect(() => {
+    if (onCodeChange) {
+      onCodeChange(code);
+    }
+  }, [code, onCodeChange]);
+
+  useEffect(() => {
+    if (onOutputChange) {
+      onOutputChange(outputLines);
+    }
+  }, [outputLines, onOutputChange]);
 
   useEffect(() => {
     (async () => {
@@ -147,7 +159,7 @@ builtins.input = input_async
         </button>
 
         <button
-          onClick={() => alert('Need help?')}
+          onClick={() => onStuckClick && onStuckClick()}
           style={{
             background: '#222',
             color: '#fff',
@@ -155,7 +167,7 @@ builtins.input = input_async
             border: 'none',
             cursor: 'pointer',
             borderRadius: '5px',
-            borderLeft: '2px solid #007acc'
+            border: '2px solid #007acc'
           }}
         >
           Stuck?

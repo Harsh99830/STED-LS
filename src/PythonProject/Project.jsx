@@ -6,13 +6,31 @@ import { useUser } from '@clerk/clerk-react';
 import { ref, update } from 'firebase/database';
 import { db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
+import { 
+  getProjectConfig, 
+  validateCodeAgainstExpected, 
+  checkTasksAndSubtasks, 
+  analyzeTerminalOutput, 
+  validateCodeLogic 
+} from './projectConfig';
 
 function Project() {
   const [rightPanel, setRightPanel] = useState('statement');
   const [isExplaining, setIsExplaining] = useState(false);
   const [showEndProjectOverlay, setShowEndProjectOverlay] = useState(false);
+  const [userCode, setUserCode] = useState('');
+  const [chatMessages, setChatMessages] = useState([]);
+  const [terminalOutput, setTerminalOutput] = useState([]);
+  const [projectConfig, setProjectConfig] = useState(null);
   const { user } = useUser();
   const navigate = useNavigate();
+
+  // Load project configuration
+  useEffect(() => {
+    // For now, hardcode to project1 - later this will come from user's current project
+    const config = getProjectConfig('project1');
+    setProjectConfig(config);
+  }, []);
 
   // Handle browser back button and page refresh
   useEffect(() => {
@@ -65,6 +83,122 @@ function Project() {
 
   const handleEndProjectCancel = () => {
     setShowEndProjectOverlay(false);
+  };
+
+  const handleSubmit = () => {
+    console.log('Submit button clicked!');
+    console.log('Current terminal output:', terminalOutput);
+    console.log('Current user code:', userCode);
+    console.log('Project config:', projectConfig);
+    
+    if (!projectConfig) {
+      console.error('No project configuration loaded');
+      return;
+    }
+    
+    // Debug: Check specific patterns in user code
+    console.log('=== DEBUG: Code Pattern Detection ===');
+    console.log('Has def show_menu:', userCode.includes('def show_menu'));
+    console.log('Has print statements:', userCode.includes('print'));
+    console.log('Has menu text:', userCode.includes('Personal Finance Tracker') || userCode.includes('Add Income') || userCode.includes('Add Expense'));
+    console.log('Has while True:', userCode.includes('while True'));
+    console.log('Has show_menu() call:', userCode.includes('show_menu()'));
+    console.log('Has input_async:', userCode.includes('input_async'));
+    console.log('Has else clause:', userCode.includes('else:'));
+    console.log('Has invalid choice handling:', userCode.includes('Invalid choice') || userCode.includes('invalid') || userCode.includes('try again'));
+    console.log('=== END DEBUG ===');
+    
+    // 1. Check code structure against expected code
+    const missingComponents = validateCodeAgainstExpected(userCode, projectConfig);
+    
+    // 2. Check all tasks and subtasks
+    const taskProgress = checkTasksAndSubtasks(userCode, projectConfig);
+    
+    // 3. Analyze terminal output
+    const outputAnalysis = analyzeTerminalOutput(terminalOutput, projectConfig);
+    
+    // 4. Validate code logic and structure
+    const logicValidation = validateCodeLogic(userCode, projectConfig);
+    
+    // Build comprehensive feedback
+    let feedbackContent = `**📋 COMPREHENSIVE CODE REVIEW - ${projectConfig.title}**\n\n`;
+    
+    // Missing components section
+    if (missingComponents.length > 0) {
+      feedbackContent += `**❌ Missing Components:**\n${missingComponents.map(item => `• ${item}`).join('\n')}\n\n`;
+    } else {
+      feedbackContent += `**✅ All required components present**\n\n`;
+    }
+    
+    // Logic validation section
+    feedbackContent += `**🔍 Logic & Structure Analysis:**\n${logicValidation.feedback.join('\n')}\n\n`;
+    
+    // Task progress section
+    feedbackContent += `**📊 Task Progress:**\n`;
+    Object.entries(taskProgress).forEach(([taskKey, task]) => {
+      const completed = task.completed.length;
+      const total = task.subtasks.length;
+      const percentage = Math.round((completed / total) * 100);
+      const status = completed === total ? '✅' : '🔄';
+      
+      feedbackContent += `${status} ${task.title}: ${completed}/${total} (${percentage}%)\n`;
+      
+      if (completed < total) {
+        const missingSubtasks = task.subtasks.filter(subtask => !task.completed.includes(subtask));
+        feedbackContent += `   Missing: ${missingSubtasks.join(', ')}\n`;
+      }
+    });
+    
+    // Terminal output analysis
+    feedbackContent += `\n**🖥️ Terminal Analysis:**\n${outputAnalysis.feedback.join('\n')}`;
+    
+    // Overall assessment - Much stricter now
+    const allTasksComplete = Object.values(taskProgress).every(task => task.completed.length === task.subtasks.length);
+    const allLogicValid = Object.values(logicValidation).every(check => typeof check === 'boolean' ? check : true);
+    const allFunctionalityWorking = outputAnalysis.functionalityChecks ? 
+      Object.values(outputAnalysis.functionalityChecks).every(check => check) : false;
+    
+    const isFullyWorking = allTasksComplete && 
+                          allLogicValid && 
+                          outputAnalysis.isWorking && 
+                          missingComponents.length === 0 &&
+                          allFunctionalityWorking;
+    
+    feedbackContent += `\n\n**🎯 Overall Status:** ${isFullyWorking ? '🎉 PROJECT COMPLETED!' : '🔄 Work in Progress'}`;
+    
+    if (!isFullyWorking) {
+      feedbackContent += `\n\n**📝 To Complete:**`;
+      if (!allTasksComplete) feedbackContent += `\n• Complete all tasks and subtasks`;
+      if (!allLogicValid) feedbackContent += `\n• Fix logic and structure issues`;
+      if (!outputAnalysis.isWorking) feedbackContent += `\n• Fix runtime errors`;
+      if (missingComponents.length > 0) feedbackContent += `\n• Add missing components`;
+      if (!allFunctionalityWorking) feedbackContent += `\n• Test all functionality`;
+    }
+    
+    const submitMessage = {
+      id: Date.now(),
+      type: 'ai',
+      content: feedbackContent,
+      timestamp: new Date()
+    };
+    
+    setChatMessages(prev => [...prev, submitMessage]);
+    setRightPanel('ai');
+  };
+
+  const handleStuckClick = () => {
+    // Switch to AI tab
+    setRightPanel('ai');
+    
+    // Add a message asking where they're stuck
+    const stuckMessage = {
+      id: Date.now(),
+      type: 'ai',
+      content: "I see you're stuck! 🤔 Where exactly are you having trouble?",
+      timestamp: new Date()
+    };
+    
+    setChatMessages(prev => [...prev, stuckMessage]);
   };
 
   return (
@@ -121,9 +255,19 @@ function Project() {
         </button>
       </div>
 
+      {/* Submit Button */}
+      <div className="absolute top-2 right-32">
+        <button
+          onClick={handleSubmit}
+          className="px-6 py-1 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg"
+        >
+          Submit
+        </button>
+      </div>
+
       <div className="flex h-screen pt-12 p-3 bg-[#0F0F0F] w-screen">
           <div className="w-280 border border-white h-full text-white border-white">
-        <CodeEditor />
+        <CodeEditor onCodeChange={setUserCode} onStuckClick={handleStuckClick} onOutputChange={setTerminalOutput} />
         </div>
       {/* Left side - Code Editor */}
      
@@ -163,7 +307,7 @@ function Project() {
           )}
 
           {rightPanel === 'ai' && (
-            <AI />
+            <AI userCode={userCode} messages={chatMessages} setMessages={setChatMessages} />
           )}
         </div>
       </div>
