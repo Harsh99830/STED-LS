@@ -13,9 +13,11 @@ function AI({ userCode, messages, setMessages }) {
 
   // Load project configuration
   useEffect(() => {
-    // For now, hardcode to project1 - later this will come from user's current project
-    const config = getProjectConfig('project1');
-    setProjectConfig(config);
+    const fetchConfig = async () => {
+      const config = await getProjectConfig('project1');
+      setProjectConfig(config);
+    };
+    fetchConfig();
   }, []);
 
   // Fetch project data when component mounts

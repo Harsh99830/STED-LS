@@ -87,48 +87,101 @@ function Statement() {
         {project.title}
       </h1>
       <p className="mb-4 text-lg" style={{ color: '#e5e7eb' }}>{project.description}</p>
+
+      {/* Concepts Used Section */}
+      {(project.Concept || project.concepts) && (
+        <div className="mb-4">
+          <div className="mb-2 text-xl font-semibold" style={{ color: '#38bdf8' }}>Concepts Used</div>
+          <ul className="list-disc ml-6">
+            {(project.Concept || project.concepts).map((concept, idx) => (
+              <li key={idx} className="text-base" style={{ color: '#f3f4f6' }}>{concept}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="mb-2 text-xl font-semibold" style={{ color: '#f472b6' }}>Project Tasks</div>
       <div className="space-y-6">
-        {project.ProjectTasks && Object.entries(project.ProjectTasks).map(([taskKey, task]) => (
-          <div
-            key={taskKey}
-            className="rounded-lg p-4 shadow border"
-            style={{
-              background: '#23232a', // slightly lighter dark
-              borderColor: '#a78bfa', // purple-400
-            }}
-          >
-            <div className="font-semibold mb-2 text-lg flex items-center gap-2" style={{ color: '#a78bfa' }}>
-              <span
-                className="px-3 py-1 rounded-full text-sm"
-                style={{ background: '#312e81', color: '#f3f4f6' }}
+        {/* Prefer 'tasks' field if present, else fallback to 'ProjectTasks' */}
+        {project.tasks
+          ? Object.entries(project.tasks).map(([taskKey, task]) => (
+              <div
+                key={taskKey}
+                className="rounded-lg p-4 shadow border"
+                style={{
+                  background: '#23232a',
+                  borderColor: '#a78bfa',
+                }}
               >
-                {task.title}
-              </span>
-            </div>
-            <ul className="space-y-2 ml-2 mt-2">
-              {Object.entries(task)
-                .filter(([k]) => k !== 'title')
-                .map(([subKey, subDesc]) => (
-                  <li key={subKey} className="flex text-left gap-3 items-center">
-                    <input
-                      type="checkbox"
-                      checked={!!checked[taskKey]?.[subKey]}
-                      onChange={() => handleCheck(taskKey, subKey)}
-                      className="accent-purple-400 rounded border-gray-600 focus:ring-2 focus:ring-purple-400 bg-[#18181b]"
-                      style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0 }}
-                    />
-                    <span
-                      className={`text-base ${checked[taskKey]?.[subKey] ? 'line-through text-gray-500' : ''}`}
-                      style={{ color: checked[taskKey]?.[subKey] ? '#6b7280' : '#f3f4f6' }}
-                    >
-                      {subDesc}
-                    </span>
-                  </li>
-                ))}
-            </ul>
-          </div>
-        ))}
+                <div className="font-semibold mb-2 text-lg flex items-center gap-2" style={{ color: '#a78bfa' }}>
+                  <span
+                    className="px-3 py-1 rounded-full text-sm"
+                    style={{ background: '#312e81', color: '#f3f4f6' }}
+                  >
+                    {task.title}
+                  </span>
+                </div>
+                <ul className="space-y-2 ml-2 mt-2">
+                  {task.subtasks && task.subtasks.map((subDesc, subIdx) => (
+                    <li key={subIdx} className="flex text-left gap-3 items-center">
+                      <input
+                        type="checkbox"
+                        checked={!!checked[taskKey]?.[subIdx]}
+                        onChange={() => handleCheck(taskKey, subIdx)}
+                        className="accent-purple-400 rounded border-gray-600 focus:ring-2 focus:ring-purple-400 bg-[#18181b]"
+                        style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0 }}
+                      />
+                      <span
+                        className={`text-base ${checked[taskKey]?.[subIdx] ? 'line-through text-gray-500' : ''}`}
+                        style={{ color: checked[taskKey]?.[subIdx] ? '#6b7280' : '#f3f4f6' }}
+                      >
+                        {subDesc}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))
+          : project.ProjectTasks && Object.entries(project.ProjectTasks).map(([taskKey, task]) => (
+              <div
+                key={taskKey}
+                className="rounded-lg p-4 shadow border"
+                style={{
+                  background: '#23232a',
+                  borderColor: '#a78bfa',
+                }}
+              >
+                <div className="font-semibold mb-2 text-lg flex items-center gap-2" style={{ color: '#a78bfa' }}>
+                  <span
+                    className="px-3 py-1 rounded-full text-sm"
+                    style={{ background: '#312e81', color: '#f3f4f6' }}
+                  >
+                    {task.title}
+                  </span>
+                </div>
+                <ul className="space-y-2 ml-2 mt-2">
+                  {Object.entries(task)
+                    .filter(([k]) => k !== 'title')
+                    .map(([subKey, subDesc]) => (
+                      <li key={subKey} className="flex text-left gap-3 items-center">
+                        <input
+                          type="checkbox"
+                          checked={!!checked[taskKey]?.[subKey]}
+                          onChange={() => handleCheck(taskKey, subKey)}
+                          className="accent-purple-400 rounded border-gray-600 focus:ring-2 focus:ring-purple-400 bg-[#18181b]"
+                          style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0 }}
+                        />
+                        <span
+                          className={`text-base ${checked[taskKey]?.[subKey] ? 'line-through text-gray-500' : ''}`}
+                          style={{ color: checked[taskKey]?.[subKey] ? '#6b7280' : '#f3f4f6' }}
+                        >
+                          {subDesc}
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            ))}
       </div>
     </div>
   );

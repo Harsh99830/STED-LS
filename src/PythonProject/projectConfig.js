@@ -1,16 +1,20 @@
-import project1Config from './Project1.json';
+// import project1Config from './Project1.json';
+import { getDatabase, ref, get } from 'firebase/database';
 
-// Project configurations mapping
-const projectConfigs = {
-  'project1': project1Config,
-  // Add more projects here as they're created
-  // 'project2': project2Config,
-  // 'project3': project3Config,
-};
+// Project configurations mapping (no longer needed for dynamic fetch)
+// const projectConfigs = {
+//   'project1': project1Config,
+// };
 
-// Load project configuration
-export const getProjectConfig = (projectId) => {
-  return projectConfigs[projectId] || null;
+// Load project configuration from Firebase
+export const getProjectConfig = async (projectId) => {
+  const db = getDatabase();
+  const projectRef = ref(db, `PythonProject/${projectId.charAt(0).toUpperCase() + projectId.slice(1)}`);
+  const snapshot = await get(projectRef);
+  if (snapshot.exists()) {
+    return snapshot.val();
+  }
+  return null;
 };
 
 // Generic validation functions that work with any project config

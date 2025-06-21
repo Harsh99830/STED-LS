@@ -28,9 +28,11 @@ function Project() {
 
   // Load project configuration
   useEffect(() => {
-    // For now, hardcode to project1 - later this will come from user's current project
-    const config = getProjectConfig('project1');
-    setProjectConfig(config);
+    const fetchConfig = async () => {
+      const config = await getProjectConfig('project1');
+      setProjectConfig(config);
+    };
+    fetchConfig();
   }, []);
 
   // Handle browser back button and page refresh
@@ -90,18 +92,31 @@ function Project() {
     try {
       if (user) {
         const userRef = ref(db, 'users/' + user.id);
+        // Determine current project number from PythonCurrentProject or fallback to Project1
+        let currentProject = 'Project1';
+        if (user.PythonCurrentProject) {
+          currentProject = user.PythonCurrentProject;
+        }
+        // Save project data
         const projectData = {
           code: userCode,
           chatHistory: chatMessages,
           completedAt: new Date().toISOString(),
-          projectType: 'Personal Finance Tracker',
+          projectType: projectConfig?.title || 'Personal Finance Tracker',
           terminalOutput: terminalOutput
         };
-        
+        // Determine next project
+        let nextProject = null;
+        if (currentProject === 'Project1') nextProject = 'Project2';
+        else if (currentProject === 'Project2') nextProject = 'Project3';
+        // Add more as needed
         const updates = {
-          'python/Project1': projectData,
+          [`python/${currentProject}`]: projectData,
           'python/PythonProjectStarted': false
         };
+        if (nextProject) {
+          updates['python/PythonCurrentProject'] = nextProject;
+        }
         await update(userRef, updates);
       }
       console.log('Project submitted successfully');
