@@ -8,6 +8,7 @@
       "while True:",
       "tasks = []",
       "input(",
+      "input_async(",
       "append(",
       "pop("
     ],
@@ -39,10 +40,13 @@
       ],
       "codeChecks": [
         "def show_menu",
+        "async def show_menu",
         "print",
         "To-Do List App",
         "while True",
-        "input("
+        "input(",
+        "input_async(",
+        "await show_menu"
       ]
     },
     "task2": {
@@ -54,8 +58,11 @@
       ],
       "codeChecks": [
         "input(",
+        "input_async(",
         "append(",
-        "Task added"
+        "Task added",
+        "✅ Task added",
+        "Task added."
       ]
     },
     "task3": {
@@ -67,7 +74,10 @@
       "codeChecks": [
         "for idx, t in enumerate",
         "print",
-        "completed"
+        "completed",
+        "Your Tasks",
+        "✔️",
+        "❌"
       ]
     },
     "task4": {
@@ -79,8 +89,15 @@
       ],
       "codeChecks": [
         "input(",
+        "input_async(",
         "completed",
-        "Task marked as completed"
+        "Task marked as completed",
+        "✅ Task marked as completed",
+        "Task marked as completed.",
+        "✅ Task marked as completed.",
+        "t[\"completed\"] = True",
+        "Invalid task number",
+        "❌ Invalid task number"
       ]
     },
     "task5": {
@@ -92,8 +109,11 @@
       ],
       "codeChecks": [
         "input(",
+        "input_async(",
         "pop(",
-        "Task deleted"
+        "Task deleted",
+        "🗑️ Task deleted",
+        "Task deleted."
       ]
     },
     "task6": {
@@ -113,7 +133,8 @@
         "elif choice == '4'",
         "elif choice == '5'",
         "else:",
-        "Invalid choice"
+        "Invalid choice",
+        "❌ Invalid choice"
       ]
     }
   },

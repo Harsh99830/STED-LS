@@ -9,7 +9,9 @@ import { getDatabase, ref, get } from 'firebase/database';
 // Load project configuration from Firebase
 export const getProjectConfig = async (projectId) => {
   const db = getDatabase();
-  const projectRef = ref(db, `PythonProject/${projectId.charAt(0).toUpperCase() + projectId.slice(1)}`);
+  // Capitalize first letter for Firebase path
+  const projectKey = projectId.charAt(0).toUpperCase() + projectId.slice(1);
+  const projectRef = ref(db, `PythonProject/${projectKey}`);
   const snapshot = await get(projectRef);
   if (snapshot.exists()) {
     return snapshot.val();
@@ -24,14 +26,98 @@ export const validateCodeAgainstExpected = (userCode, config) => {
   const missing = [];
   const userCodeClean = userCode.replace(/\s+/g, ' ').toLowerCase();
   
-  // Check required components
+  // Check required components with flexible input detection
   config.validationRules.requiredComponents.forEach(component => {
-    if (!userCodeClean.includes(component.toLowerCase())) {
+    const componentLower = component.toLowerCase();
+    let found = false;
+    
+    // Special handling for input detection
+    if (componentLower === 'input(') {
+      found = userCodeClean.includes('input(') || userCodeClean.includes('input_async(');
+    } else {
+      found = userCodeClean.includes(componentLower);
+    }
+    
+    if (!found) {
       missing.push(component);
     }
   });
   
   return missing;
+};
+
+// Anti-gaming detection function
+export const detectGamingAttempts = (userCode) => {
+  const userCodeClean = userCode.replace(/\s+/g, ' ').toLowerCase();
+  const issues = [];
+  
+  // Check for suspicious text-only implementations
+  const suspiciousPatterns = [
+    'marked completed',
+    'task completed', 
+    'completed successfully',
+    'done',
+    'finished',
+    'implemented',
+    'working',
+    'functional'
+  ];
+  
+  const hasSuspiciousText = suspiciousPatterns.some(pattern => 
+    userCodeClean.includes(pattern) && 
+    !userCodeClean.includes('print') && 
+    !userCodeClean.includes('def') &&
+    !userCodeClean.includes('if') &&
+    !userCodeClean.includes('while') &&
+    !userCodeClean.includes('for')
+  );
+  
+  if (hasSuspiciousText) {
+    issues.push('⚠️ Detected text-only implementation attempt. Please write actual code instead of just describing what should happen.');
+  }
+  
+  // Check for code patterns that are just strings
+  const codePatterns = [
+    'input(',
+    'def show_menu',
+    'while true',
+    'append(',
+    'pop(',
+    'enumerate',
+    't["completed"] = true'
+  ];
+  
+  codePatterns.forEach(pattern => {
+    if (userCodeClean.includes(`"${pattern}"`) || userCodeClean.includes(`'${pattern}'`)) {
+      issues.push(`⚠️ Found "${pattern}" as a string instead of actual code. Please implement the functionality, not just write it as text.`);
+    }
+  });
+  
+  // Check for minimal code that doesn't actually do anything
+  const lines = userCode.split('\n').filter(line => line.trim().length > 0);
+  const codeLines = lines.filter(line => 
+    !line.trim().startsWith('#') && 
+    !line.trim().startsWith('"""') &&
+    !line.trim().startsWith("'''") &&
+    line.trim().length > 0
+  );
+  
+  if (codeLines.length < 5) {
+    issues.push('⚠️ Very minimal code detected. Make sure you\'re implementing the full functionality, not just placeholder code.');
+  }
+  
+  // Check for excessive comments vs actual code
+  const commentLines = lines.filter(line => 
+    line.trim().startsWith('#') || 
+    line.trim().startsWith('"""') ||
+    line.trim().startsWith("'''")
+  );
+  
+  if (commentLines.length > codeLines.length) {
+    issues.push('⚠️ Too many comments compared to actual code. Focus on implementing the functionality.');
+  }
+  
+  return issues;
 };
 
 export const checkTasksAndSubtasks = (userCode, config) => {
@@ -40,126 +126,177 @@ export const checkTasksAndSubtasks = (userCode, config) => {
   const tasks = {};
   const userCodeClean = userCode.replace(/\s+/g, ' ').toLowerCase();
   
+  // Debug: Log the cleaned user code
+  console.log('=== DEBUG: User Code Analysis ===');
+  console.log('Cleaned user code:', userCodeClean);
+  
+  // Check for gaming attempts
+  const gamingIssues = detectGamingAttempts(userCode);
+  if (gamingIssues.length > 0) {
+    console.log('=== GAMING DETECTION ===');
+    gamingIssues.forEach(issue => console.log(issue));
+    console.log('=== END GAMING DETECTION ===');
+  }
+  
   Object.entries(config.tasks).forEach(([taskKey, task]) => {
     tasks[taskKey] = {
       title: task.title,
       subtasks: task.subtasks,
-      completed: []
+      completed: [],
+      gamingIssues: gamingIssues // Include gaming issues in task results
     };
     
-    // Task-specific validation logic
-    switch (taskKey) {
-      case 'task1': // Create Menu System
-        if (userCodeClean.includes('def show_menu') || userCodeClean.includes('def show_menu(')) {
-          tasks[taskKey].completed.push("Create show_menu() function");
-        }
-        if (userCodeClean.includes('print') && (userCodeClean.includes('personal finance tracker') || userCodeClean.includes('add income') || userCodeClean.includes('add expense') || userCodeClean.includes('view summary') || userCodeClean.includes('exit'))) {
-          tasks[taskKey].completed.push("Add print statements for menu options");
-        }
-        if (userCodeClean.includes('while true') || userCodeClean.includes('while true:') || userCodeClean.includes('while true ')) {
-          tasks[taskKey].completed.push("Create main while loop");
-        }
-        if (userCodeClean.includes('show_menu()') && userCodeClean.includes('while')) {
-          tasks[taskKey].completed.push("Call show_menu() in loop");
-        }
-        if (userCodeClean.includes('input_async')) {
-          tasks[taskKey].completed.push("Get user input with input_async()");
-        }
-        break;
+    console.log(`\n--- Checking ${taskKey}: ${task.title} ---`);
+    console.log(`  Subtasks:`, task.subtasks);
+    console.log(`  Code checks:`, task.codeChecks);
+    
+    // Generic task validation using codeChecks
+    if (task.codeChecks) {
+      task.codeChecks.forEach(check => {
+        const checkLower = check.toLowerCase();
+        let found = false;
         
-      case 'task2': // Add Income Feature
-        if (userCodeClean.includes('def add_income') || userCodeClean.includes('async def add_income')) {
-          tasks[taskKey].completed.push("Create add_income() function");
+        // Enhanced validation with anti-gaming checks
+        if (checkLower === 'input(') {
+          found = (userCodeClean.includes('input(') || userCodeClean.includes('input_async(')) &&
+                  !userCodeClean.includes('"input(') && // Not just a string
+                  !userCodeClean.includes("'input(");   // Not just a string
+        } else if (checkLower === 'def show_menu') {
+          found = (userCodeClean.includes('def show_menu') || userCodeClean.includes('async def show_menu')) &&
+                  !userCodeClean.includes('"def show_menu') && // Not just a string
+                  !userCodeClean.includes("'def show_menu");   // Not just a string
+        } else if (checkLower === 'while true') {
+          found = (userCodeClean.includes('while true') || userCodeClean.includes('while true:')) &&
+                  !userCodeClean.includes('"while true') && // Not just a string
+                  !userCodeClean.includes("'while true");   // Not just a string
+        } else if (checkLower === 'append(') {
+          found = (userCodeClean.includes('append(') || userCodeClean.includes('tasks.append')) &&
+                  !userCodeClean.includes('"append(') && // Not just a string
+                  !userCodeClean.includes("'append(");   // Not just a string
+        } else if (checkLower === 'pop(' || checkLower === 'tasks.pop') {
+          found = (userCodeClean.includes('pop(') || userCodeClean.includes('tasks.pop')) &&
+                  !userCodeClean.includes('"pop(') && // Not just a string
+                  !userCodeClean.includes("'pop(");   // Not just a string
+        } else if (checkLower === 'for idx, t in enumerate' || checkLower.includes('enumerate')) {
+          found = (userCodeClean.includes('for idx, t in enumerate') || userCodeClean.includes('enumerate(tasks')) &&
+                  !userCodeClean.includes('"for idx, t in enumerate') && // Not just a string
+                  !userCodeClean.includes("'for idx, t in enumerate");   // Not just a string
+        } else if (checkLower === 't["completed"] = true') {
+          found = (userCodeClean.includes('t["completed"] = true') || 
+                  userCodeClean.includes('t[\'completed\'] = true') || 
+                  userCodeClean.includes('completed"] = true')) &&
+                  !userCodeClean.includes('"t["completed"] = true') && // Not just a string
+                  !userCodeClean.includes("'t['completed'] = true");   // Not just a string
+        } else if (checkLower.includes('task added')) {
+          // For confirmation messages, we need to see them in print statements or actual output
+          found = (userCodeClean.includes('task added') || 
+                  userCodeClean.includes('✅ task added') ||
+                  userCodeClean.includes('task added.') ||
+                  userCodeClean.includes('✅ task added.')) &&
+                  (userCodeClean.includes('print') || userCodeClean.includes('f"') || userCodeClean.includes('f\''));
+        } else if (checkLower.includes('task marked as completed')) {
+          // For confirmation messages, we need to see them in print statements or actual output
+          found = (userCodeClean.includes('task marked as completed') || 
+                  userCodeClean.includes('✅ task marked as completed') ||
+                  userCodeClean.includes('task marked as completed.') ||
+                  userCodeClean.includes('✅ task marked as completed.')) &&
+                  (userCodeClean.includes('print') || userCodeClean.includes('f"') || userCodeClean.includes('f\''));
+        } else if (checkLower.includes('task deleted')) {
+          // For confirmation messages, we need to see them in print statements or actual output
+          found = (userCodeClean.includes('task deleted') || 
+                  userCodeClean.includes('🗑️ task deleted') ||
+                  userCodeClean.includes('task deleted.') ||
+                  userCodeClean.includes('🗑️ task deleted.')) &&
+                  (userCodeClean.includes('print') || userCodeClean.includes('f"') || userCodeClean.includes('f\''));
+        } else if (checkLower.includes('invalid task number')) {
+          // For error messages, we need to see them in print statements or actual output
+          found = (userCodeClean.includes('invalid task number') || 
+                  userCodeClean.includes('❌ invalid task number')) &&
+                  (userCodeClean.includes('print') || userCodeClean.includes('f"') || userCodeClean.includes('f\''));
+        } else {
+          // For other patterns, ensure they're not just strings
+          found = userCodeClean.includes(checkLower) &&
+                  !userCodeClean.includes(`"${checkLower}"`) && // Not just a quoted string
+                  !userCodeClean.includes(`'${checkLower}'`);   // Not just a quoted string
         }
-        if (userCodeClean.includes('input_async') && userCodeClean.includes('add_income')) {
-          tasks[taskKey].completed.push("Use input_async() to get amount");
-        }
-        if (userCodeClean.includes('float(') && userCodeClean.includes('add_income')) {
-          tasks[taskKey].completed.push("Convert input to float");
-        }
-        if (userCodeClean.includes('return') && userCodeClean.includes('add_income')) {
-          tasks[taskKey].completed.push("Return the amount");
-        }
-        break;
         
-      case 'task3': // Add Expense Feature
-        if (userCodeClean.includes('def add_expense') || userCodeClean.includes('async def add_expense')) {
-          tasks[taskKey].completed.push("Create add_expense() function");
-        }
-        if (userCodeClean.includes('input_async') && userCodeClean.includes('add_expense')) {
-          tasks[taskKey].completed.push("Get expense name with input_async()");
-          tasks[taskKey].completed.push("Get expense amount with input_async()");
-        }
-        if (userCodeClean.includes('return') && userCodeClean.includes('{') && userCodeClean.includes('add_expense')) {
-          tasks[taskKey].completed.push("Return dictionary with name and amount");
-        }
-        break;
+        console.log(`  Checking "${check}" (${checkLower}): ${found ? '✅ FOUND' : '❌ NOT FOUND'}`);
         
-      case 'task4': // View Balance Feature
-        if (userCodeClean.includes('def show_summary(')) {
-          tasks[taskKey].completed.push("Create show_summary() function");
+        if (found) {
+          // Find matching subtasks for this code check
+          const matchingSubtasks = task.subtasks.filter(subtask => {
+            const subtaskLower = subtask.toLowerCase();
+            
+            // More flexible matching for different patterns
+            if (checkLower === 'input(' || checkLower === 'input_async(') {
+              return subtaskLower.includes('input') || subtaskLower.includes('prompt');
+            } else if (checkLower === 'def show_menu' || checkLower === 'async def show_menu') {
+              return subtaskLower.includes('show_menu') || subtaskLower.includes('function');
+            } else if (checkLower === 'while true' || checkLower === 'while true:') {
+              return subtaskLower.includes('while') || subtaskLower.includes('loop');
+            } else if (checkLower === 'append(' || checkLower === 'tasks.append') {
+              return subtaskLower.includes('append') || subtaskLower.includes('add');
+            } else if (checkLower === 'pop(' || checkLower === 'tasks.pop') {
+              return subtaskLower.includes('pop') || subtaskLower.includes('delete');
+            } else if (checkLower === 'for idx, t in enumerate' || checkLower.includes('enumerate')) {
+              return subtaskLower.includes('enumerate') || subtaskLower.includes('display') || subtaskLower.includes('view');
+            } else if (checkLower.includes('completed')) {
+              return subtaskLower.includes('completed') || subtaskLower.includes('mark');
+            } else if (checkLower.includes('choice ==')) {
+              return subtaskLower.includes('choice') || subtaskLower.includes('handle');
+            } else if (checkLower.includes('task added') || checkLower.includes('task deleted') || checkLower.includes('task marked')) {
+              return subtaskLower.includes('confirmation') || subtaskLower.includes('message') || subtaskLower.includes('show');
+            } else {
+              return subtaskLower.includes(checkLower.replace(/[()]/g, '')) ||
+                     (checkLower === 'input(' && subtaskLower.includes('input'));
+            }
+          });
+          
+          console.log(`    Matching subtasks for "${check}":`, matchingSubtasks);
+          
+          matchingSubtasks.forEach(subtask => {
+            if (!tasks[taskKey].completed.includes(subtask)) {
+              tasks[taskKey].completed.push(subtask);
+              console.log(`    ✅ Completed: ${subtask}`);
+            }
+          });
+        } else {
+          console.log(`    ❌ Pattern "${check}" not found in code`);
         }
-        if (userCodeClean.includes('sum(') && userCodeClean.includes('incomes')) {
-          tasks[taskKey].completed.push("Calculate total income with sum()");
+      });
+    }
+    
+    // Additional pattern matching for specific subtasks that need multiple patterns
+    if (taskKey === 'task3') {
+      // For "Show completed and incomplete status" - check if we have both status indicators
+      const hasCompletedStatus = userCodeClean.includes('✔️') && userCodeClean.includes('❌');
+      const hasCompletedLogic = userCodeClean.includes('t["completed"]') || userCodeClean.includes("t['completed']");
+      
+      if (hasCompletedStatus && hasCompletedLogic) {
+        const statusSubtask = "Show completed and incomplete status";
+        if (!tasks[taskKey].completed.includes(statusSubtask)) {
+          tasks[taskKey].completed.push(statusSubtask);
+          console.log(`    ✅ Completed: ${statusSubtask} (via status indicators)`);
         }
-        if (userCodeClean.includes('sum(') && userCodeClean.includes('expenses')) {
-          tasks[taskKey].completed.push("Calculate total expenses with sum()");
+      }
+    }
+    
+    if (taskKey === 'task4') {
+      // For "Show confirmation or error" - check if we have both confirmation and error messages
+      const hasConfirmation = userCodeClean.includes('task marked as completed') || userCodeClean.includes('✅ task marked as completed');
+      const hasError = userCodeClean.includes('invalid task number') || userCodeClean.includes('❌ invalid task number');
+      
+      if (hasConfirmation && hasError) {
+        const confirmationSubtask = "Show confirmation or error";
+        if (!tasks[taskKey].completed.includes(confirmationSubtask)) {
+          tasks[taskKey].completed.push(confirmationSubtask);
+          console.log(`    ✅ Completed: ${confirmationSubtask} (via confirmation and error messages)`);
         }
-        if (userCodeClean.includes('print') && userCodeClean.includes('show_summary')) {
-          tasks[taskKey].completed.push("Display formatted summary");
-        }
-        break;
-        
-      case 'task5': // Data Management
-        if (userCodeClean.includes('incomes = []') || userCodeClean.includes('incomes=[]') || userCodeClean.includes('incomes =[]')) {
-          tasks[taskKey].completed.push("Initialize incomes list");
-        }
-        if (userCodeClean.includes('expenses = []') || userCodeClean.includes('expenses=[]') || userCodeClean.includes('expenses =[]')) {
-          tasks[taskKey].completed.push("Initialize expenses list");
-        }
-        if (userCodeClean.includes('incomes.append') && userCodeClean.includes('add_income')) {
-          tasks[taskKey].completed.push("Add income to list in main loop");
-        }
-        if (userCodeClean.includes('expenses.append') && userCodeClean.includes('add_expense')) {
-          tasks[taskKey].completed.push("Add expense to list in main loop");
-        }
-        break;
-        
-      case 'task6': // Menu Logic Implementation
-        if (userCodeClean.includes("if choice == '1'") || userCodeClean.includes("if choice == '1':")) {
-          tasks[taskKey].completed.push("Handle choice == '1' (Add Income)");
-        }
-        if (userCodeClean.includes("elif choice == '2'") || userCodeClean.includes("if choice == '2'")) {
-          tasks[taskKey].completed.push("Handle choice == '2' (Add Expense)");
-        }
-        if (userCodeClean.includes("elif choice == '3'") || userCodeClean.includes("if choice == '3'")) {
-          tasks[taskKey].completed.push("Handle choice == '3' (View Summary)");
-        }
-        if (userCodeClean.includes("elif choice == '4'") || userCodeClean.includes("if choice == '4'")) {
-          tasks[taskKey].completed.push("Handle choice == '4' (Exit)");
-        }
-        if ((userCodeClean.includes("else:") || userCodeClean.includes("else :")) && (userCodeClean.includes("invalid choice") || userCodeClean.includes("invalid") || userCodeClean.includes("try again"))) {
-          tasks[taskKey].completed.push("Handle invalid choices");
-        }
-        break;
-        
-      default:
-        // Fallback to generic checking for other tasks
-        task.codeChecks.forEach(check => {
-          if (userCodeClean.includes(check.toLowerCase())) {
-            const matchingSubtasks = task.subtasks.filter(subtask => 
-              subtask.toLowerCase().includes(check.toLowerCase().replace(/[()]/g, ''))
-            );
-            matchingSubtasks.forEach(subtask => {
-              if (!tasks[taskKey].completed.includes(subtask)) {
-                tasks[taskKey].completed.push(subtask);
-              }
-            });
-          }
-        });
+      }
     }
   });
   
+  console.log('=== END DEBUG ===');
   return tasks;
 };
 

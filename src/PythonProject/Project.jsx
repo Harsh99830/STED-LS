@@ -3,7 +3,7 @@ import CodeEditor from './CodeEditor';
 import Statement from './Statement';
 import AI from './AI';
 import { useUser } from '@clerk/clerk-react';
-import { ref, update } from 'firebase/database';
+import { ref, update, get } from 'firebase/database';
 import { db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -29,11 +29,22 @@ function Project() {
   // Load project configuration
   useEffect(() => {
     const fetchConfig = async () => {
-      const config = await getProjectConfig('project1');
-      setProjectConfig(config);
+      if (!user) return;
+      try {
+        const userRef = ref(db, 'users/' + user.id + '/python');
+        const userSnap = await get(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.val();
+          const projectKey = userData.PythonCurrentProject || 'Project1';
+          const config = await getProjectConfig(projectKey);
+          setProjectConfig(config);
+        }
+      } catch (err) {
+        setProjectConfig(null);
+      }
     };
     fetchConfig();
-  }, []);
+  }, [user]);
 
   // Handle browser back button and page refresh
   useEffect(() => {
@@ -171,6 +182,19 @@ function Project() {
     // Build comprehensive feedback
     let feedbackContent = `**📋 COMPREHENSIVE CODE REVIEW - ${projectConfig.title}**\n\n`;
     
+    // Gaming detection section
+    const allGamingIssues = Object.values(taskProgress)
+      .filter(task => task.gamingIssues && task.gamingIssues.length > 0)
+      .flatMap(task => task.gamingIssues);
+    
+    if (allGamingIssues.length > 0) {
+      feedbackContent += `**🚨 GAMING DETECTION WARNINGS:**\n`;
+      allGamingIssues.forEach(issue => {
+        feedbackContent += `• ${issue}\n`;
+      });
+      feedbackContent += `\n`;
+    }
+    
     // Missing components section
     if (missingComponents.length > 0) {
       feedbackContent += `**❌ Missing Components:**\n${missingComponents.map(item => `• ${item}`).join('\n')}\n\n`;
@@ -207,12 +231,14 @@ function Project() {
       .every(([key, value]) => value);
     const allFunctionalityWorking = outputAnalysis.functionalityChecks ? 
       Object.values(outputAnalysis.functionalityChecks).every(check => check) : false;
+    const noGamingAttempts = allGamingIssues.length === 0;
     
     const isFullyWorking = allTasksComplete && 
                           allLogicValid && 
                           outputAnalysis.isWorking && 
                           missingComponents.length === 0 &&
-                          allFunctionalityWorking;
+                          allFunctionalityWorking &&
+                          noGamingAttempts;
     
     feedbackContent += `\n\n**🎯 Overall Status:** ${isFullyWorking ? '🎉 PROJECT COMPLETED!' : '🔄 Work in Progress'}`;
     
@@ -223,6 +249,7 @@ function Project() {
       if (!outputAnalysis.isWorking) feedbackContent += `\n• Fix runtime errors`;
       if (missingComponents.length > 0) feedbackContent += `\n• Add missing components`;
       if (!allFunctionalityWorking) feedbackContent += `\n• Test all functionality`;
+      if (!noGamingAttempts) feedbackContent += `\n• Fix gaming detection issues - write actual code, not just text`;
     }
     
     const submitMessage = {

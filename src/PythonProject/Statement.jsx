@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { ref, get } from 'firebase/database';
 import { db } from '../firebase';
+import { getProjectConfig } from './projectConfig';
 
 function Statement() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -33,15 +34,14 @@ function Statement() {
           setLoading(false);
           return;
         }
-        // Get project data
-        const projectRef = ref(db, 'PythonProject/' + startedKey);
-        const projectSnap = await get(projectRef);
-        if (!projectSnap.exists()) {
+        // Get project data using utility
+        const projectData = await getProjectConfig(startedKey);
+        if (!projectData) {
           setError('Project not found.');
           setLoading(false);
           return;
         }
-        setProject(projectSnap.val());
+        setProject(projectData);
         setLoading(false);
       } catch (err) {
         setError('Failed to load project: ' + err.message);
@@ -88,17 +88,7 @@ function Statement() {
       </h1>
       <p className="mb-4 text-lg" style={{ color: '#e5e7eb' }}>{project.description}</p>
 
-      {/* Concepts Used Section */}
-      {(project.Concept || project.concepts) && (
-        <div className="mb-4">
-          <div className="mb-2 text-xl font-semibold" style={{ color: '#38bdf8' }}>Concepts Used</div>
-          <ul className="list-disc ml-6">
-            {(project.Concept || project.concepts).map((concept, idx) => (
-              <li key={idx} className="text-base" style={{ color: '#f3f4f6' }}>{concept}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+     
 
       <div className="mb-2 text-xl font-semibold" style={{ color: '#f472b6' }}>Project Tasks</div>
       <div className="space-y-6">
