@@ -18,6 +18,7 @@ function Project() {
   const [rightPanel, setRightPanel] = useState('statement');
   const [isExplaining, setIsExplaining] = useState(false);
   const [showEndProjectOverlay, setShowEndProjectOverlay] = useState(false);
+  const [showCongratulationsOverlay, setShowCongratulationsOverlay] = useState(false);
   const [userCode, setUserCode] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [terminalOutput, setTerminalOutput] = useState([]);
@@ -83,6 +84,38 @@ function Project() {
 
   const handleEndProjectCancel = () => {
     setShowEndProjectOverlay(false);
+  };
+
+  const handleCongratulationsSubmit = async () => {
+    try {
+      if (user) {
+        const userRef = ref(db, 'users/' + user.id);
+        const projectData = {
+          code: userCode,
+          chatHistory: chatMessages,
+          completedAt: new Date().toISOString(),
+          projectType: 'Personal Finance Tracker',
+          terminalOutput: terminalOutput
+        };
+        
+        const updates = {
+          'python/Project1': projectData,
+          'python/PythonProjectStarted': false
+        };
+        await update(userRef, updates);
+      }
+      console.log('Project submitted successfully');
+      setShowCongratulationsOverlay(false);
+      navigate('/python');
+    } catch (err) {
+      console.error('Failed to submit project:', err);
+      setShowCongratulationsOverlay(false);
+      navigate('/python');
+    }
+  };
+
+  const handleCongratulationsClose = () => {
+    setShowCongratulationsOverlay(false);
   };
 
   const handleSubmit = () => {
@@ -154,7 +187,9 @@ function Project() {
     
     // Overall assessment - Much stricter now
     const allTasksComplete = Object.values(taskProgress).every(task => task.completed.length === task.subtasks.length);
-    const allLogicValid = Object.values(logicValidation).every(check => typeof check === 'boolean' ? check : true);
+    const allLogicValid = Object.entries(logicValidation)
+      .filter(([key, value]) => typeof value === 'boolean')
+      .every(([key, value]) => value);
     const allFunctionalityWorking = outputAnalysis.functionalityChecks ? 
       Object.values(outputAnalysis.functionalityChecks).every(check => check) : false;
     
@@ -184,6 +219,13 @@ function Project() {
     
     setChatMessages(prev => [...prev, submitMessage]);
     setRightPanel('ai');
+    
+    // Show congratulations overlay if project is completed
+    if (isFullyWorking) {
+      setTimeout(() => {
+        setShowCongratulationsOverlay(true);
+      }, 1000);
+    }
   };
 
   const handleStuckClick = () => {
@@ -239,6 +281,52 @@ function Project() {
                 className="bg-gray-300 text-gray-800 px-6 py-2 rounded hover:bg-gray-400"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Congratulations Overlay */}
+      {showCongratulationsOverlay && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.7)',
+          zIndex: 1001,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '40px',
+            borderRadius: '20px',
+            minWidth: '400px',
+            textAlign: 'center',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            color: 'white',
+            animation: 'fadeInScale 0.5s ease-out'
+          }}>
+            <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🎉</div>
+            <h2 className="text-3xl font-bold mb-4">Congratulations!</h2>
+            <p className="text-xl mb-6">You've successfully completed the Personal Finance Tracker project!</p>
+            <p className="text-lg mb-8">All requirements have been met and your code is working perfectly.</p>
+            <div className="flex gap-4 justify-center">
+              <button 
+                onClick={handleCongratulationsSubmit} 
+                className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 font-semibold text-lg transition-colors"
+              >
+                Submit Project
+              </button>
+              <button 
+                onClick={handleCongratulationsClose} 
+                className="bg-white text-gray-800 px-8 py-3 rounded-lg hover:bg-gray-100 font-semibold text-lg transition-colors"
+              >
+                Continue Working
               </button>
             </div>
           </div>

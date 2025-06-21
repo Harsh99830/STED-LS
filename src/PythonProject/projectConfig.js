@@ -222,7 +222,7 @@ export const analyzeTerminalOutput = (output, config) => {
 
   // Overall assessment
   const allFunctionalityWorking = Object.values(analysis.functionalityChecks).every(check => check);
-  if (analysis.hasMenu && analysis.hasInput && !analysis.hasErrors) {
+  if (allFunctionalityWorking && !analysis.hasErrors) {
     analysis.isWorking = true;
     analysis.feedback.push("🎉 Program is working correctly!");
   } else if (analysis.hasErrors) {
@@ -267,6 +267,14 @@ export const validateCodeLogic = (userCode, config) => {
     logicChecks.feedback.push(`❌ Missing logic: ${missingLogic.join(', ')}`);
   }
 
+  // Check for proper if-elif structure
+  if (userCode.includes("if choice == '1'") && userCode.includes("elif choice == '2'") && userCode.includes("elif choice == '3'") && userCode.includes("elif choice == '4'")) {
+    logicChecks.hasProperIfElifStructure = true;
+    logicChecks.feedback.push("✅ Proper if-elif structure for menu handling");
+  } else {
+    logicChecks.feedback.push("❌ Missing proper if-elif structure for menu handling");
+  }
+
   // Check for break statement
   if (userCode.includes("break")) {
     logicChecks.hasBreakStatement = true;
@@ -276,7 +284,7 @@ export const validateCodeLogic = (userCode, config) => {
   }
 
   // Check for error handling
-  if (userCode.includes("else:") && userCode.includes("Invalid choice")) {
+  if (userCode.includes("else:") && (userCode.toLowerCase().includes("invalid choice") || userCode.toLowerCase().includes("invalid") || userCode.toLowerCase().includes("try again"))) {
     logicChecks.hasErrorHandling = true;
     logicChecks.feedback.push("✅ Error handling for invalid choices");
   } else {

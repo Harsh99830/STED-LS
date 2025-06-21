@@ -164,7 +164,6 @@ builtins.input = input_async
             background: '#222',
             color: '#fff',
             padding: '8px 16px',
-            border: 'none',
             cursor: 'pointer',
             borderRadius: '5px',
             border: '2px solid #007acc'
