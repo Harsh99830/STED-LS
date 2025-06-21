@@ -4,7 +4,7 @@ import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import { useUser } from "@clerk/clerk-react";
 import { motion } from "framer-motion";
-import { getDatabase, ref, get } from "firebase/database";
+import { getDatabase, ref, get, update } from "firebase/database";
 import { db } from "../firebase";
 
 function Python() {
@@ -52,7 +52,7 @@ function Python() {
   }, [isLoaded, isSignedIn, user]);
 
   useEffect(() => {
-    if (userData.PythonStartedProject === "Project1") {
+    if (userData.python && userData.python.PythonCurrentProject === "Project1") {
       setProjectLoading(true);
       setProjectError("");
       const projectRef = ref(db, "PythonProject/Project1");
@@ -74,10 +74,38 @@ function Python() {
       setProjectData(null);
       setProjectError("");
     }
-  }, [userData.PythonStartedProject]);
+  }, [userData.python]);
 
   const toggleProgress = () => {
     setShowProgress(!showProgress);
+  };
+
+  const handleStartProject = async () => {
+    if (!user) return;
+    
+    try {
+      const userRef = ref(db, 'users/' + user.id);
+      const updates = {
+        'python/PythonProjectStarted': true
+      };
+      await update(userRef, updates);
+      
+      // Update local state
+      setUserData(prev => ({
+        ...prev,
+        python: {
+          ...prev.python,
+          PythonProjectStarted: true
+        }
+      }));
+      
+      // Navigate to project page
+      navigate('/python/project');
+    } catch (err) {
+      console.error('Failed to update project status:', err);
+      // Still navigate even if update fails
+      navigate('/python/project');
+    }
   };
 
   if (isLoading) {
@@ -220,7 +248,7 @@ function Python() {
               <h2 className="text-2xl font-bold text-white mb-6">
                 🔥 Your Next Project
               </h2>
-              {userData.PythonStartedProject === 'Project1' ? (
+              {userData.python && userData.python.PythonCurrentProject === 'Project1' ? (
                 projectLoading ? (
                   <div className="text-white">Loading project...</div>
                 ) : projectError ? (
@@ -245,8 +273,8 @@ function Python() {
                         </div>
                       </div>
                     </div>
-                    <Link
-                      to="/python/project"
+                    <button
+                      onClick={handleStartProject}
                       className="inline-flex items-center gap-2 bg-purple-900 text-white hover:bg-purple-700 font-semibold px-4 py-2 rounded-lg shadow-md transition-colors"
                     >
                       🚀 Start Project
@@ -263,50 +291,13 @@ function Python() {
                           d="M9 5l7 7-7 7"
                         />
                       </svg>
-                    </Link>
+                    </button>
                   </>
-                ) : null
+                ) : (
+                  <div className="text-white">No project assigned. Click "Start Learning" to begin your first project.</div>
+                )
               ) : (
-                <>
-                  <div className="bg-[#3B3B3F] bg-opacity-30 rounded-xl p-5 mb-6 border border-purple-400 shadow-inner">
-                    <h3 className="text-xl font-semibold text-white mb-2">
-                      📊 Personal Finance Tracker
-                    </h3>
-                    <p className="text-purple-100 text-sm leading-relaxed">
-                      Build a Python console app that helps manage your income,
-                      expenses, and calculate balance easily.
-                    </p>
-                    <div className="mt-4 space-y-1">
-                      <p className="text-purple-200 text-xs">
-                        💡 Concepts: <span className="text-black bg-white rounded">Functions</span>, Lists, Dictionaries, Loops
-                      </p>
-                      <div className="flex items-center gap-3 text-purple-100 text-sm pt-2">
-                        <span className="bg-purple-800 bg-opacity-50 rounded-full px-3 py-1">
-                          🎯 +400 XP
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <Link
-                    to="/python/project"
-                    className="inline-flex items-center gap-2 bg-purple-900 text-white hover:bg-purple-700 font-semibold px-4 py-2 rounded-lg shadow-md transition-colors"
-                  >
-                    🚀 Start Project
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </Link>
-                </>
+                <div className="text-white">No project assigned. Click "Start Learning" to begin your first project.</div>
               )}
             </motion.div>
 

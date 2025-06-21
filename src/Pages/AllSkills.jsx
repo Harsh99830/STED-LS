@@ -125,6 +125,18 @@ function AllSkills() {
             const updates = {
                 [`${skill.node}/${skill.currentProjectField}`]: skill.value,
             };
+            
+            // Add ProjectStarted field for each skill
+            if (skill.node === 'python') {
+                updates[`${skill.node}/PythonProjectStarted`] = false;
+            } else if (skill.node === 'data-science') {
+                updates[`${skill.node}/DataScienceProjectStarted`] = false;
+            } else if (skill.node === 'public-speaking') {
+                updates[`${skill.node}/PublicSpeakingProjectStarted`] = false;
+            } else if (skill.node === 'powerbi') {
+                updates[`${skill.node}/PowerBiProjectStarted`] = false;
+            }
+            
             await update(userRef, updates);
             setShowOverlay(false);
             setPendingSkill(null);

@@ -114,7 +114,7 @@ builtins.input = input_async
   };
 
   return (
-    <div style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', paddingTop: '20px' }}>
+    <div style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1 }}>
         <Editor
           height="100%"

@@ -74,9 +74,9 @@ function Statement() {
 
   return (
     <div
-      className="p-8 max-w-2xl mx-auto rounded-2xl shadow-lg mt-6 animate-fadeIn"
+      className="p-8 max-w-2xl shadow-lg mt-6 animate-fadeIn"
       style={{
-        maxHeight: '85vh',
+        maxHeight: '79vh',
         overflowY: 'auto',
         background: '#18181b', // slate-900
         color: '#f3f4f6', // slate-100
