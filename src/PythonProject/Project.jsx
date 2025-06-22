@@ -35,9 +35,11 @@ function Project() {
         const userSnap = await get(userRef);
         if (userSnap.exists()) {
           const userData = userSnap.val();
-          const projectKey = userData.PythonCurrentProject || 'Project1';
-          const config = await getProjectConfig(projectKey);
-          setProjectConfig(config);
+          const projectKey = userData.PythonCurrentProject;
+          if (projectKey) {
+            const config = await getProjectConfig(projectKey);
+            setProjectConfig(config);
+          }
         }
       } catch (err) {
         setProjectConfig(null);
@@ -104,9 +106,12 @@ function Project() {
       if (user) {
         const userRef = ref(db, 'users/' + user.id);
         // Determine current project number from PythonCurrentProject or fallback to Project1
-        let currentProject = 'Project1';
-        if (user.PythonCurrentProject) {
-          currentProject = user.PythonCurrentProject;
+        const userPythonRef = ref(db, 'users/' + user.id + '/python');
+        const userPythonSnap = await get(userPythonRef);
+        let currentProject = 'Project1'; // fallback
+        if (userPythonSnap.exists()) {
+          const userPythonData = userPythonSnap.val();
+          currentProject = userPythonData.PythonCurrentProject || 'Project1';
         }
         // Save project data
         const projectData = {

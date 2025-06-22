@@ -52,10 +52,10 @@ function Python() {
   }, [isLoaded, isSignedIn, user]);
 
   useEffect(() => {
-    if (userData.python && userData.python.PythonCurrentProject === "Project1") {
+    if (userData.python && userData.python.PythonCurrentProject) {
       setProjectLoading(true);
       setProjectError("");
-      const projectRef = ref(db, "PythonProject/Project1");
+      const projectRef = ref(db, `PythonProject/${userData.python.PythonCurrentProject}`);
       get(projectRef)
         .then((snapshot) => {
           if (snapshot.exists()) {
@@ -248,7 +248,7 @@ function Python() {
               <h2 className="text-2xl font-bold text-white mb-6">
                 🔥 Your Next Project
               </h2>
-              {userData.python && userData.python.PythonCurrentProject === 'Project1' ? (
+              {userData.python && userData.python.PythonCurrentProject ? (
                 projectLoading ? (
                   <div className="text-white">Loading project...</div>
                 ) : projectError ? (
