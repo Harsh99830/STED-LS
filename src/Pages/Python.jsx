@@ -3,10 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import { useUser } from "@clerk/clerk-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { getDatabase, ref, get, update } from "firebase/database";
 import { db } from "../firebase";
 import ConceptLearned from "../components/ConceptLearned";
+import Learned from "../assets/learned.png";
+import Applied from "../assets/applied.png";
+import Project from "../assets/project.png";
 
 function Python() {
   const navigate = useNavigate();
@@ -24,6 +27,8 @@ function Python() {
   const [projectData, setProjectData] = useState(null);
   const [projectLoading, setProjectLoading] = useState(false);
   const [projectError, setProjectError] = useState("");
+  const [conceptStats, setConceptStats] = useState({ learned: 0, applied: 0, total: 0 });
+  const [showProjectOverlay, setShowProjectOverlay] = useState(false);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -77,20 +82,44 @@ function Python() {
     }
   }, [userData.python]);
 
+  useEffect(() => {
+    async function fetchConceptStats() {
+      if (!userData?.python) return;
+      // Fetch all concepts
+      const allConceptsRef = ref(db, 'PythonProject/AllConcepts/category');
+      const allConceptsSnap = await get(allConceptsRef);
+      let totalConcepts = 0;
+      if (allConceptsSnap.exists()) {
+        const data = allConceptsSnap.val();
+        totalConcepts = [
+          ...Object.values(data.basic || {}),
+          ...Object.values(data.intermediate || {}),
+          ...Object.values(data.advanced || {}),
+        ].length;
+      }
+      // Get learned concepts
+      const learnedConcepts = Array.isArray(userData.python.learnedConcepts) ? userData.python.learnedConcepts : [];
+      const learned = learnedConcepts.length;
+      const applied = learnedConcepts.filter(c => c.usedInProject).length;
+      setConceptStats({ learned, applied, total: totalConcepts });
+    }
+    fetchConceptStats();
+  }, [userData]);
+
   const toggleProgress = () => {
     setShowProgress(!showProgress);
   };
 
   const handleStartProject = async () => {
     if (!user) return;
-    
+
     try {
       const userRef = ref(db, 'users/' + user.id);
       const updates = {
         'python/PythonProjectStarted': true
       };
       await update(userRef, updates);
-      
+
       // Update local state
       setUserData(prev => ({
         ...prev,
@@ -99,7 +128,7 @@ function Python() {
           PythonProjectStarted: true
         }
       }));
-      
+
       // Navigate to project page
       navigate('/python/project');
     } catch (err) {
@@ -107,6 +136,19 @@ function Python() {
       // Still navigate even if update fails
       navigate('/python/project');
     }
+  };
+
+  const handleNextProjectClick = () => {
+    setShowProjectOverlay(true);
+  };
+
+  const handleCustomProjectClick = () => {
+    // TODO: Implement custom project functionality
+    console.log("Custom project clicked");
+  };
+
+  const handleCloseProjectOverlay = () => {
+    setShowProjectOverlay(false);
   };
 
   if (isLoading) {
@@ -150,16 +192,16 @@ function Python() {
                 </p>
               </div>
               {/* <Link
-                                to="/task"
-                                className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
-                            >
-                                Start Next Challenge
-                            </Link> */}
+                    to="/task"
+                    className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Start Next Challenge
+                  </Link> */}
             </div>
           </div>
 
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -193,7 +235,7 @@ function Python() {
                   </h3>
                 </div>
                 <div className="bg-purple-50 p-3 rounded-full">
-                  <span className="text-2xl">💻</span>
+                  <span className=""><img className="w-7" src={Project} alt="" /></span>
                 </div>
               </div>
             </motion.div>
@@ -206,13 +248,13 @@ function Python() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Total XP</p>
+                  <p className="text-sm text-slate-600">Concepts Learned</p>
                   <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                    {userData.xp || 0}
+                    {conceptStats.learned} / {conceptStats.total}
                   </h3>
                 </div>
                 <div className="bg-purple-50 p-3 rounded-full">
-                  <span className="text-2xl">⭐</span>
+                  <span className="text-2xl"><img className="w-7" src={Learned} alt="" /></span>
                 </div>
               </div>
             </motion.div>
@@ -225,29 +267,36 @@ function Python() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Learning Streak</p>
+                  <p className="text-sm text-slate-600">Concepts Applied</p>
                   <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                    0 Days
+                    {conceptStats.applied} / {conceptStats.learned}
                   </h3>
                 </div>
-                <div className="bg-purple-50 p-3 rounded-full">
-                  <span className="text-2xl">🔥</span>
+                <div className="bg-yellow-50 p-3 rounded-full">
+                  <span className="text-2xl"><img className="w-7" src={Applied} alt="" /></span>
                 </div>
               </div>
             </motion.div>
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-            {/* Next Project Card */}
+          <div className="flex gap-6 mt-13 items-start">
+            {/* Learning Resources */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="bg-gradient-to-br from-[#C642F5] via-[#A633D9] to-[#8C1EB6] rounded-2xl shadow-2xl p-6 hover:scale-[1.02] transition-transform"
+              transition={{ duration: 0.5 }}
+              className="bg-white w-250  rounded-lg shadow-md p-6"
+            >
+              <ConceptLearned />
+            </motion.div>
+
+            {/* Project Card - Make sticky on large screens */}
+            <motion.div
+              className="bg-gradient-to-br from-[#C642F5] via-[#A633D9] to-[#8C1EB6] w-200 h-76 rounded-lg shadow-2xl p-6 lg:sticky lg:top-28"
             >
               <h2 className="text-2xl font-bold text-white mb-6">
-                🔥 Your Next Project
+                Project
               </h2>
               {userData.python && userData.python.PythonCurrentProject ? (
                 projectLoading ? (
@@ -256,43 +305,37 @@ function Python() {
                   <div className="text-red-300">{projectError}</div>
                 ) : projectData ? (
                   <>
-                    <div className="bg-[#3B3B3F] bg-opacity-30 rounded-xl p-5 mb-6 border border-purple-400 shadow-inner">
-                      <h3 className="text-xl font-semibold text-white mb-2">
-                        {projectData.title}
-                      </h3>
-                      <p className="text-purple-100 text-sm leading-relaxed">
-                        {projectData.description}
-                      </p>
-                      <div className="mt-4 space-y-1">
-                        <p className="text-purple-200 text-xs">
-                          💡 Concepts: <span className="text-black bg-white rounded">{projectData.Concept}</span>
-                        </p>
-                        <div className="flex items-center gap-3 text-purple-100 text-sm pt-2">
-                          <span className="bg-purple-800 bg-opacity-50 rounded-full px-3 py-1">
-                            🎯 +{projectData.XP} XP
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleStartProject}
-                      className="inline-flex items-center gap-2 bg-purple-900 text-white hover:bg-purple-700 font-semibold px-4 py-2 rounded-lg shadow-md transition-colors"
-                    >
-                      🚀 Start Project
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    <div className="flex justify-center mt-10">
+                    <div className="space-y-9 w-100">
+                      <button
+                        onClick={handleNextProjectClick}
+                        className="w-full inline-flex items-center cursor-pointer justify-center gap-2 bg-purple-900 text-white hover:bg-purple-700 font-semibold px-4 py-3 rounded-lg shadow-md transition-colors"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </button>
+                        🚀 Next Project
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </button>
+                      
+                      <button
+                        onClick={handleCustomProjectClick}
+                        className="w-full inline-flex items-center justify-center gap-2 text-white cursor-pointer font-semibold px-4 py-3 rounded-lg shadow-md transition-colors border border-white border-opacity-30"
+                      >
+                        ⚙️ Custom Project
+                        
+                      </button>
+                    </div>
+                    </div>
                   </>
                 ) : (
                   <div className="text-white">No project assigned. Click "Start Learning" to begin your first project.</div>
@@ -302,123 +345,96 @@ function Python() {
               )}
             </motion.div>
 
-            {/* Skill Progress */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-              className="bg-white rounded-lg shadow-md p-6"
-            >
-              <h2 className="text-xl font-semibold text-slate-800 mb-4">
-                Skill Progress
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-slate-600">Python</span>
-                    <span className="text-sm font-medium text-slate-800">
-                      {userData.pythonSkill || 45}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div
-                      className="bg-purple-600 h-2 rounded-full"
-                      style={{ width: `${userData.pythonSkill || 45}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-slate-600">SQL</span>
-                    <span className="text-sm font-medium text-slate-800">
-                      {userData.sqlSkill || 30}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div
-                      className="bg-green-600 h-2 rounded-full"
-                      style={{ width: `${userData.sqlSkill || 30}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-slate-600">
-                      Machine Learning
-                    </span>
-                    <span className="text-sm font-medium text-slate-800">
-                      {userData.mlSkill || 20}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div
-                      className="bg-yellow-500 h-2 rounded-full"
-                      style={{ width: `${userData.mlSkill || 20}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+            {/* Project Details Overlay */}
+            <AnimatePresence>
+              {showProjectOverlay && projectData && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+                  onClick={handleCloseProjectOverlay}
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                    className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-6 text-white">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h2 className="text-2xl font-bold mb-2">{projectData.title}</h2>
+                          <p className="text-purple-100 text-sm leading-relaxed">
+                            {projectData.description}
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleCloseProjectOverlay}
+                          className="text-white hover:text-purple-200 transition-colors text-2xl font-bold"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
 
-            {/* Learning Resources */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="bg-white rounded-lg shadow-md p-6"
-            >
-            <ConceptLearned/>   
-            </motion.div>
+                    {/* Content */}
+                    <div className="p-6">
+                      {/* Concepts Used */}
+                      <div className="mb-6">
+                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-left">
+                          <span className="text-purple-600 mr-2">💡</span>
+                          Concepts Used
+                        </h3>
+                        <ul className="space-y-2">
+                          {(Array.isArray(projectData.Concept) ? projectData.Concept : projectData.Concept.split(',').map(c => c.trim())).map((concept, index) => (
+                            <li
+                              key={index}
+                              className="bg-purple-100 text-left text-purple-700 px-3 py-2 rounded-lg text-sm font-medium list-none"
+                            >
+                              {concept}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
 
-            {/* Recent Achievements */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="bg-white rounded-lg shadow-md p-6"
-            >
-              <h2 className="text-xl font-semibold text-slate-800 mb-4">
-                Recent Achievements
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-center p-3 bg-slate-50 rounded-lg">
-                  <div className="bg-yellow-100 p-2 rounded-full mr-3">
-                    <span className="text-lg">🏆</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-slate-800">
-                      Python Basics Mastered
-                    </h3>
-                    <p className="text-slate-600 text-sm">
-                      Completed the Python fundamentals course
-                    </p>
-                  </div>
-                  <div className="ml-auto">
-                    <span className="text-sm font-medium text-yellow-600">
-                      +200 XP
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center p-3 bg-slate-50 rounded-lg">
-                  <div className="bg-purple-100 p-2 rounded-full mr-3">
-                    <span className="text-lg">📊</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-slate-800">
-                      First Data Analysis
-                    </h3>
-                    <p className="text-slate-600 text-sm">
-                      Completed your first data analysis project
-                    </p>
-                  </div>
-                  <div className="ml-auto">
-                    <span className="text-sm font-medium text-purple-600">
-                      +150 XP
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={handleStartProject}
+                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                        >
+                          🚀 Start Project
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={handleCloseProjectOverlay}
+                          className="px-6 py-3 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
