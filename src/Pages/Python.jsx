@@ -6,6 +6,7 @@ import { useUser } from "@clerk/clerk-react";
 import { motion } from "framer-motion";
 import { getDatabase, ref, get, update } from "firebase/database";
 import { db } from "../firebase";
+import ConceptLearned from "../components/ConceptLearned";
 
 function Python() {
   const navigate = useNavigate();
@@ -366,48 +367,7 @@ function Python() {
               transition={{ duration: 0.5 }}
               className="bg-white rounded-lg shadow-md p-6"
             >
-              <h2 className="text-xl font-semibold text-slate-800 mb-4">
-                Learning Resources
-              </h2>
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="bg-purple-50 p-2 rounded-full mr-3">
-                    <span className="text-lg">📚</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-slate-800">
-                      Python Documentation
-                    </h3>
-                    <p className="text-slate-600 text-sm mt-1">
-                      Official Python documentation and tutorials
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="bg-purple-50 p-2 rounded-full mr-3">
-                    <span className="text-lg">🔍</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-slate-800">SQL Practice</h3>
-                    <p className="text-slate-600 text-sm mt-1">
-                      Interactive SQL exercises and challenges
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="bg-purple-50 p-2 rounded-full mr-3">
-                    <span className="text-lg">🤖</span>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-slate-800">
-                      ML Fundamentals
-                    </h3>
-                    <p className="text-slate-600 text-sm mt-1">
-                      Basic concepts and algorithms in ML
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <ConceptLearned/>   
             </motion.div>
 
             {/* Recent Achievements */}
