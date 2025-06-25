@@ -41,8 +41,8 @@ function Start() {
           </motion.div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-slate-800 mb-6 leading-tight">
-            <span className="block">Build skills</span>
-            <span className="block text-blue-700">by <em>doing</em></span>
+            <span className="block">Apply & Track</span>
+            <span className="block text-blue-700">your <em>Learning</em></span>
           </h1>
 
           <p className="text-lg text-slate-600 mb-12 max-w-xl leading-relaxed">

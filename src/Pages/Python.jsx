@@ -183,117 +183,152 @@ function Python() {
         <Sidebar />
         <div className="w-full relative px-4 lg:px-8 pb-12">
           {/* Header Section */}
-          <div className="mt-8">
-            <div className="flex items-center justify-between">
-              <div className="text-left">
+           
+              <div className="text-left mt-6">
                 <h1 className="text-3xl font-bold text-slate-800">Python</h1>
-                <p className="text-slate-600 mt-2">
-                  Master Python, SQL, and Machine Learning
-                </p>
-              </div>
-              {/* <Link
-                    to="/task"
-                    className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    Start Next Challenge
-                  </Link> */}
             </div>
-          </div>
+          
 
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="bg-white rounded-lg shadow-md p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Current Level</p>
-                  <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                    {userData.level || "Beginner"}
-                  </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            {/* Stats Cards */}
+            <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="bg-white rounded-lg shadow-md p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Current Level</p>
+                    <h3 className="text-2xl font-bold text-slate-800 mt-1">
+                      {userData.level || "Beginner"}
+                    </h3>
+                  </div>
+                  <div className="bg-purple-50 p-3 rounded-full">
+                    <span className="text-2xl">📊</span>
+                  </div>
                 </div>
-                <div className="bg-purple-50 p-3 rounded-full">
-                  <span className="text-2xl">📊</span>
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-white rounded-lg shadow-md p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Projects Completed</p>
-                  <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                    {userData.tasksCompleted || 0}
-                  </h3>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="bg-white rounded-lg shadow-md p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Projects Completed</p>
+                    <h3 className="text-2xl font-bold text-slate-800 mt-1">
+                      {userData.tasksCompleted || 0}
+                    </h3>
+                  </div>
+                  <div className="bg-purple-50 p-3 rounded-full">
+                    <span className=""><img className="w-7" src={Project} alt="" /></span>
+                  </div>
                 </div>
-                <div className="bg-purple-50 p-3 rounded-full">
-                  <span className=""><img className="w-7" src={Project} alt="" /></span>
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="bg-white rounded-lg shadow-md p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Concepts Learned</p>
-                  <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                    {conceptStats.learned} / {conceptStats.total}
-                  </h3>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="bg-white rounded-lg shadow-md p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Concepts Learned</p>
+                    <h3 className="text-2xl font-bold text-slate-800 mt-1">
+                      {conceptStats.learned} / {conceptStats.total}
+                    </h3>
+                  </div>
+                  <div className="bg-purple-50 p-3 rounded-full">
+                    <span className="text-2xl"><img className="w-7" src={Learned} alt="" /></span>
+                  </div>
                 </div>
-                <div className="bg-purple-50 p-3 rounded-full">
-                  <span className="text-2xl"><img className="w-7" src={Learned} alt="" /></span>
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="bg-white rounded-lg shadow-md p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Concepts Applied</p>
+                    <h3 className="text-2xl font-bold text-slate-800 mt-1">
+                      {conceptStats.applied} / {conceptStats.learned}
+                    </h3>
+                  </div>
+                  <div className="bg-yellow-50 p-3 rounded-full">
+                    <span className="text-2xl"><img className="w-7" src={Applied} alt="" /></span>
+                  </div>
+                </div>
+              </motion.div>
+
+              
+            </div>
+
+            {/* Concept Status Card - moved to right side */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="bg-white rounded-lg shadow-md p-6"
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="bg-white rounded-lg shadow-md p-6 h-full flex flex-col justify-between"
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Concepts Applied</p>
-                  <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                    {conceptStats.applied} / {conceptStats.learned}
-                  </h3>
-                </div>
-                <div className="bg-yellow-50 p-3 rounded-full">
-                  <span className="text-2xl"><img className="w-7" src={Applied} alt="" /></span>
-                </div>
+              <div>
+              <p className="text-sm text-slate-600">Concepts Status</p>
+              {(() => {
+                  const learnedConcepts = Array.isArray(userData.python?.learnedConcepts) ? userData.python.learnedConcepts : [];
+                  const totalLearned = learnedConcepts.length;
+                  const statusCounts = learnedConcepts.reduce((acc, c) => {
+                    if (c.status === 'understood') acc.understood++;
+                    else if (c.status === 'partially understood') acc.partially++;
+                    else if (c.status === 'still confused') acc.confused++;
+                    return acc;
+                  }, { understood: 0, partially: 0, confused: 0 });
+                  return (
+                    <div className="flex flex-col gap-2 mt-2">
+                      <div className="flex items-center gap-2 mt-3 border-b border-slate-200 pb-2">
+                        <span className="inline-block w-2 h-2 rounded-full bg-black mr-2"></span>
+                        <span className="text-black font-normal">Understood</span>
+                        <span className="ml-auto text-black px-2 py-0.5 rounded-full text-lg font-semibold">{statusCounts.understood} / {totalLearned}</span>
+                      </div>
+                      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                        <span className="inline-block w-2 h-2 rounded-full bg-black mr-2"></span>
+                        <span className="text-black font-normal">Partially Understood</span>
+                        <span className="ml-auto text-black px-2 py-0.5 rounded-full text-lg font-semibold">{statusCounts.partially} / {totalLearned}</span>
+                      </div>
+                      <div className="flex items-center gap-2 pt-2">
+                        <span className="inline-block w-2 h-2 rounded-full bg-black mr-2"></span>
+                        <span className="text-black font-normal">Still Confused</span>
+                        <span className="ml-auto text-black px-2 py-0.5 rounded-full text-lg font-semibold">{statusCounts.confused} / {totalLearned}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </motion.div>
           </div>
 
           {/* Main Content Grid */}
-          <div className="flex gap-6 mt-13 items-start">
+          <div className="flex flex-col lg:flex-row gap-6 mt-13 items-start">
             {/* Learning Resources */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="bg-white w-250  rounded-lg shadow-md p-6"
+              className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
               <ConceptLearned />
             </motion.div>
 
             {/* Project Card - Make sticky on large screens */}
             <motion.div
-              className="bg-gradient-to-br from-[#C642F5] via-[#A633D9] to-[#8C1EB6] w-200 h-76 rounded-lg shadow-2xl p-6 lg:sticky lg:top-28"
+              className="bg-gradient-to-br from-[#C642F5] via-[#A633D9] to-[#8C1EB6] w-full lg:w-1/3 h-76 rounded-lg shadow-2xl p-6 lg:sticky lg:top-28"
             >
               <h2 className="text-2xl font-bold text-white mb-6">
                 Project
