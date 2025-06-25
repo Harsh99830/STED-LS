@@ -474,8 +474,41 @@ function Python() {
         </div>
       </div>
 
-      {/* Professional bottom accent line */}
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-purple-600" />
+
+      {/* Project History Section */}
+      <div className="w-full mx-auto lg:px-8 text-left mb-10">
+        <h2 className="text-2xl font-bold text-slate-800 mb-6">Project History</h2>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          {(() => {
+            const pythonData = userData.python || {};
+            // Get all project keys like Project1, Project2, ...
+            const projectKeys = Object.keys(pythonData).filter(k => /^Project\d+$/i.test(k));
+            // Sort by completion date descending
+            const projects = projectKeys
+              .map(k => ({ key: k, ...pythonData[k] }))
+              .filter(p => p.completedAt)
+              .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+            if (projects.length === 0) {
+              return <div className="text-slate-500 italic">No completed projects yet.</div>;
+            }
+            return (
+              <ul className="divide-y divide-slate-200">
+                {projects.map((p, idx) => (
+                  <li key={p.key} className=" flex flex-col md:flex-row  gap-2 md:gap-6">
+                    <div className="flex-1">
+                      <div className="text-2xl font-semibold text-slate-800">{p.projectType || p.key}</div>
+                      <div className="text-slate-500 text-sm mt-5">Completed: {new Date(p.completedAt).toLocaleDateString()}</div>
+                    </div>
+                    <div className="flex-none flex flex-col items-end gap-2 md:gap-3">
+                      <span className="inline-block  text-slate-700 px-3 py-1 text-lg font-semibold">Time Taken: 1:14:16</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            );
+          })()}
+        </div>
+      </div>
     </div>
   );
 }
