@@ -478,7 +478,7 @@ function Python() {
       {/* Project History Section */}
       <div className="w-full mx-auto lg:px-8 text-left mb-10">
         <h2 className="text-2xl font-bold text-slate-800 mb-6">Project History</h2>
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white hover:bg-[#f7f7f7]  rounded-lg shadow-md p-6 cursor-pointer">
           {(() => {
             const pythonData = userData.python || {};
             // Get all project keys like Project1, Project2, ...
@@ -500,7 +500,7 @@ function Python() {
                       <div className="text-slate-500 text-sm mt-5">Completed: {new Date(p.completedAt).toLocaleDateString()}</div>
                     </div>
                     <div className="flex-none flex flex-col items-end gap-2 md:gap-3">
-                      <span className="inline-block  text-slate-700 px-3 py-1 text-lg font-semibold">Time Taken: 1:14:16</span>
+                      <span className="inline-block  text-slate-700 px-3 py-1 pt-6 text-lg">1h:14m:16s</span>
                     </div>
                   </li>
                 ))}
