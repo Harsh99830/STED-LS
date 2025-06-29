@@ -201,9 +201,9 @@ function Python() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-600">Current Level</p>
+                    <p className="text-sm text-slate-600">STED points</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                      {userData.level || "Beginner"}
+                      16
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
