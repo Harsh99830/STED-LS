@@ -59,7 +59,7 @@ function Home() {
         project: "Personal Finance Tracker",
         skill: "Python",
         time: "2 hours ago",
-        xp: 250
+        sp: 10
       },
       {
         id: 2,
@@ -69,27 +69,58 @@ function Home() {
         concept: "Functions and Lists",
         skill: "Python",
         time: "4 hours ago",
-        xp: 100
+        sp: 4
       },
       {
         id: 3,
         student: "Mike Rodriguez",
         avatar: "👨‍🔬",
-        action: "started",
+        action: "completed",
         project: "Data Visualization Dashboard",
         skill: "Power BI",
         time: "6 hours ago",
-        xp: 0
+        sp: 10
+      },
+      {
+        id: 1,
+        student: "Alex Chen",
+        avatar: "👨‍💻",
+        action: "completed",
+        project: "Personal Finance Tracker",
+        skill: "Python",
+        time: "2 hours ago",
+        sp: 10
+      },
+      {
+        id: 2,
+        student: "Sarah Johnson",
+        avatar: "👩‍🎓",
+        action: "learned",
+        concept: "Functions and Lists",
+        skill: "Python",
+        time: "4 hours ago",
+        sp: 4
+      },
+      {
+        id: 3,
+        student: "Mike Rodriguez",
+        avatar: "👨‍🔬",
+        action: "completed",
+        project: "Data Visualization Dashboard",
+        skill: "Power BI",
+        time: "6 hours ago",
+        sp: 10
       }
     ])
   }, [])
 
   return (
+    <>
     <div className="min-h-screen bg-slate-50">
       <Navbar />
 
       {/* Main Content */}
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
         {/* Tab Navigation */}
         <div className="flex justify-left w-100 mb-8">
           <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-sm">
@@ -120,7 +151,7 @@ function Home() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
+                className="space-y-6 max-h-145 overflow-y-auto"
               >
                 {learningActivities.map((activity) => (
                   <motion.div
@@ -150,8 +181,8 @@ function Home() {
                           <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
                             {activity.skill}
                           </span>
-                          {activity.xp > 0 && (
-                            <span className="text-green-600 font-medium">+{activity.xp} XP</span>
+                          {activity.sp > 0 && (
+                            <span className="text-green-600 font-medium">+{activity.sp} SP</span>
                           )}
                         </div>
                       </div>
@@ -165,7 +196,7 @@ function Home() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
+                className="space-y-6 max-h-140 overflow-y-auto"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {students.map((student) => (
@@ -223,11 +254,11 @@ function Home() {
               animate={{ opacity: 1, x: 0 }}
               className="bg-white rounded-lg shadow-sm p-6"
             >
-              <h3 className="font-semibold text-slate-800 mb-4">Your Learning Stats</h3>
+              <h3 className="font-semibold text-slate-800 mb-4">Your SP</h3>
               <div className="space-y-4">
                 <div className="border-b border-slate-200 pb-4 mb-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-700 font-semibold text-lg">Total Points</span>
+                    <span className="text-slate-700 font-semibold text-lg">Total SP</span>
                     <span className="font-bold text-slate-800 text-2xl">16</span>
                   </div>
                 </div>
@@ -281,6 +312,7 @@ function Home() {
         </div>
       </div>
     </div>
+    </>
   )
 }
 
