@@ -6,9 +6,7 @@ import { FaSearch } from 'react-icons/fa';
 
 function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
-  // Mock skills for demonstration (replace with real userData if available)
-  const mySkills = ["Python", "Data Science", "Public Speaking", "Power BI"];
-  const [showSkills, setShowSkills] = useState(false);
+
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -48,25 +46,6 @@ function Navbar() {
         </form>
       </div>
 
-      {/* My Skills Dropdown */}
-      <div className="relative mr-6">
-        <button
-          onClick={() => setShowSkills((prev) => !prev)}
-          className="bg-purple-100 text-purple-700 px-4 py-2 rounded-full font-medium text-sm shadow hover:bg-purple-200 transition-colors"
-        >
-          My learning
-        </button>
-        {showSkills && (
-          <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-lg shadow-lg z-50 p-3 flex flex-col gap-2">
-            {mySkills.map((skill) => (
-              <Link key={skill} to={`/${skill.toLowerCase().replace(/ /g, '-')}`}
-                className="bg-purple-50 hover:bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium transition-colors">
-                {skill}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* Right Side */}
       <div className="flex items-center gap-6 h-full">

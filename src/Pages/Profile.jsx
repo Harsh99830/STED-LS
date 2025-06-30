@@ -176,6 +176,18 @@ function Profile() {
                                         <div className="w-full bg-slate-200 rounded-full h-1.5">
                                             <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `16%` }}></div>
                                         </div>
+                                        <div className="text-sm text-right font-medium text-slate-800">8/50</div>
+                                    </div>
+                                    {/* Concepts Applied */}
+                                    <div>
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-sm text-slate-600">Concepts applied</span>
+                                            <span className="text-sm font-medium text-slate-800">25%</span>
+                                        </div>
+                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                            <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                                        </div>
+                                        <div className="text-sm text-right font-medium text-slate-800">2/8</div>
                                     </div>
                                     <p className="text-sm text-slate-600">SP Earned: 16</p>
                                 </div>
@@ -201,6 +213,18 @@ function Profile() {
                                         <div className="w-full bg-slate-200 rounded-full h-1.5">
                                             <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${userData.powerbi?.PowerBiSkill || 0}%` }}></div>
                                         </div>
+                                        <div className="text-sm text-right font-medium text-slate-800">{userData.powerbi?.PowerBiSkill ? `${userData.powerbi?.PowerBiSkill}%` : '0%'}</div>
+                                    </div>
+                                    {/* Concepts Applied */}
+                                    <div>
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-sm text-slate-600">Concepts applied</span>
+                                            <span className="text-sm font-medium text-slate-800">25%</span>
+                                        </div>
+                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                            <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                                        </div>
+                                        <div className="text-sm text-right font-medium text-slate-800">2/8</div>
                                     </div>
                                     <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('powerbi')}</p>
                                 </div>
@@ -225,6 +249,18 @@ function Profile() {
                                         <div className="w-full bg-slate-200 rounded-full h-1.5">
                                             <div className="bg-green-600 h-1.5 rounded-full" style={{ width: `${userData['data-science']?.dataSkill || 0}%` }}></div>
                                         </div>
+                                        <div className="text-sm text-right font-medium text-slate-800">{userData['data-science']?.dataSkill ? `${userData['data-science']?.dataSkill}%` : '0%'}</div>
+                                    </div>
+                                    {/* Concepts Applied */}
+                                    <div>
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-sm text-slate-600">Concepts applied</span>
+                                            <span className="text-sm font-medium text-slate-800">25%</span>
+                                        </div>
+                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                            <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                                        </div>
+                                        <div className="text-sm text-right font-medium text-slate-800">2/8</div>
                                     </div>
                                     <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('data-science')}</p>
                                 </div>
@@ -249,6 +285,18 @@ function Profile() {
                                         <div className="w-full bg-slate-200 rounded-full h-1.5">
                                             <div className="bg-yellow-500 h-1.5 rounded-full" style={{ width: `${userData['public-speaking']?.speakingSkill || 0}%` }}></div>
                                         </div>
+                                        <div className="text-sm text-right font-medium text-slate-800">{userData['public-speaking']?.speakingSkill ? `${userData['public-speaking']?.speakingSkill}%` : '0%'}</div>
+                                    </div>
+                                    {/* Concepts Applied */}
+                                    <div>
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-sm text-slate-600">Concepts applied</span>
+                                            <span className="text-sm font-medium text-slate-800">25%</span>
+                                        </div>
+                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                            <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                                        </div>
+                                        <div className="text-sm text-right font-medium text-slate-800">2/8</div>
                                     </div>
                                     <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('public-speaking')}</p>
                                 </div>

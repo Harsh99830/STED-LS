@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
@@ -41,6 +41,7 @@ export default function UserProfile() {
   const [userData, setUserData] = useState(student || {});
   const [selectedSkill, setSelectedSkill] = useState(null);
   const [activeSkillDetailTab, setActiveSkillDetailTab] = useState('sp');
+  const skillDetailRef = useRef(null);
 
   useEffect(() => {
     if (student) setUserData(student);
@@ -49,6 +50,15 @@ export default function UserProfile() {
   useEffect(() => {
     if (selectedSkill) {
       setActiveSkillDetailTab('sp');
+      setTimeout(() => {
+        if (skillDetailRef.current) {
+          // Calculate the offset to scroll so the skill name is just below the top
+          const rect = skillDetailRef.current.getBoundingClientRect();
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const offset = rect.top + scrollTop - 20; // 20px below the top
+          window.scrollTo({ top: offset, behavior: 'smooth' });
+        }
+      }, 100);
     }
   }, [selectedSkill]);
 
@@ -135,7 +145,7 @@ export default function UserProfile() {
     };
 
     return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-6 bg-slate-50 rounded-lg p-6 border border-slate-200 relative">
+      <motion.div ref={skillDetailRef} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-6 bg-slate-50 rounded-lg p-6 border border-slate-200 relative">
         {/* Skill Detail Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
@@ -181,11 +191,11 @@ export default function UserProfile() {
           </button>
         </div>
         {/* Metric Boxes */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 h-100 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* STED Points */}
           <div
             onClick={() => setActiveSkillDetailTab('sp')}
-            className={`bg-white rounded-lg shadow-md p-6 min-h-[120px] flex flex-col justify-between cursor-pointer transition-all relative ${activeSkillDetailTab === 'sp' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
+            className={`bg-white rounded-lg shadow-md h-20 flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'sp' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -194,13 +204,12 @@ export default function UserProfile() {
               </div>
             </div>
             <div className="absolute top-3 right-3 bg-purple-50 p-2 rounded-full">
-              <span className="text-xl">�</span>
             </div>
           </div>
           {/* Projects Completed */}
           <div
             onClick={() => setActiveSkillDetailTab('projects')}
-            className={`bg-white rounded-lg shadow-md p-6 min-h-[120px] flex flex-col justify-between cursor-pointer transition-all relative ${activeSkillDetailTab === 'projects' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
+            className={`bg-white rounded-lg shadow-md h-20 flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'projects' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -209,13 +218,12 @@ export default function UserProfile() {
               </div>
             </div>
             <div className="absolute top-3 right-3 bg-purple-50 p-2 rounded-full">
-              <span><img className="w-5 h-5" src={PowerBi} alt="" /></span>
             </div>
           </div>
           {/* Concepts Learned */}
           <div
             onClick={() => setActiveSkillDetailTab('learned')}
-            className={`bg-white rounded-lg shadow-md p-6 min-h-[120px] flex flex-col justify-between cursor-pointer transition-all relative ${activeSkillDetailTab === 'learned' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
+            className={`bg-white rounded-lg shadow-md p-6 h-20 flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'learned' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -224,13 +232,12 @@ export default function UserProfile() {
               </div>
             </div>
             <div className="absolute top-3 right-3 bg-purple-50 p-2 rounded-full">
-              <span className="text-xl"><img className="w-5 h-5" src={learned} alt="" /></span>
             </div>
           </div>
           {/* Concepts Applied */}
           <div
             onClick={() => setActiveSkillDetailTab('applied')}
-            className={`bg-white rounded-lg shadow-md p-6 min-h-[120px] flex flex-col justify-between cursor-pointer transition-all relative ${activeSkillDetailTab === 'applied' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
+            className={`bg-white rounded-lg shadow-md p-6 h-20 flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'applied' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -239,7 +246,6 @@ export default function UserProfile() {
               </div>
             </div>
             <div className="absolute top-3 right-3 bg-yellow-50 p-2 rounded-full">
-              <span className="text-xl"><img className="w-5 h-5" src={applied} alt="" /></span>
             </div>
           </div>
         </div>
@@ -300,16 +306,23 @@ export default function UserProfile() {
                     <h3 className="text-lg font-semibold text-slate-800">Python</h3>
                   </div>
                   <div className="space-y-2">
-                    <div>
+                    <div className='mb-5'>
                       <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concept learned</span>
-                        <span className="text-sm font-medium text-slate-800">16%</span>
+                        <span className="text-sm text-slate-600">Concepts learned</span>
+                        <span className="text-sm font-medium text-slate-800">8/50</span>
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-1.5">
                         <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
                       </div>
-                    <div className="text-sm text-right font-medium text-slate-800">8/50</div>
-
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-slate-600">Concepts applied</span>
+                        <span className="text-sm font-medium text-slate-800">2/8</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                      </div>
                     </div>
                     <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
                   </div>
@@ -321,17 +334,25 @@ export default function UserProfile() {
                     <h3 className="text-lg font-semibold text-slate-800">Power BI</h3>
                   </div>
                   <div className="space-y-2">
-                    <div>
+                    <div className='mb-5'>
                       <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concept learned</span>
-                        <span className="text-sm font-medium text-slate-800">{userData.powerbi?.PowerBiSkill || 0}%</span>
+                        <span className="text-sm text-slate-600">Concepts learned</span>
+                        <span className="text-sm font-medium text-slate-800">8/50</span>
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${userData.powerbi?.PowerBiSkill || 0}%` }}></div>
+                        <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
                       </div>
-                    <div className="text-sm text-right font-medium text-slate-800">7/20</div>
                     </div>
-                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('powerbi')}</p>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-slate-600">Concepts applied</span>
+                        <span className="text-sm font-medium text-slate-800">2/8</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
                   </div>
                 </motion.div>
                 {/* Data Science Skills */}
@@ -341,17 +362,25 @@ export default function UserProfile() {
                     <h3 className="text-lg font-semibold text-slate-800">Data Science</h3>
                   </div>
                   <div className="space-y-2">
-                    <div>
+                    <div className='mb-5'>
                       <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concept learned</span>
-                        <span className="text-sm font-medium text-slate-800">{userData['data-science']?.dataSkill || 0}%</span>
+                        <span className="text-sm text-slate-600">Concepts learned</span>
+                        <span className="text-sm font-medium text-slate-800">8/50</span>
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-green-600 h-1.5 rounded-full" style={{ width: `${userData['data-science']?.dataSkill || 0}%` }}></div>
+                        <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
                       </div>
-                    <div className="text-sm text-right font-medium text-slate-800">10/65</div>
                     </div>
-                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('data-science')}</p>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-slate-600">Concepts applied</span>
+                        <span className="text-sm font-medium text-slate-800">2/8</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
                   </div>
                 </motion.div>
                 {/* Public Speaking Skills */}
@@ -361,17 +390,25 @@ export default function UserProfile() {
                     <h3 className="text-lg font-semibold text-slate-800">Public Speaking</h3>
                   </div>
                   <div className="space-y-2">
-                    <div>
+                    <div className='mb-5'>
                       <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concept learned</span>
-                        <span className="text-sm font-medium text-slate-800">{userData['public-speaking']?.speakingSkill || 0}%</span>
+                        <span className="text-sm text-slate-600">Concepts learned</span>
+                        <span className="text-sm font-medium text-slate-800">8/50</span>
                       </div>
                       <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-yellow-500 h-1.5 rounded-full" style={{ width: `${userData['public-speaking']?.speakingSkill || 0}%` }}></div>
+                        <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
                       </div>
-                    <div className="text-sm text-right font-medium text-slate-800">0/10</div>
                     </div>
-                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('public-speaking')}</p>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-slate-600">Concepts applied</span>
+                        <span className="text-sm font-medium text-slate-800">2/8</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
                   </div>
                 </motion.div>
               </div>

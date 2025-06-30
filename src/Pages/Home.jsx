@@ -7,10 +7,12 @@ import { db } from '../firebase'
 import Navbar from '../components/Navbar'
 import Feed from '../components/Feed'
 import openImg from '../assets/open.png'
+import python from '../assets/python.png';
+import PowerBi from '../assets/PowerBi.png';
 
 function Home() {
   const { user, isLoaded, isSignedIn } = useUser()
-  const [activeTab, setActiveTab] = useState('feed')
+  const [activeTab, setActiveTab] = useState('my-learning')
   const [students, setStudents] = useState([])
   const [learningActivities, setLearningActivities] = useState([])
   const [userData, setUserData] = useState(null)
@@ -139,9 +141,10 @@ function Home() {
       {/* Main Content */}
       <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
         {/* Tab Navigation */}
-        <div className="flex justify-left w-100 mb-8">
+        <div className="flex justify-left w-130 mb-8">
           <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-sm">
             {[
+              { id: 'my-learning', label: 'My Learning' },
               { id: 'feed', label: 'Learning Feed' },
               { id: 'discover', label: 'Discover Students' },
             ].map((tab) => (
@@ -164,6 +167,121 @@ function Home() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Content Area */}
           <div className="flex-1 max-w-300 w-full">
+            {activeTab === 'my-learning' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                {/* Python Learning Card */}
+                <Link to={'/python'}>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-center mb-3">
+                    <img src={python} alt="Python" className="w-6 h-6 mr-2" />
+                    <h3 className="text-lg font-semibold text-slate-800">Python Learning</h3>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div>
+                      <div className="flex justify-between text-xs pb-2 text-slate-600">
+                        <span>Concepts learned</span> 
+                        <span className="text-xs text-right font-medium text-slate-800">8/50</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
+                        <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: '16%' }}></div>
+                      </div>
+                    </div>
+                    <div>
+                    <div className="flex justify-between text-xs pb-2 text-slate-600">
+                        <span>Concepts Applied</span> 
+                        <span className="text-xs text-right font-medium text-slate-800">2/8</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                </Link>
+                {/* Power BI Learning Card */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-center mb-3">
+                    <img src={PowerBi} alt="Power BI" className="w-6 h-6 mr-2" />
+                    <h3 className="text-lg font-semibold text-slate-800">Power BI Learning</h3>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div>
+                    <div className="flex justify-between text-xs pb-2 text-slate-600">
+                        <span>Concepts learned</span> 
+                        <span className="text-xs text-right font-medium text-slate-800">7/20</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
+                        <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: '40%' }}></div>
+                      </div>
+                    </div>
+                    <div>
+                    <div className="flex justify-between text-xs pb-2 text-slate-600">
+                        <span>Concepts Applied</span> 
+                        <span className="text-xs text-right font-medium text-slate-800">2/7</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '20%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Data Science Learning Card */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-center mb-3">
+                    <span className="text-xl mr-2">📊</span>
+                    <h3 className="text-lg font-semibold text-slate-800">Data Science Learning</h3>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div>
+                    <div className="flex justify-between text-xs pb-2 text-slate-600">
+                        <span>Concepts learned</span> 
+                        <span className="text-xs text-right font-medium text-slate-800">10/65</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
+                        <div className="bg-green-600 h-1.5 rounded-full" style={{ width: '20%' }}></div>
+                      </div>
+                    </div>
+                    <div>
+                    <div className="flex justify-between text-xs pb-2 text-slate-600">
+                        <span>Concepts Applied</span> 
+                        <span className="text-xs text-right font-medium text-slate-800">3/10</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '15%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Public Speaking Learning Card */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-center mb-3">
+                    <span className="text-xl mr-2">🎤</span>
+                    <h3 className="text-lg font-semibold text-slate-800">Public Speaking Learning</h3>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div>
+                    <div className="flex justify-between text-xs pb-2 text-slate-600">
+                        <span>Concepts learned</span> 
+                        <span className="text-xs text-right font-medium text-slate-800">0/10</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
+                        <div className="bg-yellow-500 h-1.5 rounded-full" style={{ width: '0%' }}></div>
+                      </div>
+                    </div>
+                    <div>
+                    <div className="flex justify-between text-xs pb-2 text-slate-600">
+                        <span>Concepts Applied</span> 
+                        <span className="text-xs text-right font-medium text-slate-800">0</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                        <div className="bg-yellow-500 h-1.5 rounded-full" style={{ width: '0%' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'feed' && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
