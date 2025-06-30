@@ -126,7 +126,7 @@ function Profile() {
                     <div className="w-full max-w-4xl">
                         {/* Profile Header */}
                         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                            <div className="flex items-center justify-between">
+                            
                                 <div className="flex items-center space-x-6">
                                     <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
                                         {user?.imageUrl ? (
@@ -140,7 +140,7 @@ function Profile() {
                                         <p className="text-slate-600 text-left pt-2">Total SP: {calculateTotalSP()}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center space-x-8">
+                                <div className="flex items-center mt-10 text-sm space-x-4">
                                     <div className="flex items-center">
                                         <span className="text-slate-800 font-semibold">{userData.observers?.length || 34}</span>
                                         <span className="text-slate-600 ml-2">Observers</span>
@@ -152,7 +152,7 @@ function Profile() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                       
 
                         {/* Skills Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

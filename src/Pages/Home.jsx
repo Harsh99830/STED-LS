@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useUser } from '@clerk/clerk-react'
+import { getDatabase, ref, get } from 'firebase/database'
+import { db } from '../firebase'
 import Navbar from '../components/Navbar'
 import Feed from '../components/Feed'
+import openImg from '../assets/open.png'
 
 function Home() {
-  const { user } = useUser()
+  const { user, isLoaded, isSignedIn } = useUser()
   const [activeTab, setActiveTab] = useState('feed')
   const [students, setStudents] = useState([])
   const [learningActivities, setLearningActivities] = useState([])
+  const [userData, setUserData] = useState(null)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const navigate = useNavigate();
 
   // Mock data for demonstration
   useEffect(() => {
@@ -82,7 +88,7 @@ function Home() {
         sp: 10
       },
       {
-        id: 1,
+        id: 4,
         student: "Alex Chen",
         avatar: "👨‍💻",
         action: "completed",
@@ -92,7 +98,7 @@ function Home() {
         sp: 10
       },
       {
-        id: 2,
+        id: 5,
         student: "Sarah Johnson",
         avatar: "👩‍🎓",
         action: "learned",
@@ -102,7 +108,7 @@ function Home() {
         sp: 4
       },
       {
-        id: 3,
+        id: 6,
         student: "Mike Rodriguez",
         avatar: "👨‍🔬",
         action: "completed",
@@ -113,6 +119,17 @@ function Home() {
       }
     ])
   }, [])
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn && user?.id) {
+      const userRef = ref(db, 'users/' + user.id);
+      get(userRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          setUserData(snapshot.val());
+        }
+      }).finally(() => setIsLoadingProfile(false));
+    }
+  }, [isLoaded, isSignedIn, user]);
 
   return (
     <>
@@ -144,9 +161,9 @@ function Home() {
         </div>
 
         {/* Tab Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="flex flex-col lg:flex-row gap-8">
           {/* Main Content Area */}
-          <div className="lg:col-span-2">
+          <div className="flex-1 max-w-300 w-full">
             {activeTab === 'feed' && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -198,43 +215,37 @@ function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-6 max-h-140 overflow-y-auto"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex flex-col md:flex-row md:flex-wrap gap-6">
                   {students.map((student) => (
                     <motion.div
                       key={student.id}
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow border border-slate-200"
+                      className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow border border-slate-200 flex flex-col w-72 max-w-xs mx-auto cursor-pointer"
+                      onClick={() => navigate(`/userprofile/${student.id}`)}
                     >
-                      <div className="flex items-start space-x-4">
-                        <div className="text-3xl">{student.avatar}</div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="font-semibold text-slate-800">{student.name}</h3>
-                            <span className={`w-2 h-2 rounded-full ${student.isOnline ? 'bg-green-500' : 'bg-slate-300'}`}></span>
-                          </div>
-                          <p className="text-slate-600 text-sm mb-3">{student.level} • {student.lastActive}</p>
-                          <div className="space-y-2">
-                            <div className="flex flex-wrap gap-1">
-                              {student.skills.map((skill) => (
-                                <span key={skill} className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">
-                                  {skill}
-                                </span>
-                              ))}
-                            </div>
-                            <div className="flex space-x-4 text-sm text-slate-500">
-                              <span>{student.conceptsLearned} concepts learned</span>
-                              <span>{student.projectsCompleted} projects completed</span>
-                            </div>
-                          </div>
-                          <div className="mt-4 flex space-x-2">
-                            <button className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">
-                              Add Friend
-                            </button>
-                            <button className="border border-slate-300 text-slate-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                              View Profile
-                            </button>
-                          </div>
+                      <div className="flex flex-col items-center w-full">
+                        <div className="text-5xl mb-3">{student.avatar}</div>
+                        <div className="flex flex-col items-center mb-2">
+                          <h3 className="font-semibold text-slate-800 text-lg">{student.name}</h3>
+                          <span className={`w-2 h-2 rounded-full mt-1 ${student.isOnline ? 'bg-green-500' : 'bg-slate-300'}`}></span>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-1 mb-2">
+                          {student.skills.slice(0, 2).map((skill) => (
+                            <span key={skill} className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">
+                              {skill}
+                            </span>
+                          ))}
+                          {student.skills.length > 2 && (
+                            <span className="bg-slate-200 text-slate-700 px-2 py-1 rounded-full text-xs">
+                              +{student.skills.length - 2}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-4 flex w-full justify-center">
+                          <button className=" border border-purple-600 text-purple-600 px-12 py-2 rounded-4xl text-sm font-medium hover:bg-purple-700 hover:text-white transition-colors">
+                            Observe
+                          </button>
                         </div>
                       </div>
                     </motion.div>
@@ -242,68 +253,103 @@ function Home() {
                 </div>
               </motion.div>
             )}
-
-          
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Stats */}
+          <div className="flex flex-col space-y-6 w-72 min-w-[26rem] max-w-xs">
+            {/* Mini Profile Card */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-white rounded-lg shadow-sm p-6"
+              className="relative rounded-lg shadow-sm p-6 flex flex-col items-center w-full bg-white"
             >
-              <h3 className="font-semibold text-slate-800 mb-4">Your SP</h3>
-              <div className="space-y-4">
-                <div className="border-b border-slate-200 pb-4 mb-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-700 font-semibold text-lg">Total SP</span>
-                    <span className="font-bold text-slate-800 text-2xl">16</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Python</span>
-                  <span className="font-semibold text-purple-600">16</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Data Science</span>
-                  <span className="font-semibold text-blue-600">0</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Public Speaking</span>
-                  <span className="font-semibold text-green-600">0</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600">Power BI</span>
-                  <span className="font-semibold text-orange-600">0</span>
-                </div>
+              <Link to={'/profile'}>
+              <div className="absolute right-4 top-4 w-10 h-10 flex items-center justify-center">
+                <img src={openImg} alt="Open" className="w-6 h-6 object-contain" />
               </div>
+              </Link>
+              {isLoadingProfile ? (
+                <div className="w-full flex justify-center items-center h-24">
+                  <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : userData ? (
+                <>
+                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-3 border-4 border-white">
+                    {user?.imageUrl ? (
+                      <img src={user.imageUrl} alt="Profile" className="w-20 h-20 rounded-full object-cover" />
+                    ) : (
+                      <span className="text-3xl">👤</span>
+                    )}
+                  </div>
+                  <h3 className="font-semibold text-lg text-center text-slate-800 drop-shadow">{user?.fullName || 'Student'}</h3>
+                  <p className="text-center text-sm mb-2 text-slate-600">Total SP: 16</p>
+                  <div className="flex flex-wrap justify-center gap-1 mb-2">
+                    {userData.projectHistory && userData.projectHistory.length > 0 ? (
+                      Array.from(new Set(userData.projectHistory.map(p => p.skill))).map((skill) => {
+                        const skillSP = userData.projectHistory.filter(p => p.skill === skill).reduce((acc, p) => acc + (p.sp || 0), 0);
+                        return (
+                          <span key={skill} className="bg-slate-100 text-purple-700 px-2 py-1 rounded-full text-xs font-semibold">{skill && skill.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                        );
+                      })
+                    ) : null}
+                  </div>
+                  {/* Skills and SP List */}
+                  {userData.projectHistory && userData.projectHistory.length > 0 ? (
+                    <div className="w-full mt-4">
+                      <h4 className="text-slate-700 font-semibold text-sm mb-2">Your Skills & SP</h4>
+                      <div className="flex flex-col gap-2">
+                        {Array.from(new Set(userData.projectHistory.map(p => p.skill))).map((skill) => {
+                          const skillSP = userData.projectHistory.filter(p => p.skill === skill).reduce((acc, p) => acc + (p.sp || 0), 0);
+                          return (
+                            <div key={skill} className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
+                              <span className="text-purple-700 font-semibold">{skill && skill.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                              <span className="font-semibold text-purple-700">{skillSP} SP</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full mt-4">
+                      <h4 className="text-slate-700 font-semibold text-sm mb-2">Your Skills & SP</h4>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
+                          <span className="text-purple-700 font-semibold">Python</span>
+                          <span className="font-semibold text-purple-700">16 SP</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
+                          <span className="text-purple-700 font-semibold">Data Science</span>
+                          <span className="font-semibold text-purple-700">0 SP</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
+                          <span className="text-purple-700 font-semibold">Public Speaking</span>
+                          <span className="font-semibold text-purple-700">0 SP</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
+                          <span className="text-purple-700 font-semibold">Power BI</span>
+                          <span className="font-semibold text-purple-700">0 SP</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-slate-500 text-center">No profile data</div>
+              )}
             </motion.div>
-
 
             {/* Quick Actions */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-lg shadow-sm p-6"
+              className="bg-white rounded-lg shadow-sm p-6 w-full"
             >
               <h3 className="font-semibold text-slate-800 mb-4">Quick Actions</h3>
               <div className="space-y-3">
                 <Link to="/python">
                   <button className="w-full text-left p-3 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors">
                     🐍 Continue Python Learning
-                  </button>
-                </Link>
-                <Link to="/data-science">
-                  <button className="w-full text-left p-3 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
-                    📊 Start Data Science
-                  </button>
-                </Link>
-                <Link to="/public-speaking">
-                  <button className="w-full text-left p-3 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors">
-                    🎤 Practice Speaking
                   </button>
                 </Link>
               </div>
