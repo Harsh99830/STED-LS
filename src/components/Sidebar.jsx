@@ -22,6 +22,7 @@ export default function Sidebar() {
 
   const menuItems = [
     { icon: FaHome, text: "Home", path: "/home" },
+    { icon: FaUserCircle, text: "Profile", path: "/profile" },
     { icon: FaTasks, text: "All skills", path: "/all-skills" },
     { icon: FaChartLine, text: "Your Progress", path: "/progress" },
   ];
@@ -98,6 +99,7 @@ export default function Sidebar() {
             </div>
             
             {/* Edit Button */}
+            
             <motion.div
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -110,6 +112,7 @@ export default function Sidebar() {
           <h2 className="mt-4 text-lg font-semibold text-slate-800">Your Profile</h2>
           <p className="text-sm text-slate-500">Manage your account</p>
         </motion.div>
+           
 
         <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mb-6" />
 

@@ -14,6 +14,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AllSkills from './Pages/AllSkills';
 import Project from './PythonProject/Project';
 import PowerBi from './Pages/PowerBi';
+import Profile from './Pages/Profile';
 
 function App() {
   return (
@@ -76,6 +77,14 @@ function App() {
           element={
             <SurveyProtectedRoute>
               <AllSkills />
+            </SurveyProtectedRoute>
+          }
+        />
+         <Route
+          path="/profile"
+          element={
+            <SurveyProtectedRoute>
+              <Profile />
             </SurveyProtectedRoute>
           }
         />
