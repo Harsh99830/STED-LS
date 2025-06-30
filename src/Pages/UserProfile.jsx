@@ -136,14 +136,51 @@ export default function UserProfile() {
 
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-6 bg-slate-50 rounded-lg p-6 border border-slate-200 relative">
-        <div className="flex justify-between items-start">
-          <h3 className="text-xl font-bold text-slate-800 mb-4">{skillName} Details</h3>
-          <button onClick={() => setSelectedSkill(null)} className="text-slate-500 hover:text-slate-800 z-10">
+        {/* Skill Detail Header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <span className="text-xl font-bold text-slate-800">{skillName}</span>
+          </div>
+          <button onClick={() => setSelectedSkill(null)} className="text-slate-500 hover:text-slate-800 z-10 text-lg ml-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
+        {/* Skill Switcher Row */}
+        <div className="flex gap-2 mb-6 flex-wrap">
+          <button
+            className="px-3 py-1 rounded-full text-sm font-medium border border-slate-300 bg-white hover:bg-slate-100 text-slate-700"
+            onClick={() => setSelectedSkill(null)}
+          >
+            All Skills
+          </button>
+          <button
+            className={`px-3 py-1 rounded-full text-sm font-medium border ${selectedSkill === 'python' ? 'bg-purple-600 text-white border-purple-600' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`}
+            onClick={() => setSelectedSkill('python')}
+          >
+            Python
+          </button>
+          <button
+            className={`px-3 py-1 rounded-full text-sm font-medium border ${selectedSkill === 'powerbi' ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`}
+            onClick={() => setSelectedSkill('powerbi')}
+          >
+            Power BI
+          </button>
+          <button
+            className={`px-3 py-1 rounded-full text-sm font-medium border ${selectedSkill === 'data-science' ? 'bg-green-600 text-white border-green-600' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`}
+            onClick={() => setSelectedSkill('data-science')}
+          >
+            Data Science
+          </button>
+          <button
+            className={`px-3 py-1 rounded-full text-sm font-medium border ${selectedSkill === 'public-speaking' ? 'bg-yellow-500 text-white border-yellow-500' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`}
+            onClick={() => setSelectedSkill('public-speaking')}
+          >
+            Public Speaking
+          </button>
+        </div>
+        {/* Metric Boxes */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* STED Points */}
           <div
