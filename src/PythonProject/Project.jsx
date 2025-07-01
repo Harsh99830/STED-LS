@@ -19,12 +19,18 @@ function Project() {
   const [isExplaining, setIsExplaining] = useState(false);
   const [showEndProjectOverlay, setShowEndProjectOverlay] = useState(false);
   const [showCongratulationsOverlay, setShowCongratulationsOverlay] = useState(false);
+  const [showSubmitOverlay, setShowSubmitOverlay] = useState(false);
+  const [submitFeedback, setSubmitFeedback] = useState('');
   const [userCode, setUserCode] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [terminalOutput, setTerminalOutput] = useState([]);
   const [projectConfig, setProjectConfig] = useState(null);
   const { user } = useUser();
   const navigate = useNavigate();
+  const [taskCheckResults, setTaskCheckResults] = useState([]);
+  const [checkingTaskIndex, setCheckingTaskIndex] = useState(-1);
+  const [expandedTasks, setExpandedTasks] = useState({});
+  const [subtaskCheckResults, setSubtaskCheckResults] = useState({});
 
   // Load project configuration
   useEffect(() => {
@@ -149,130 +155,54 @@ function Project() {
     setShowCongratulationsOverlay(false);
   };
 
-  const handleSubmit = () => {
-    console.log('Submit button clicked!');
-    console.log('Current terminal output:', terminalOutput);
-    console.log('Current user code:', userCode);
-    console.log('Project config:', projectConfig);
-    
-    if (!projectConfig) {
-      console.error('No project configuration loaded');
-      return;
-    }
-    
-    // Debug: Check specific patterns in user code
-    console.log('=== DEBUG: Code Pattern Detection ===');
-    console.log('Has def show_menu:', userCode.includes('def show_menu'));
-    console.log('Has print statements:', userCode.includes('print'));
-    console.log('Has menu text:', userCode.includes('Personal Finance Tracker') || userCode.includes('Add Income') || userCode.includes('Add Expense'));
-    console.log('Has while True:', userCode.includes('while True'));
-    console.log('Has show_menu() call:', userCode.includes('show_menu()'));
-    console.log('Has input_async:', userCode.includes('input_async'));
-    console.log('Has else clause:', userCode.includes('else:'));
-    console.log('Has invalid choice handling:', userCode.includes('Invalid choice') || userCode.includes('invalid') || userCode.includes('try again'));
-    console.log('=== END DEBUG ===');
-    
-    // 1. Check code structure against expected code
-    const missingComponents = validateCodeAgainstExpected(userCode, projectConfig);
-    
-    // 2. Check all tasks and subtasks
-    const taskProgress = checkTasksAndSubtasks(userCode, projectConfig);
-    
-    // 3. Analyze terminal output
-    const outputAnalysis = analyzeTerminalOutput(terminalOutput, projectConfig);
-    
-    // 4. Validate code logic and structure
-    const logicValidation = validateCodeLogic(userCode, projectConfig);
-    
-    // Build comprehensive feedback
-    let feedbackContent = `**📋 COMPREHENSIVE CODE REVIEW - ${projectConfig.title}**\n\n`;
-    
-    // Gaming detection section
-    const allGamingIssues = Object.values(taskProgress)
-      .filter(task => task.gamingIssues && task.gamingIssues.length > 0)
-      .flatMap(task => task.gamingIssues);
-    
-    if (allGamingIssues.length > 0) {
-      feedbackContent += `**🚨 GAMING DETECTION WARNINGS:**\n`;
-      allGamingIssues.forEach(issue => {
-        feedbackContent += `• ${issue}\n`;
-      });
-      feedbackContent += `\n`;
-    }
-    
-    // Missing components section
-    if (missingComponents.length > 0) {
-      feedbackContent += `**❌ Missing Components:**\n${missingComponents.map(item => `• ${item}`).join('\n')}\n\n`;
-    } else {
-      feedbackContent += `**✅ All required components present**\n\n`;
-    }
-    
-    // Logic validation section
-    feedbackContent += `**🔍 Logic & Structure Analysis:**\n${logicValidation.feedback.join('\n')}\n\n`;
-    
-    // Task progress section
-    feedbackContent += `**📊 Task Progress:**\n`;
-    Object.entries(taskProgress).forEach(([taskKey, task]) => {
-      const completed = task.completed.length;
-      const total = task.subtasks.length;
-      const percentage = Math.round((completed / total) * 100);
-      const status = completed === total ? '✅' : '🔄';
-      
-      feedbackContent += `${status} ${task.title}: ${completed}/${total} (${percentage}%)\n`;
-      
-      if (completed < total) {
-        const missingSubtasks = task.subtasks.filter(subtask => !task.completed.includes(subtask));
-        feedbackContent += `   Missing: ${missingSubtasks.join(', ')}\n`;
+  const handleSubmit = async () => {
+    if (!projectConfig) return;
+    setShowSubmitOverlay(true);
+    setTaskCheckResults([]);
+    setCheckingTaskIndex(0);
+    setSubtaskCheckResults({});
+    const tasks = Object.entries(projectConfig.tasks || {});
+    let results = [];
+    for (let i = 0; i < tasks.length; i++) {
+      setCheckingTaskIndex(i);
+      const [taskKey, task] = tasks[i];
+      const subtaskResults = [];
+      for (let j = 0; j < (task.subtasks || []).length; j++) {
+        const subtask = task.subtasks[j];
+        const prompt = `User's Code:\n\n${userCode}\n\nSubtask: ${subtask}\n\nIs this subtask clearly implemented in the user's code? Respond only with true or false.`;
+        let isSubtaskComplete = false;
+        try {
+          const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+          const model = 'gemini-1.5-flash';
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+          });
+          const data = await response.json();
+          let answer = '';
+          if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+            answer = data.candidates[0].content.parts[0].text.trim().toLowerCase();
+          }
+          const normalized = answer.replace(/[^a-z]/g, '');
+          if (normalized.startsWith('true')) isSubtaskComplete = true;
+          else if (normalized.startsWith('false')) isSubtaskComplete = false;
+        } catch (e) {
+          // On error, treat as not complete
+        }
+        subtaskResults.push({ subtask, complete: isSubtaskComplete });
+        // Update subtasks UI as each result comes in
+        setSubtaskCheckResults(prev => ({
+          ...prev,
+          [taskKey]: [...subtaskResults]
+        }));
       }
-    });
-    
-    // Terminal output analysis
-    feedbackContent += `\n**🖥️ Terminal Analysis:**\n${outputAnalysis.feedback.join('\n')}`;
-    
-    // Overall assessment - Much stricter now
-    const allTasksComplete = Object.values(taskProgress).every(task => task.completed.length === task.subtasks.length);
-    const allLogicValid = Object.entries(logicValidation)
-      .filter(([key, value]) => typeof value === 'boolean')
-      .every(([key, value]) => value);
-    const allFunctionalityWorking = outputAnalysis.functionalityChecks ? 
-      Object.values(outputAnalysis.functionalityChecks).every(check => check) : false;
-    const noGamingAttempts = allGamingIssues.length === 0;
-    
-    const isFullyWorking = allTasksComplete && 
-                          allLogicValid && 
-                          outputAnalysis.isWorking && 
-                          missingComponents.length === 0 &&
-                          allFunctionalityWorking &&
-                          noGamingAttempts;
-    
-    feedbackContent += `\n\n**🎯 Overall Status:** ${isFullyWorking ? '🎉 PROJECT COMPLETED!' : '🔄 Work in Progress'}`;
-    
-    if (!isFullyWorking) {
-      feedbackContent += `\n\n**📝 To Complete:**`;
-      if (!allTasksComplete) feedbackContent += `\n• Complete all tasks and subtasks`;
-      if (!allLogicValid) feedbackContent += `\n• Fix logic and structure issues`;
-      if (!outputAnalysis.isWorking) feedbackContent += `\n• Fix runtime errors`;
-      if (missingComponents.length > 0) feedbackContent += `\n• Add missing components`;
-      if (!allFunctionalityWorking) feedbackContent += `\n• Test all functionality`;
-      if (!noGamingAttempts) feedbackContent += `\n• Fix gaming detection issues - write actual code, not just text`;
+      // Mark task as complete only if all subtasks are complete
+      const isTaskComplete = subtaskResults.length > 0 && subtaskResults.every(r => r.complete);
+      results.push({ taskTitle: task.title, complete: isTaskComplete });
+      setTaskCheckResults([...results]);
     }
-    
-    const submitMessage = {
-      id: Date.now(),
-      type: 'ai',
-      content: feedbackContent,
-      timestamp: new Date()
-    };
-    
-    setChatMessages(prev => [...prev, submitMessage]);
-    setRightPanel('ai');
-    
-    // Show congratulations overlay if project is completed
-    if (isFullyWorking) {
-      setTimeout(() => {
-        setShowCongratulationsOverlay(true);
-      }, 1000);
-    }
+    setCheckingTaskIndex(-1);
   };
 
   const handleStuckClick = () => {
@@ -288,6 +218,40 @@ function Project() {
     };
     
     setChatMessages(prev => [...prev, stuckMessage]);
+  };
+
+  const handleTaskClick = async (taskKey, task) => {
+    setExpandedTasks(prev => ({ ...prev, [taskKey]: !prev[taskKey] }));
+    // Only check subtasks if not already checked
+    if (!subtaskCheckResults[taskKey] && task.subtasks && task.subtasks.length > 0) {
+      const results = [];
+      for (let i = 0; i < task.subtasks.length; i++) {
+        const subtask = task.subtasks[i];
+        const prompt = `User's Code:\n\n${userCode}\n\nSubtask: ${subtask}\n\nIs this subtask clearly implemented in the user's code? Respond only with true or false.`;
+        let isComplete = false;
+        try {
+          const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+          const model = 'gemini-1.5-flash';
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+          });
+          const data = await response.json();
+          let answer = '';
+          if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+            answer = data.candidates[0].content.parts[0].text.trim().toLowerCase();
+          }
+          const normalized = answer.replace(/[^a-z]/g, '');
+          if (normalized.startsWith('true')) isComplete = true;
+          else if (normalized.startsWith('false')) isComplete = false;
+        } catch (e) {
+          // On error, treat as not complete
+        }
+        results.push({ subtask, complete: isComplete });
+      }
+      setSubtaskCheckResults(prev => ({ ...prev, [taskKey]: results }));
+    }
   };
 
   return (
@@ -380,6 +344,99 @@ function Project() {
         </div>
       )}
 
+      {/* Submit Feedback Overlay */}
+      {showSubmitOverlay && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(10,10,20,0.96)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'inherit',
+        }}>
+          <div style={{
+            background: '#18181b',
+            padding: '36px 32px',
+            borderRadius: '18px',
+            minWidth: '400px',
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            color: '#f3f4f6',
+            fontFamily: 'inherit',
+            whiteSpace: 'pre-wrap',
+            border: '1.5px solid #764ba2',
+          }}>
+            <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: '#a78bfa', letterSpacing: 1 }}>Submission Review</h2>
+            <div style={{ fontSize: 18 }}>
+              {Object.entries(projectConfig.tasks || {}).map(([taskKey, task], idx) => (
+                <div key={taskKey} style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  background: '#23232a',
+                  borderRadius: 10,
+                  padding: '16px 20px',
+                  marginBottom: 18,
+                  border: '1.5px solid #312e81',
+                  boxShadow: '0 2px 8px #0002',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s',
+                }}
+                  onClick={() => handleTaskClick(taskKey, task)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 600, color: '#f3f4f6', fontSize: 17 }}>{task.title}</span>
+                    {taskCheckResults[idx] ? (
+                      taskCheckResults[idx].complete ? (
+                        <span style={{ color: '#22c55e', fontSize: 28, fontWeight: 700 }}>✔</span>
+                      ) : (
+                        <span style={{ color: '#ef4444', fontSize: 28, fontWeight: 700 }}>✖</span>
+                      )
+                    ) : (
+                      idx === checkingTaskIndex ? (
+                        <span className="animate-spin" style={{ color: '#a78bfa', fontSize: 26 }}>⏳</span>
+                      ) : (
+                        <span style={{ color: '#444', fontSize: 28, fontWeight: 700 }}>?</span>
+                      )
+                    )}
+                  </div>
+                  {expandedTasks[taskKey] && task.subtasks && (
+                    <ul className="mt-4 space-y-2">
+                      {(subtaskCheckResults[taskKey] || task.subtasks.map(subtask => ({ subtask, complete: null }))).map((result, i) => (
+                        <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#18181b', borderRadius: 6, padding: '8px 14px' }}>
+                          <span style={{ color: '#f3f4f6', fontSize: 15 }}>{result.subtask}</span>
+                          {result.complete === true ? (
+                            <span style={{ color: '#22c55e', fontSize: 22, fontWeight: 700 }}>✔</span>
+                          ) : result.complete === false ? (
+                            <span style={{ color: '#ef4444', fontSize: 22, fontWeight: 700 }}>✖</span>
+                          ) : (
+                            <span style={{ color: '#a1a1aa', fontSize: 22 }}>⏳</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end mt-8">
+              <button
+                onClick={() => setShowSubmitOverlay(false)}
+                className="px-7 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg text-lg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* End Project Button */}
       <div className="absolute top-2 right-4">
         <button
@@ -438,7 +495,7 @@ function Project() {
         {/* Content Section */}
         <div className="mt-2">
           {rightPanel === 'statement' && (
-            <Statement/>
+            <Statement userCode={userCode} projectConfig={projectConfig} />
           )}
 
           {rightPanel === 'ai' && (

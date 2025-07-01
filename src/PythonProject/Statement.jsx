@@ -2,15 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { ref, get } from 'firebase/database';
 import { db } from '../firebase';
-import { getProjectConfig } from './projectConfig';
+import { getProjectConfig, checkTasksAndSubtasks, checkTasksAndSubtasksGemini } from './projectConfig';
 
-function Statement() {
+function Statement({ userCode, projectConfig }) {
   const { isLoaded, isSignedIn, user } = useUser();
   const [projectKey, setProjectKey] = useState(null);
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [checked, setChecked] = useState({});
+  const [taskCheckStatus, setTaskCheckStatus] = useState({});
+  const [showModal, setShowModal] = useState(false);
+  const [modalSubtasks, setModalSubtasks] = useState([]);
+  const [modalTaskTitle, setModalTaskTitle] = useState('');
+  const [loadingTaskCheck, setLoadingTaskCheck] = useState(false);
+  const [modalReasons, setModalReasons] = useState({});
 
   useEffect(() => {
     async function fetchProjectKeyAndData() {
@@ -62,6 +68,34 @@ function Statement() {
     }));
   };
 
+  const handleTaskCheck = async (taskKey, task) => {
+    if (!userCode || !projectConfig) return;
+    setLoadingTaskCheck(true);
+    try {
+      const taskProgress = await checkTasksAndSubtasksGemini(userCode, projectConfig);
+      const thisTask = taskProgress[taskKey];
+      if (!thisTask) {
+        setLoadingTaskCheck(false);
+        return;
+      }
+      const allComplete = thisTask.completed.length === (thisTask.subtasks ? thisTask.subtasks.length : 0);
+      if (allComplete) {
+        setTaskCheckStatus(prev => ({ ...prev, [taskKey]: true }));
+      } else {
+        // Find incomplete subtasks
+        const incomplete = (thisTask.subtasks || []).filter(sub => !thisTask.completed.includes(sub));
+        setModalSubtasks(incomplete);
+        setModalReasons(thisTask.reasons || {});
+        setModalTaskTitle(task.title);
+        setTaskCheckStatus(prev => ({ ...prev, [taskKey]: false }));
+        setShowModal(true);
+      }
+    } catch (e) {
+      // Optionally handle error
+    }
+    setLoadingTaskCheck(false);
+  };
+
   if (loading) {
     return <div className="p-8 text-lg text-white">Loading project statement...</div>;
   }
@@ -88,11 +122,8 @@ function Statement() {
       </h1>
       <p className="mb-4 text-lg" style={{ color: '#e5e7eb' }}>{project.description}</p>
 
-     
-
       <div className="mb-2 text-xl font-semibold" style={{ color: '#f472b6' }}>Project Tasks</div>
       <div className="space-y-6">
-        {/* Prefer 'tasks' field if present, else fallback to 'ProjectTasks' */}
         {project.tasks
           ? Object.entries(project.tasks).map(([taskKey, task]) => (
               <div
@@ -103,7 +134,7 @@ function Statement() {
                   borderColor: '#a78bfa',
                 }}
               >
-                <div className="font-semibold mb-2 text-lg flex items-center gap-2" style={{ color: '#a78bfa' }}>
+                <div className="font-semibold mb-2 text-lg" style={{ color: '#a78bfa' }}>
                   <span
                     className="px-3 py-1 rounded-full text-sm"
                     style={{ background: '#312e81', color: '#f3f4f6' }}
@@ -141,7 +172,7 @@ function Statement() {
                   borderColor: '#a78bfa',
                 }}
               >
-                <div className="font-semibold mb-2 text-lg flex items-center gap-2" style={{ color: '#a78bfa' }}>
+                <div className="font-semibold mb-2 text-lg" style={{ color: '#a78bfa' }}>
                   <span
                     className="px-3 py-1 rounded-full text-sm"
                     style={{ background: '#312e81', color: '#f3f4f6' }}
@@ -152,18 +183,18 @@ function Statement() {
                 <ul className="space-y-2 ml-2 mt-2">
                   {Object.entries(task)
                     .filter(([k]) => k !== 'title')
-                    .map(([subKey, subDesc]) => (
+                    .map(([subKey, subDesc], idx) => (
                       <li key={subKey} className="flex text-left gap-3 items-center">
                         <input
                           type="checkbox"
-                          checked={!!checked[taskKey]?.[subKey]}
-                          onChange={() => handleCheck(taskKey, subKey)}
+                          checked={!!checked[taskKey]?.[idx]}
+                          onChange={() => handleCheck(taskKey, idx)}
                           className="accent-purple-400 rounded border-gray-600 focus:ring-2 focus:ring-purple-400 bg-[#18181b]"
                           style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0 }}
                         />
                         <span
-                          className={`text-base ${checked[taskKey]?.[subKey] ? 'line-through text-gray-500' : ''}`}
-                          style={{ color: checked[taskKey]?.[subKey] ? '#6b7280' : '#f3f4f6' }}
+                          className={`text-base ${checked[taskKey]?.[idx] ? 'line-through text-gray-500' : ''}`}
+                          style={{ color: checked[taskKey]?.[idx] ? '#6b7280' : '#f3f4f6' }}
                         >
                           {subDesc}
                         </span>

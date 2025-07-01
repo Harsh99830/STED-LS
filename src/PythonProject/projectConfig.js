@@ -122,181 +122,106 @@ export const detectGamingAttempts = (userCode) => {
 
 export const checkTasksAndSubtasks = (userCode, config) => {
   if (!config || !config.tasks) return {};
-  
+
   const tasks = {};
   const userCodeClean = userCode.replace(/\s+/g, ' ').toLowerCase();
-  
-  // Debug: Log the cleaned user code
-  console.log('=== DEBUG: User Code Analysis ===');
-  console.log('Cleaned user code:', userCodeClean);
-  
-  // Check for gaming attempts
-  const gamingIssues = detectGamingAttempts(userCode);
-  if (gamingIssues.length > 0) {
-    console.log('=== GAMING DETECTION ===');
-    gamingIssues.forEach(issue => console.log(issue));
-    console.log('=== END GAMING DETECTION ===');
-  }
-  
+
   Object.entries(config.tasks).forEach(([taskKey, task]) => {
+    const subtasks = task.subtasks || [];
+    const codeChecks = task.codeChecks || [];
+    const completed = [];
+
+    // For each codeCheck, check if it exists in userCode
+    codeChecks.forEach((check, idx) => {
+      let found = false;
+      if (check.startsWith('/') && check.endsWith('/')) {
+        // Treat as regex
+        try {
+          const regex = new RegExp(check.slice(1, -1), 'i');
+          found = regex.test(userCode);
+        } catch (e) {
+          found = false;
+        }
+      } else {
+        found = userCodeClean.includes(check.toLowerCase());
+      }
+      // If found, mark the corresponding subtask as complete (by index)
+      if (found && subtasks[idx] && !completed.includes(subtasks[idx])) {
+        completed.push(subtasks[idx]);
+      }
+    });
+
     tasks[taskKey] = {
       title: task.title,
-      subtasks: task.subtasks,
-      completed: [],
-      gamingIssues: gamingIssues // Include gaming issues in task results
+      subtasks,
+      completed,
     };
-    
-    console.log(`\n--- Checking ${taskKey}: ${task.title} ---`);
-    console.log(`  Subtasks:`, task.subtasks);
-    console.log(`  Code checks:`, task.codeChecks);
-    
-    // Generic task validation using codeChecks
-    if (task.codeChecks) {
-      task.codeChecks.forEach(check => {
-        const checkLower = check.toLowerCase();
-        let found = false;
-        
-        // Enhanced validation with anti-gaming checks
-        if (checkLower === 'input(') {
-          found = (userCodeClean.includes('input(') || userCodeClean.includes('input_async(')) &&
-                  !userCodeClean.includes('"input(') && // Not just a string
-                  !userCodeClean.includes("'input(");   // Not just a string
-        } else if (checkLower === 'def show_menu') {
-          found = (userCodeClean.includes('def show_menu') || userCodeClean.includes('async def show_menu')) &&
-                  !userCodeClean.includes('"def show_menu') && // Not just a string
-                  !userCodeClean.includes("'def show_menu");   // Not just a string
-        } else if (checkLower === 'while true') {
-          found = (userCodeClean.includes('while true') || userCodeClean.includes('while true:')) &&
-                  !userCodeClean.includes('"while true') && // Not just a string
-                  !userCodeClean.includes("'while true");   // Not just a string
-        } else if (checkLower === 'append(') {
-          found = (userCodeClean.includes('append(') || userCodeClean.includes('tasks.append')) &&
-                  !userCodeClean.includes('"append(') && // Not just a string
-                  !userCodeClean.includes("'append(");   // Not just a string
-        } else if (checkLower === 'pop(' || checkLower === 'tasks.pop') {
-          found = (userCodeClean.includes('pop(') || userCodeClean.includes('tasks.pop')) &&
-                  !userCodeClean.includes('"pop(') && // Not just a string
-                  !userCodeClean.includes("'pop(");   // Not just a string
-        } else if (checkLower === 'for idx, t in enumerate' || checkLower.includes('enumerate')) {
-          found = (userCodeClean.includes('for idx, t in enumerate') || userCodeClean.includes('enumerate(tasks')) &&
-                  !userCodeClean.includes('"for idx, t in enumerate') && // Not just a string
-                  !userCodeClean.includes("'for idx, t in enumerate");   // Not just a string
-        } else if (checkLower === 't["completed"] = true') {
-          found = (userCodeClean.includes('t["completed"] = true') || 
-                  userCodeClean.includes('t[\'completed\'] = true') || 
-                  userCodeClean.includes('completed"] = true')) &&
-                  !userCodeClean.includes('"t["completed"] = true') && // Not just a string
-                  !userCodeClean.includes("'t['completed'] = true");   // Not just a string
-        } else if (checkLower.includes('task added')) {
-          // For confirmation messages, we need to see them in print statements or actual output
-          found = (userCodeClean.includes('task added') || 
-                  userCodeClean.includes('✅ task added') ||
-                  userCodeClean.includes('task added.') ||
-                  userCodeClean.includes('✅ task added.')) &&
-                  (userCodeClean.includes('print') || userCodeClean.includes('f"') || userCodeClean.includes('f\''));
-        } else if (checkLower.includes('task marked as completed')) {
-          // For confirmation messages, we need to see them in print statements or actual output
-          found = (userCodeClean.includes('task marked as completed') || 
-                  userCodeClean.includes('✅ task marked as completed') ||
-                  userCodeClean.includes('task marked as completed.') ||
-                  userCodeClean.includes('✅ task marked as completed.')) &&
-                  (userCodeClean.includes('print') || userCodeClean.includes('f"') || userCodeClean.includes('f\''));
-        } else if (checkLower.includes('task deleted')) {
-          // For confirmation messages, we need to see them in print statements or actual output
-          found = (userCodeClean.includes('task deleted') || 
-                  userCodeClean.includes('🗑️ task deleted') ||
-                  userCodeClean.includes('task deleted.') ||
-                  userCodeClean.includes('🗑️ task deleted.')) &&
-                  (userCodeClean.includes('print') || userCodeClean.includes('f"') || userCodeClean.includes('f\''));
-        } else if (checkLower.includes('invalid task number')) {
-          // For error messages, we need to see them in print statements or actual output
-          found = (userCodeClean.includes('invalid task number') || 
-                  userCodeClean.includes('❌ invalid task number')) &&
-                  (userCodeClean.includes('print') || userCodeClean.includes('f"') || userCodeClean.includes('f\''));
-        } else {
-          // For other patterns, ensure they're not just strings
-          found = userCodeClean.includes(checkLower) &&
-                  !userCodeClean.includes(`"${checkLower}"`) && // Not just a quoted string
-                  !userCodeClean.includes(`'${checkLower}'`);   // Not just a quoted string
-        }
-        
-        console.log(`  Checking "${check}" (${checkLower}): ${found ? '✅ FOUND' : '❌ NOT FOUND'}`);
-        
-        if (found) {
-          // Find matching subtasks for this code check
-          const matchingSubtasks = task.subtasks.filter(subtask => {
-            const subtaskLower = subtask.toLowerCase();
-            
-            // More flexible matching for different patterns
-            if (checkLower === 'input(' || checkLower === 'input_async(') {
-              return subtaskLower.includes('input') || subtaskLower.includes('prompt');
-            } else if (checkLower === 'def show_menu' || checkLower === 'async def show_menu') {
-              return subtaskLower.includes('show_menu') || subtaskLower.includes('function');
-            } else if (checkLower === 'while true' || checkLower === 'while true:') {
-              return subtaskLower.includes('while') || subtaskLower.includes('loop');
-            } else if (checkLower === 'append(' || checkLower === 'tasks.append') {
-              return subtaskLower.includes('append') || subtaskLower.includes('add');
-            } else if (checkLower === 'pop(' || checkLower === 'tasks.pop') {
-              return subtaskLower.includes('pop') || subtaskLower.includes('delete');
-            } else if (checkLower === 'for idx, t in enumerate' || checkLower.includes('enumerate')) {
-              return subtaskLower.includes('enumerate') || subtaskLower.includes('display') || subtaskLower.includes('view');
-            } else if (checkLower.includes('completed')) {
-              return subtaskLower.includes('completed') || subtaskLower.includes('mark');
-            } else if (checkLower.includes('choice ==')) {
-              return subtaskLower.includes('choice') || subtaskLower.includes('handle');
-            } else if (checkLower.includes('task added') || checkLower.includes('task deleted') || checkLower.includes('task marked')) {
-              return subtaskLower.includes('confirmation') || subtaskLower.includes('message') || subtaskLower.includes('show');
-            } else {
-              return subtaskLower.includes(checkLower.replace(/[()]/g, '')) ||
-                     (checkLower === 'input(' && subtaskLower.includes('input'));
-            }
-          });
-          
-          console.log(`    Matching subtasks for "${check}":`, matchingSubtasks);
-          
-          matchingSubtasks.forEach(subtask => {
-            if (!tasks[taskKey].completed.includes(subtask)) {
-              tasks[taskKey].completed.push(subtask);
-              console.log(`    ✅ Completed: ${subtask}`);
-            }
-          });
-        } else {
-          console.log(`    ❌ Pattern "${check}" not found in code`);
-        }
-      });
-    }
-    
-    // Additional pattern matching for specific subtasks that need multiple patterns
-    if (taskKey === 'task3') {
-      // For "Show completed and incomplete status" - check if we have both status indicators
-      const hasCompletedStatus = userCodeClean.includes('✔️') && userCodeClean.includes('❌');
-      const hasCompletedLogic = userCodeClean.includes('t["completed"]') || userCodeClean.includes("t['completed']");
-      
-      if (hasCompletedStatus && hasCompletedLogic) {
-        const statusSubtask = "Show completed and incomplete status";
-        if (!tasks[taskKey].completed.includes(statusSubtask)) {
-          tasks[taskKey].completed.push(statusSubtask);
-          console.log(`    ✅ Completed: ${statusSubtask} (via status indicators)`);
-        }
-      }
-    }
-    
-    if (taskKey === 'task4') {
-      // For "Show confirmation or error" - check if we have both confirmation and error messages
-      const hasConfirmation = userCodeClean.includes('task marked as completed') || userCodeClean.includes('✅ task marked as completed');
-      const hasError = userCodeClean.includes('invalid task number') || userCodeClean.includes('❌ invalid task number');
-      
-      if (hasConfirmation && hasError) {
-        const confirmationSubtask = "Show confirmation or error";
-        if (!tasks[taskKey].completed.includes(confirmationSubtask)) {
-          tasks[taskKey].completed.push(confirmationSubtask);
-          console.log(`    ✅ Completed: ${confirmationSubtask} (via confirmation and error messages)`);
-        }
-      }
-    }
   });
-  
-  console.log('=== END DEBUG ===');
+
+  return tasks;
+};
+
+export const checkTasksAndSubtasksGemini = async (userCode, config) => {
+  if (!config || !config.tasks) return {};
+  const tasks = {};
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const model = 'gemini-1.5-flash';
+
+  for (const [taskKey, task] of Object.entries(config.tasks)) {
+    const subtasks = task.subtasks || [];
+    const completed = [];
+    const reasons = {};
+    for (const subtask of subtasks) {
+      // More forgiving yes/no prompt
+      const prompt = `Project: ${config.title}\nDescription: ${config.description}\n\nUser's Code:\n\n${userCode}\n\nSubtask: ${subtask}\n\nIs this subtask completed in the user's code? Respond only with true or false. Consider the subtask complete if the main functionality is present, even if minor improvements (like error handling) are missing.`;
+      let isComplete = false;
+      let answer = '';
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await response.json();
+        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) {
+          answer = data.candidates[0].content.parts[0].text.trim().toLowerCase();
+        }
+        if (answer === 'true') {
+          completed.push(subtask);
+          isComplete = true;
+        }
+      } catch (e) {
+        // On error, treat as not complete
+      }
+      // Always ask for reason/explanation
+      const reasonPrompt = `Project: ${config.title}\nDescription: ${config.description}\n\nUser's Code:\n\n${userCode}\n\nSubtask: ${subtask}\n\nIf this subtask is not completed, explain why in one sentence. If it is completed, explain why it is considered complete.`;
+      let reason = '';
+      try {
+        const reasonResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: reasonPrompt }] }] })
+        });
+        const reasonData = await reasonResponse.json();
+        if (reasonData.candidates && reasonData.candidates[0] && reasonData.candidates[0].content && reasonData.candidates[0].content.parts) {
+          reason = reasonData.candidates[0].content.parts[0].text.trim();
+        }
+        reasons[subtask] = reason;
+      } catch (e) {
+        reasons[subtask] = '';
+      }
+      // If explanation says subtask is complete, mark as complete
+      if (!isComplete && reason && /subtask (is|has been)? ?complete|main functionality is present|core functionality is present|the code fulfills|the code implements|the code achieves/i.test(reason)) {
+        completed.push(subtask);
+      }
+    }
+    tasks[taskKey] = {
+      title: task.title,
+      subtasks,
+      completed,
+      reasons,
+    };
+  }
   return tasks;
 };
 

@@ -10,6 +10,9 @@ function AI({ userCode, messages, setMessages }) {
   const [isLoading, setIsLoading] = useState(false);
   const [projectConfig, setProjectConfig] = useState(null);
   const messagesEndRef = useRef(null);
+  const [taskCheckStatus, setTaskCheckStatus] = useState({});
+  const [showModal, setShowModal] = useState(false);
+  const [modalSubtasks, setModalSubtasks] = useState([]);
 
   // Fetch project data when component mounts
   useEffect(() => {
@@ -156,6 +159,39 @@ function AI({ userCode, messages, setMessages }) {
     }
   };
 
+  const handleTaskCheck = (taskKey) => {
+    if (!projectConfig || !projectConfig.tasks) return;
+    const task = projectConfig.tasks[taskKey];
+    const userCodeLower = (userCode || '').toLowerCase();
+    const completed = (task.codeChecks || []).filter(check =>
+      userCodeLower.includes(check.toLowerCase().replace(/[`'"().:]/g, ''))
+    );
+    const allComplete = completed.length === (task.codeChecks ? task.codeChecks.length : (task.subtasks ? task.subtasks.length : 0));
+    if (allComplete) {
+      setTaskCheckStatus(prev => ({ ...prev, [taskKey]: true }));
+    } else {
+      // Find incomplete subtasks
+      const incomplete = (task.subtasks || []).filter((_, idx) => !(completed.includes((task.codeChecks||[])[idx])));
+      setModalSubtasks(incomplete);
+      setTaskCheckStatus(prev => ({ ...prev, [taskKey]: false }));
+      setShowModal(true);
+    }
+  };
+
+  // Helper to provide what to do for a subtask
+  const getSubtaskHelp = (subtask) => {
+    // You can customize this mapping for more detailed help per subtask
+    if (subtask.toLowerCase().includes('function')) return 'Write the required function definition in your code.';
+    if (subtask.toLowerCase().includes('input')) return 'Use input_async() or input() to get user input.';
+    if (subtask.toLowerCase().includes('print')) return 'Use print() to display output.';
+    if (subtask.toLowerCase().includes('loop')) return 'Implement a while or for loop as needed.';
+    if (subtask.toLowerCase().includes('list')) return 'Initialize and use a list as described.';
+    if (subtask.toLowerCase().includes('dictionary')) return 'Use a dictionary to store data as needed.';
+    if (subtask.toLowerCase().includes('return')) return 'Make sure to return the required value from your function.';
+    if (subtask.toLowerCase().includes('summary')) return 'Display the summary as described.';
+    return 'Check the project instructions for this subtask.';
+  };
+
   return (
     <div className="flex flex-col bg-gray-900 text-white h-155">
       {/* Header */}
@@ -187,7 +223,6 @@ function AI({ userCode, messages, setMessages }) {
             </div>
           </div>
         ))}
-        
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-gray-700 text-gray-100 rounded-lg p-3">
@@ -199,7 +234,6 @@ function AI({ userCode, messages, setMessages }) {
             </div>
           </div>
         )}
-        
         <div ref={messagesEndRef} />
       </div>
 
