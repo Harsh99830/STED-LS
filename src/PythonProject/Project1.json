@@ -15,7 +15,7 @@
         "print",
         "Personal Finance Tracker",
         "while True",
-        "input_async"
+        "/input_async|input\\(/"
       ],
       "subtasks": [
         "Create show_menu() function",
@@ -29,7 +29,7 @@
     "task2": {
       "codeChecks": [
         "def add_income",
-        "input_async",
+        "/input_async|input\\(/",
         "float(",
         "return"
       ],
@@ -44,7 +44,7 @@
     "task3": {
       "codeChecks": [
         "def add_expense",
-        "input_async",
+        "/input_async|input\\(/",
         "return",
         "{"
       ],
