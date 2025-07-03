@@ -3,6 +3,8 @@ import { useUser } from '@clerk/clerk-react';
 import { ref, get } from 'firebase/database';
 import { db } from '../firebase';
 import { getProjectConfig, checkTasksAndSubtasks, checkTasksAndSubtasksGemini } from './projectConfig';
+import { FaChevronDown } from 'react-icons/fa';
+import { FaQuestionCircle } from 'react-icons/fa';
 
 function Statement({ userCode, projectConfig }) {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -20,6 +22,9 @@ function Statement({ userCode, projectConfig }) {
   const [subtaskCheckResults, setSubtaskCheckResults] = useState({});
   const [hoveredReason, setHoveredReason] = useState({ taskKey: null, subIdx: null });
   const hoverTimeout = useRef();
+  const [expandedTask, setExpandedTask] = useState(null);
+  const [showProjectDesc, setShowProjectDesc] = useState(false);
+  const projectDescIconRef = useRef();
 
   useEffect(() => {
     async function fetchProjectKeyAndData() {
@@ -59,6 +64,18 @@ function Statement({ userCode, projectConfig }) {
     }
     fetchProjectKeyAndData();
   }, [isLoaded, isSignedIn, user]);
+
+  // Close overlay on outside click
+  useEffect(() => {
+    if (!showProjectDesc) return;
+    function handleClick(e) {
+      if (projectDescIconRef.current && !projectDescIconRef.current.contains(e.target)) {
+        setShowProjectDesc(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showProjectDesc]);
 
   // Checklist state handler
   const handleCheck = (task, subtask) => {
@@ -152,181 +169,272 @@ function Statement({ userCode, projectConfig }) {
         boxShadow: '0 4px 32px #000a',
       }}
     >
-      <h1 className="text-3xl text-center justify-center font-bold mb-2 flex gap-2" style={{ color: '#a78bfa' }}>
+      <h1 className="text-3xl text-center justify-center font-bold mb-2 flex gap-2 items-center relative" style={{ color: '#a78bfa' }}>
         {project.title}
+        <span ref={projectDescIconRef} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+          <FaQuestionCircle
+            style={{
+              color: '#e5e7eb',
+              fontSize: 22,
+              marginLeft: 8,
+              cursor: 'pointer',
+              verticalAlign: 'middle',
+              opacity: 0.85,
+              transition: 'color 0.2s'
+            }}
+            onClick={() => setShowProjectDesc(v => !v)}
+            title="Show project description"
+          />
+          {showProjectDesc && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 32,
+                right: 0,
+                zIndex: 100,
+                background: '#23232a',
+                color: '#e5e7eb',
+                border: '1px solid #444',
+                borderRadius: 8,
+                padding: '16px 20px',
+                minWidth: 350,
+                maxWidth: 340,
+                boxShadow: '0 4px 24px #000a',
+                fontSize: 16,
+                lineHeight: '1.6',
+                whiteSpace: 'pre-line',
+                transition: 'opacity 0.3s cubic-bezier(.4,0,.2,1), transform 0.3s cubic-bezier(.4,0,.2,1)',
+                opacity: 1,
+                transform: 'translateY(0px) scale(1)'
+              }}
+            >
+              {project.description}
+            </div>
+          )}
+        </span>
       </h1>
-      <p className="mb-4 text-lg" style={{ color: '#e5e7eb' }}>{project.description}</p>
 
-      <div className="mb-2 text-xl font-semibold" style={{ color: '#f472b6' }}>Project Tasks</div>
-      <div className="space-y-6">
+      <div className="space-y-6 mt-10">
         {project.tasks
-          ? Object.entries(project.tasks).map(([taskKey, task]) => (
-              <div
-                key={taskKey}
-                className="rounded-lg p-4 shadow border"
-                style={{
-                  background: '#23232a',
-                  borderColor: '#a78bfa',
-                }}
-              >
-                <div className="font-semibold mb-2 text-lg flex items-center justify-between" style={{ color: '#a78bfa' }}>
-                  <span
-                    className="px-3 py-1 rounded-full text-sm"
-                    style={{ background: '#312e81', color: '#f3f4f6' }}
+          ? Object.entries(project.tasks).map(([taskKey, task]) => {
+              const isExpanded = expandedTask === taskKey;
+              return (
+                <div
+                  key={taskKey}
+                  className="p-4 shadow border"
+                  style={{
+                    background: '#23232a',
+                    borderColor: '#444',
+                    borderRadius: 0,
+                  }}
+                >
+                  <div
+                    className="font-semibold mb-2 text-lg flex items-center justify-between cursor-pointer select-none"
+                    style={{ color: '#e5e7eb', borderRadius: 0, fontSize: 24, lineHeight: '2.2rem' }}
+                    onClick={() => setExpandedTask(isExpanded ? null : taskKey)}
                   >
-                    {task.title}
-                  </span>
-                  <button
-                    className="ml-4 px-3 py-1 rounded bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm flex items-center gap-2"
-                    style={{ minWidth: 70, minHeight: 32, position: 'relative' }}
-                    onClick={() => handleTaskCheck(taskKey, task)}
-                    disabled={loadingTaskKey === taskKey}
-                  >
-                    {loadingTaskKey === taskKey ? (
-                      <span className="loader mr-2" style={{ width: 16, height: 16, border: '2px solid #fff', borderTop: '2px solid #a78bfa', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
-                    ) : taskCheckStatus[taskKey] === true ? (
-                      <span style={{ color: '#22c55e', fontSize: 18 }}>✔</span>
-                    ) : taskCheckStatus[taskKey] === false ? (
-                      <span style={{ color: '#ef4444', fontSize: 18 }}>✖</span>
-                    ) : (
-                      'Check'
-                    )}
-                  </button>
-                </div>
-                <ul className="space-y-2 ml-2 mt-2">
-                  {task.subtasks && task.subtasks.map((subDesc, subIdx) => (
-                    <li key={subIdx} className="flex text-left gap-3 items-center">
-                      <input
-                        type="checkbox"
-                        checked={!!checked[taskKey]?.[subIdx]}
-                        onChange={() => handleCheck(taskKey, subIdx)}
-                        className="accent-purple-400 rounded border-gray-600 focus:ring-2 focus:ring-purple-400 bg-[#18181b]"
-                        style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0 }}
+                    <span className="flex items-center gap-2">
+                      <FaChevronDown
+                        style={{
+                          transition: 'transform 0.3s',
+                          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                          fontSize: 16,
+                        }}
                       />
                       <span
-                        className={`text-base ${checked[taskKey]?.[subIdx] ? 'line-through text-gray-500' : ''}`}
-                        style={{ color: checked[taskKey]?.[subIdx] ? '#6b7280' : '#f3f4f6' }}
+                        className="px-3 py-1"
+                        style={{ background: '#23232a', color: '#e5e7eb', borderRadius: 0, fontWeight: 400, fontSize: 20, lineHeight: '2.2rem' }}
                       >
-                        {subDesc}
+                        {task.title}
                       </span>
-                      {/* Tick/cross for subtask check and reason */}
-                      {loadingTaskKey === taskKey && (!subtaskCheckResults[taskKey] || subtaskCheckResults[taskKey][subIdx] === undefined) ? (
-                        <span className="loader ml-2" style={{ width: 14, height: 14, border: '2px solid #fff', borderTop: '2px solid #a78bfa', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
-                      ) : subtaskCheckResults[taskKey] && subtaskCheckResults[taskKey][subIdx] !== undefined ? (
-                        <>
+                    </span>
+                    <button
+                      className="ml-4 px-3 py-1 text-white font-semibold text-sm flex items-center gap-2"
+                      style={{ minWidth: 70, minHeight: 32, position: 'relative', background: '#333', borderRadius: 0, border: '1px solid #444' }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleTaskCheck(taskKey, task);
+                      }}
+                      disabled={loadingTaskKey === taskKey}
+                    >
+                      {loadingTaskKey === taskKey ? (
+                        <span className="loader mr-2" style={{ width: 16, height: 16, border: '2px solid #fff', borderTop: '2px solid #888', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
+                      ) : taskCheckStatus[taskKey] === true ? (
+                        <span style={{ color: '#22c55e', fontSize: 18 }}>✔</span>
+                      ) : taskCheckStatus[taskKey] === false ? (
+                        <span style={{ color: '#ef4444', fontSize: 18 }}>✖</span>
+                      ) : (
+                        'Check'
+                      )}
+                    </button>
+                  </div>
+                  {isExpanded && (
+                    <ul className="space-y-2 ml-2 mt-2">
+                      {task.subtasks && task.subtasks.map((subDesc, subIdx) => (
+                        <li
+                          key={subIdx}
+                          className="flex text-left gap-3 items-center"
+                          style={{ borderBottom: '1px solid #333', paddingBottom: 6, marginBottom: 4 }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!checked[taskKey]?.[subIdx]}
+                            onChange={() => handleCheck(taskKey, subIdx)}
+                            className="border-gray-600 focus:ring-2 bg-[#18181b]"
+                            style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0, borderRadius: 0 }}
+                          />
                           <span
-                            style={{ color: subtaskCheckResults[taskKey][subIdx].complete ? '#22c55e' : '#ef4444', fontSize: 16, marginLeft: 6, cursor: 'pointer', position: 'relative' }}
-                            onMouseEnter={e => {
-                              clearTimeout(hoverTimeout.current);
-                              const rect = e.target.getBoundingClientRect();
-                              const rightSpace = window.innerWidth - rect.right;
-                              hoverTimeout.current = setTimeout(() => {
-                                setHoveredReason({ taskKey, subIdx, left: rightSpace < 250 });
-                              }, 200);
-                            }}
-                            onMouseLeave={() => {
-                              clearTimeout(hoverTimeout.current);
-                              hoverTimeout.current = setTimeout(() => {
-                                setHoveredReason({ taskKey: null, subIdx: null });
-                              }, 200);
-                            }}
+                            className={`text-base ${checked[taskKey]?.[subIdx] ? 'line-through text-gray-500' : ''}`}
+                            style={{ color: checked[taskKey]?.[subIdx] ? '#6b7280' : '#f3f4f6' }}
                           >
-                            {subtaskCheckResults[taskKey][subIdx].complete ? '✔' : '✖'}
-                            {/* Absolute reason box */}
-                            {(hoveredReason.taskKey === taskKey && hoveredReason.subIdx === subIdx) && (
-                              <div
-                                style={{
-                                  position: 'absolute',
-                                  top: 24,
-                                  left: hoveredReason.left ? 'auto' : 0,
-                                  right: hoveredReason.left ? 0 : 'auto',
-                                  zIndex: 100,
-                                  background: '#23232a',
-                                  color: '#a78bfa',
-                                  fontSize: 11,
-                                  border: '1px solid #a78bfa',
-                                  borderRadius: 6,
-                                  padding: '6px 10px',
-                                  minWidth: 120,
-                                  maxWidth: 220,
-                                  whiteSpace: 'pre-line',
-                                  boxShadow: '0 2px 8px #0006',
-                                  transition: 'opacity 0.4s cubic-bezier(.4,0,.2,1), transform 0.4s cubic-bezier(.4,0,.2,1)',
-                                  opacity: 1,
-                                  transform: 'translateY(0px) scale(1)',
+                            {subDesc}
+                          </span>
+                          {/* Tick/cross for subtask check and reason */}
+                          {loadingTaskKey === taskKey && (!subtaskCheckResults[taskKey] || subtaskCheckResults[taskKey][subIdx] === undefined) ? (
+                            <span className="loader ml-2" style={{ width: 14, height: 14, border: '2px solid #fff', borderTop: '2px solid #888', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
+                          ) : subtaskCheckResults[taskKey] && subtaskCheckResults[taskKey][subIdx] !== undefined ? (
+                            <>
+                              <span
+                                style={{ color: subtaskCheckResults[taskKey][subIdx].complete ? '#22c55e' : '#ef4444', fontSize: 16, marginLeft: 6, cursor: 'pointer', position: 'relative' }}
+                                onMouseEnter={e => {
+                                  clearTimeout(hoverTimeout.current);
+                                  const rect = e.target.getBoundingClientRect();
+                                  const rightSpace = window.innerWidth - rect.right;
+                                  hoverTimeout.current = setTimeout(() => {
+                                    setHoveredReason({ taskKey, subIdx, left: rightSpace < 250 });
+                                  }, 200);
+                                }}
+                                onMouseLeave={() => {
+                                  clearTimeout(hoverTimeout.current);
+                                  hoverTimeout.current = setTimeout(() => {
+                                    setHoveredReason({ taskKey: null, subIdx: null });
+                                  }, 200);
                                 }}
                               >
-                                {subtaskCheckResults[taskKey][subIdx].reason
-                                  .split(/(?<=[.!?])\s+/)
-                                  .slice(0, 2)
-                                  .join(' ')
-                                  .slice(0, 140)}
-                              </div>
-                            )}
-                          </span>
-                        </>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))
-          : project.ProjectTasks && Object.entries(project.ProjectTasks).map(([taskKey, task]) => (
-              <div
-                key={taskKey}
-                className="rounded-lg p-4 shadow border"
-                style={{
-                  background: '#23232a',
-                  borderColor: '#a78bfa',
-                }}
-              >
-                <div className="font-semibold mb-2 text-lg flex items-center justify-between" style={{ color: '#a78bfa' }}>
-                  <span
-                    className="px-3 py-1 rounded-full text-sm"
-                    style={{ background: '#312e81', color: '#f3f4f6' }}
-                  >
-                    {task.title}
-                  </span>
-                  <button
-                    className="ml-4 px-3 py-1 rounded bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm flex items-center gap-2"
-                    style={{ minWidth: 70, minHeight: 32, position: 'relative' }}
-                    onClick={() => handleTaskCheck(taskKey, task)}
-                    disabled={loadingTaskKey === taskKey}
-                  >
-                    {loadingTaskKey === taskKey ? (
-                      <span className="loader mr-2" style={{ width: 16, height: 16, border: '2px solid #fff', borderTop: '2px solid #a78bfa', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
-                    ) : taskCheckStatus[taskKey] === true ? (
-                      <span style={{ color: '#22c55e', fontSize: 18 }}>✔</span>
-                    ) : taskCheckStatus[taskKey] === false ? (
-                      <span style={{ color: '#ef4444', fontSize: 18 }}>✖</span>
-                    ) : (
-                      'Check'
-                    )}
-                  </button>
+                                {subtaskCheckResults[taskKey][subIdx].complete ? '✔' : '✖'}
+                                {/* Absolute reason box */}
+                                {(hoveredReason.taskKey === taskKey && hoveredReason.subIdx === subIdx) && (
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      top: 24,
+                                      left: hoveredReason.left ? 'auto' : 0,
+                                      right: hoveredReason.left ? 0 : 'auto',
+                                      zIndex: 100,
+                                      background: '#23232a',
+                                      color: '#e5e7eb',
+                                      fontSize: 11,
+                                      border: '1px solid #444',
+                                      borderRadius: 0,
+                                      padding: '6px 10px',
+                                      minWidth: 120,
+                                      maxWidth: 220,
+                                      whiteSpace: 'pre-line',
+                                      boxShadow: '0 2px 8px #0006',
+                                      transition: 'opacity 0.4s cubic-bezier(.4,0,.2,1), transform 0.4s cubic-bezier(.4,0,.2,1)',
+                                      opacity: 1,
+                                      transform: 'translateY(0px) scale(1)',
+                                    }}
+                                  >
+                                    {subtaskCheckResults[taskKey][subIdx].reason
+                                      .split(/(?<=[.!?])\s+/)
+                                      .slice(0, 2)
+                                      .join(' ')
+                                      .slice(0, 140)}
+                                  </div>
+                                )}
+                              </span>
+                            </>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-                <ul className="space-y-2 ml-2 mt-2">
-                  {Object.entries(task)
-                    .filter(([k]) => k !== 'title')
-                    .map(([subKey, subDesc], idx) => (
-                      <li key={subKey} className="flex text-left gap-3 items-center">
-                        <input
-                          type="checkbox"
-                          checked={!!checked[taskKey]?.[idx]}
-                          onChange={() => handleCheck(taskKey, idx)}
-                          className="accent-purple-400 rounded border-gray-600 focus:ring-2 focus:ring-purple-400 bg-[#18181b]"
-                          style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0 }}
-                        />
-                        <span
-                          className={`text-base ${checked[taskKey]?.[idx] ? 'line-through text-gray-500' : ''}`}
-                          style={{ color: checked[taskKey]?.[idx] ? '#6b7280' : '#f3f4f6' }}
-                        >
-                          {subDesc}
-                        </span>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            ))}
+              );
+            })
+          : project.ProjectTasks && Object.entries(project.ProjectTasks).map(([taskKey, task]) => {
+              const isExpanded = expandedTask === taskKey;
+              return (
+                <div
+                  key={taskKey}
+                  className="p-4 shadow border"
+                  style={{
+                    background: '#23232a',
+                    borderColor: '#444',
+                    borderRadius: 0,
+                  }}
+                >
+                  <div
+                    className="font-semibold mb-2 text-lg flex items-center justify-between cursor-pointer select-none"
+                    style={{ color: '#e5e7eb', borderRadius: 0, fontSize: 24, lineHeight: '2.2rem' }}
+                    onClick={() => setExpandedTask(isExpanded ? null : taskKey)}
+                  >
+                    <span className="flex items-center gap-2">
+                      <FaChevronDown
+                        style={{
+                          transition: 'transform 0.3s',
+                          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                          fontSize: 16,
+                        }}
+                      />
+                      <span
+                        className="px-3 py-1"
+                        style={{ background: '#23232a', color: '#e5e7eb', borderRadius: 0, fontWeight: 700, fontSize: 24, lineHeight: '2.2rem' }}
+                      >
+                        {task.title}
+                      </span>
+                    </span>
+                    <button
+                      className="ml-4 px-3 py-1 text-white font-semibold text-sm flex items-center gap-2"
+                      style={{ minWidth: 70, minHeight: 32, position: 'relative', background: '#333', borderRadius: 0, border: '1px solid #444' }}
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleTaskCheck(taskKey, task);
+                      }}
+                      disabled={loadingTaskKey === taskKey}
+                    >
+                      {loadingTaskKey === taskKey ? (
+                        <span className="loader mr-2" style={{ width: 16, height: 16, border: '2px solid #fff', borderTop: '2px solid #888', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
+                      ) : taskCheckStatus[taskKey] === true ? (
+                        <span style={{ color: '#22c55e', fontSize: 18 }}>✔</span>
+                      ) : taskCheckStatus[taskKey] === false ? (
+                        <span style={{ color: '#ef4444', fontSize: 18 }}>✖</span>
+                      ) : (
+                        'Check'
+                      )}
+                    </button>
+                  </div>
+                  {isExpanded && (
+                    <ul className="space-y-2 ml-2 mt-2">
+                      {Object.entries(task)
+                        .filter(([k]) => k !== 'title')
+                        .map(([subKey, subDesc], idx) => (
+                          <li
+                            key={subKey}
+                            className="flex text-left gap-3 items-center"
+                            style={{ borderBottom: '1px solid #333', paddingBottom: 6, marginBottom: 4 }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={!!checked[taskKey]?.[idx]}
+                              onChange={() => handleCheck(taskKey, idx)}
+                              className="border-gray-600 focus:ring-2 bg-[#18181b]"
+                              style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0, borderRadius: 0 }}
+                            />
+                            <span
+                              className={`text-base ${checked[taskKey]?.[idx] ? 'line-through text-gray-500' : ''}`}
+                              style={{ color: checked[taskKey]?.[idx] ? '#6b7280' : '#f3f4f6' }}
+                            >
+                              {subDesc}
+                            </span>
+                          </li>
+                        ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
       </div>
     </div>
   );
