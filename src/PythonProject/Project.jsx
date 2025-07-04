@@ -437,23 +437,47 @@ function Project() {
         </div>
       )}
 
-      {/* End Project Button */}
-      <div className="absolute top-2 right-4">
-        <button
-          onClick={handleEndProjectClick}
-          className="px-6 py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg"
-        >
-          End Project
-        </button>
-      </div>
-
-      {/* Submit Button */}
-      <div className="absolute top-2 right-32">
+      {/* End Project & Submit Buttons */}
+      <div style={{ position: 'absolute', top: 12, right: 24, display: 'flex', gap: 8, zIndex: 100 }}>
         <button
           onClick={handleSubmit}
-          className="px-6 py-1 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg"
+          style={{
+            padding: '4px 14px',
+            background: '#22c55e',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: 13,
+            border: '1px solid #15803d',
+            borderRadius: 6,
+            boxShadow: '0 1px 4px #0004',
+            transition: 'background 0.2s',
+            minWidth: 0,
+            minHeight: 0,
+            lineHeight: '1.2',
+            cursor: 'pointer',
+          }}
         >
           Submit
+        </button>
+        <button
+          onClick={handleEndProjectClick}
+          style={{
+            padding: '4px 14px',
+            background: '#ef4444',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: 13,
+            border: '1px solid #991b1b',
+            borderRadius: 6,
+            boxShadow: '0 1px 4px #0004',
+            transition: 'background 0.2s',
+            minWidth: 0,
+            minHeight: 0,
+            lineHeight: '1.2',
+            cursor: 'pointer',
+          }}
+        >
+          End Project
         </button>
       </div>
 
@@ -465,7 +489,9 @@ function Project() {
      
 
       {/* Right side - Statement / AI Panel */}
-      <div className="w-150 h-full bg-zinc-700 text-white p-5 border border-white border-white">
+      <div className="w-150 h-full text-white p-5 border border-white border-white"
+      style={{"backgroundColor":"rgb(24, 24, 27)"}}
+      >
         {/* Toggle Buttons */}
         <div className="flex gap-4 mb-4">
           <button

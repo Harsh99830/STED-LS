@@ -13,6 +13,7 @@ function AI({ userCode, messages, setMessages }) {
   const [taskCheckStatus, setTaskCheckStatus] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [modalSubtasks, setModalSubtasks] = useState([]);
+  const inputRef = useRef(null);
 
   // Fetch project data when component mounts
   useEffect(() => {
@@ -206,6 +207,13 @@ function AI({ userCode, messages, setMessages }) {
     return 'Check the project instructions for this subtask.';
   };
 
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = inputRef.current.scrollHeight + 'px';
+    }
+  }, [inputMessage]);
+
   return (
     <div className="flex flex-col bg-gray-900 text-white h-155">
       {/* Header */}
@@ -252,21 +260,55 @@ function AI({ userCode, messages, setMessages }) {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t text-left border-gray-700">
-        <div className="flex space-x-2">
+      <div className="p-3 border-t text-left border-gray-700">
+        <div className="flex space-x-2 items-end">
           <textarea
+            ref={inputRef}
             value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
+            onChange={e => {
+              setInputMessage(e.target.value);
+              // Auto-resize
+              if (inputRef.current) {
+                inputRef.current.style.height = 'auto';
+                inputRef.current.style.height = inputRef.current.scrollHeight + 'px';
+              }
+            }}
             onKeyPress={handleKeyPress}
             placeholder="Ask me anything about your project..."
-            className="flex-1 bg-gray-800 text-left text-white rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-            rows={2}
+            className="flex-1 bg-gray-800 text-left text-white"
+            style={{
+              borderRadius: 6,
+              padding: '7px 10px',
+              fontSize: 14,
+              minHeight: 40,
+              maxHeight: 120,
+              resize: 'none',
+              lineHeight: 1.3,
+              outline: 'none',
+              border: '1px solid #444',
+              overflow: 'hidden',
+            }}
+            rows={1}
             disabled={isLoading}
           />
           <button
             onClick={sendMessage}
             disabled={!inputMessage.trim() || isLoading}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+            style={{
+              background: '#a78bfa',
+              color: 'white',
+              padding: '6px 14px',
+              fontSize: 14,
+              borderRadius: 6,
+              fontWeight: 600,
+              minHeight: 40,
+              minWidth: 0,
+              border: 'none',
+              transition: 'background 0.2s',
+              cursor: (!inputMessage.trim() || isLoading) ? 'not-allowed' : 'pointer',
+              opacity: (!inputMessage.trim() || isLoading) ? 0.7 : 1,
+            }}
+            className="transition-colors"
           >
             Send
           </button>
