@@ -10,6 +10,7 @@ import ConceptLearned from "../components/ConceptLearned";
 import Learned from "../assets/learned.png";
 import Applied from "../assets/applied.png";
 import Project from "../assets/project.png";
+import ProjectRecommender from '../components/ProjectRecommender';
 
 function Python() {
   const navigate = useNavigate();
@@ -98,7 +99,10 @@ function Python() {
         ].length;
       }
       // Get learned concepts
-      const learnedConcepts = Array.isArray(userData.python.learnedConcepts) ? userData.python.learnedConcepts : [];
+      let learnedConcepts = userData.python?.learnedConcepts || [];
+      if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+        learnedConcepts = Object.values(learnedConcepts);
+      }
       const learned = learnedConcepts.length;
       const applied = learnedConcepts.filter(c => c.usedInProject).length;
       setConceptStats({ learned, applied, total: totalConcepts });
@@ -282,7 +286,10 @@ function Python() {
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
-                  const learnedConcepts = Array.isArray(userData.python?.learnedConcepts) ? userData.python.learnedConcepts : [];
+                  let learnedConcepts = userData.python?.learnedConcepts || [];
+                  if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+                    learnedConcepts = Object.values(learnedConcepts);
+                  }
                   const totalLearned = learnedConcepts.length;
                   const statusCounts = learnedConcepts.reduce((acc, c) => {
                     if (c.status === 'understood') acc.understood++;
@@ -382,7 +389,7 @@ function Python() {
 
             {/* Project Details Overlay */}
             <AnimatePresence>
-              {showProjectOverlay && projectData && (
+              {showProjectOverlay && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -398,73 +405,68 @@ function Python() {
                     className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {/* Header */}
-                    <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-6 text-white">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h2 className="text-2xl font-bold mb-2">{projectData.title}</h2>
-                          <p className="text-purple-100 text-sm leading-relaxed">
-                            {projectData.description}
-                          </p>
-                        </div>
-                        <button
-                          onClick={handleCloseProjectOverlay}
-                          className="text-white hover:text-purple-200 transition-colors text-2xl font-bold"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-6">
-                      {/* Concepts Used */}
-                      <div className="mb-6">
-                        <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-left">
-                          <span className="text-purple-600 mr-2">💡</span>
-                          Concepts Used
-                        </h3>
-                        <ul className="space-y-2">
-                          {(Array.isArray(projectData.Concept) ? projectData.Concept : projectData.Concept.split(',').map(c => c.trim())).map((concept, index) => (
-                            <li
-                              key={index}
-                              className="bg-purple-100 text-left text-purple-700 px-3 py-2 rounded-lg text-sm font-medium list-none"
-                            >
-                              {concept}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-3">
-                        <button
-                          onClick={handleStartProject}
-                          className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
-                        >
-                          🚀 Start Project
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={handleCloseProjectOverlay}
-                          className="px-6 py-3 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                    <button
+                      onClick={handleCloseProjectOverlay}
+                      className="absolute top-4 right-6 text-slate-700 hover:text-purple-600 text-3xl font-bold z-10"
+                    >
+                      ×
+                    </button>
+                    <div className="p-8">
+                      <ProjectRecommender learnedConcepts={userData.python?.learnedConcepts}>
+                        {({ recommendedProject, loading, error }) => {
+                          if (loading) return <div>Loading project recommendation...</div>;
+                          if (error) return <div className="text-red-500">{error}</div>;
+                          if (!recommendedProject) return <div>No suitable project found for your learned concepts yet.</div>;
+                          return (
+                            <>
+                              <div className="mb-6">
+                                <h2 className="text-2xl font-bold mb-2 text-purple-700">{recommendedProject.title}</h2>
+                                <p className="text-gray-700 mb-4">{recommendedProject.description}</p>
+                                <div className="mb-2 text-sm text-gray-500">
+                                  Required Concepts: {recommendedProject.Concept}
+                                </div>
+                              </div>
+                              <div className="flex gap-3">
+                                <button
+                                  onClick={async () => {
+                                    // Set this project as the user's current project in Firebase
+                                    if (!user) return;
+                                    const userRef = ref(db, 'users/' + user.id);
+                                    // Ensure project key starts with capital 'P'
+                                    let projectKey = recommendedProject.id || recommendedProject.title;
+                                    if (typeof projectKey === 'string' && projectKey.length > 0) {
+                                      projectKey = projectKey[0].toUpperCase() + projectKey.slice(1);
+                                    }
+                                    await update(userRef, {
+                                      'python/PythonCurrentProject': projectKey,
+                                      'python/PythonProjectStarted': true
+                                    });
+                                    setUserData(prev => ({
+                                      ...prev,
+                                      python: {
+                                        ...prev.python,
+                                        PythonCurrentProject: projectKey,
+                                        PythonProjectStarted: true
+                                      }
+                                    }));
+                                    setShowProjectOverlay(false);
+                                    navigate('/python/project');
+                                  }}
+                                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                >
+                                  🚀 Start Project
+                                </button>
+                                <button
+                                  onClick={handleCloseProjectOverlay}
+                                  className="px-6 py-3 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </>
+                          );
+                        }}
+                      </ProjectRecommender>
                     </div>
                   </motion.div>
                 </motion.div>

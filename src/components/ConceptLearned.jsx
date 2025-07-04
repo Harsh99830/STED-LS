@@ -41,7 +41,9 @@ function ConceptLearned() {
         const userConceptsRef = ref(db, `users/${user.id}/python/learnedConcepts`);
         const userConceptsSnap = await get(userConceptsRef);
         if (userConceptsSnap.exists()) {
-          setLearnedConcepts(userConceptsSnap.val() || []);
+          const val = userConceptsSnap.val() || {};
+          // Convert object to array for UI
+          setLearnedConcepts(Array.isArray(val) ? val : Object.values(val));
         }
       } catch (err) {
         console.error("Error fetching concepts:", err);
@@ -103,11 +105,16 @@ function ConceptLearned() {
         status: conceptStatuses[`${item.category}:${item.concept}`] || 'understood',
       })),
     ];
+    // Save as object, key by concept:category
+    const learnedConceptsObj = {};
+    updatedLearnedConcepts.filter(Boolean).forEach((c) => {
+      learnedConceptsObj[`${c.category}:${c.concept}`] = c;
+    });
     try {
       await update(ref(db, `users/${user.id}/python`), {
-        learnedConcepts: updatedLearnedConcepts,
+        learnedConcepts: learnedConceptsObj,
       });
-      setLearnedConcepts(updatedLearnedConcepts);
+      setLearnedConcepts(Object.values(learnedConceptsObj));
     } catch (err) {
       console.error('Error saving concept statuses:', err);
     }

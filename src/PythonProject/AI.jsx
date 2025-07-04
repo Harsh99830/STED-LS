@@ -9,6 +9,7 @@ function AI({ userCode, messages, setMessages }) {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [projectConfig, setProjectConfig] = useState(null);
+  const [loadError, setLoadError] = useState('');
   const messagesEndRef = useRef(null);
   const [taskCheckStatus, setTaskCheckStatus] = useState({});
   const [showModal, setShowModal] = useState(false);
@@ -19,7 +20,7 @@ function AI({ userCode, messages, setMessages }) {
   useEffect(() => {
     const fetchProjectData = async () => {
       if (!user) return;
-      
+      setLoadError('');
       try {
         // Get user's current project
         const userRef = ref(db, 'users/' + user.id + '/python');
@@ -27,21 +28,29 @@ function AI({ userCode, messages, setMessages }) {
         if (userSnap.exists()) {
           const userData = userSnap.val();
           const projectKey = userData.PythonCurrentProject;
-          
           if (projectKey) {
             // Get project data
             const projectRef = ref(db, 'PythonProject/' + projectKey);
             const projectSnap = await get(projectRef);
             if (projectSnap.exists()) {
               setProjectConfig(projectSnap.val());
+            } else {
+              setProjectConfig(null);
+              setLoadError('Project not found in PythonProject: ' + projectKey);
             }
+          } else {
+            setProjectConfig(null);
+            setLoadError('No PythonCurrentProject set for user.');
           }
+        } else {
+          setProjectConfig(null);
+          setLoadError('User data not found.');
         }
       } catch (error) {
-        console.error('Error fetching project data:', error);
+        setProjectConfig(null);
+        setLoadError('Error fetching project data: ' + error.message);
       }
     };
-
     fetchProjectData();
   }, [user]);
 
@@ -57,7 +66,7 @@ function AI({ userCode, messages, setMessages }) {
         {
           id: 1,
           type: 'ai',
-          content: `Hi! I'm here to help you with your **${projectConfig.title}** project.  What would you like help with?`,
+          content: `Hi! I'm here to help you with your ${projectConfig.title} project.  What would you like help with?`,
           timestamp: new Date()
         }
       ]);
@@ -218,9 +227,13 @@ function AI({ userCode, messages, setMessages }) {
     <div className="flex flex-col bg-gray-900 text-white h-155">
       {/* Header */}
       <div className="p-4 border-b border-gray-700">
-        <h2 className="text-xl font-semibold text-purple-400">🤖 AI Assistant</h2>
+        <h2 className="text-xl font-semibold text-purple-400">AI Mentor</h2>
         <p className="text-sm text-gray-400 mt-1">
-          {projectConfig ? `Helping with: ${projectConfig.title}` : 'Loading project...'}
+          {loadError
+            ? <span className="text-red-400">{loadError}</span>
+            : projectConfig
+              ? `Helping with: ${projectConfig.title}`
+              : 'Loading project...'}
         </p>
       </div>
 
