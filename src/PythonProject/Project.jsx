@@ -6,6 +6,8 @@ import { useUser } from '@clerk/clerk-react';
 import { ref, update, get } from 'firebase/database';
 import { db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
+import cross from '../assets/cross.png';
+import applied from '../assets/applied.png';
 import { 
   getProjectConfig, 
   validateCodeAgainstExpected, 
@@ -363,9 +365,8 @@ function Project() {
             background: '#18181b',
             padding: '36px 32px',
             borderRadius: '18px',
-            minWidth: '400px',
-            maxWidth: '90vw',
-            maxHeight: '90vh',
+            width: '600px',
+            height: '80vh',
             overflowY: 'auto',
             boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
             color: '#f3f4f6',
@@ -394,9 +395,9 @@ function Project() {
                     <span style={{ fontWeight: 600, color: '#f3f4f6', fontSize: 17 }}>{task.title}</span>
                     {taskCheckResults[idx] ? (
                       taskCheckResults[idx].complete ? (
-                        <span style={{ color: '#22c55e', fontSize: 28, fontWeight: 700 }}>✔</span>
+                        <img src={applied} alt="" style={{ width: '28px', height: '28px' }} />
                       ) : (
-                        <span style={{ color: '#ef4444', fontSize: 28, fontWeight: 700 }}>✖</span>
+                        <img src={cross} alt="" style={{ width: '28px', height: '28px' }} />
                       )
                     ) : (
                       idx === checkingTaskIndex ? (
@@ -412,9 +413,9 @@ function Project() {
                         <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#18181b', borderRadius: 6, padding: '8px 14px' }}>
                           <span style={{ color: '#f3f4f6', fontSize: 15 }}>{result.subtask}</span>
                           {result.complete === true ? (
-                            <span style={{ color: '#22c55e', fontSize: 22, fontWeight: 700 }}>✔</span>
+                            <img src={applied} alt="" style={{ width: '22px', height: '22px' }} />
                           ) : result.complete === false ? (
-                            <span style={{ color: '#ef4444', fontSize: 22, fontWeight: 700 }}>✖</span>
+                            <img src={cross} alt="" style={{ width: '22px', height: '22px' }} />
                           ) : (
                             <span style={{ color: '#a1a1aa', fontSize: 22 }}>⏳</span>
                           )}

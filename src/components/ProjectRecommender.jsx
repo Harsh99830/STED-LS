@@ -6,15 +6,28 @@ import { useUser } from '@clerk/clerk-react';
 // Accepts a render prop for full control of UI
 function ProjectRecommender({ learnedConcepts, children }) {
   const [recommendedProject, setRecommendedProject] = useState(null);
+  const [allMatchingProjects, setAllMatchingProjects] = useState([]);
+  const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { user } = useUser();
+
+  // Function to get next project from the list
+  const getNextProject = () => {
+    if (allMatchingProjects.length === 0) return;
+    const nextIndex = (currentProjectIndex + 1) % allMatchingProjects.length;
+    setCurrentProjectIndex(nextIndex);
+    setRecommendedProject(allMatchingProjects[nextIndex]);
+  };
 
   useEffect(() => {
     async function fetchAndRecommend() {
       setLoading(true);
       setError('');
       setRecommendedProject(null);
+      setAllMatchingProjects([]);
+      setCurrentProjectIndex(0);
+      
       try {
         // Fetch all projects from Firebase
         const projectsRef = ref(db, 'PythonProject');
@@ -25,6 +38,7 @@ function ProjectRecommender({ learnedConcepts, children }) {
           return;
         }
         const projects = snapshot.val();
+        
         // Prepare learned concepts as a Set for fast lookup
         let learnedSet = new Set();
         if (Array.isArray(learnedConcepts)) {
@@ -36,19 +50,23 @@ function ProjectRecommender({ learnedConcepts, children }) {
             Object.values(learnedConcepts).map(c => c.concept.toLowerCase().trim())
           );
         }
-        // Find a project where all required concepts are learned
-        let found = null;
+        
+        // Find all projects where all required concepts are learned
+        const matchingProjects = [];
         Object.values(projects).forEach(project => {
           if (!project.Concept) return;
           // Split concepts by comma and trim
           const required = project.Concept.split(',').map(s => s.toLowerCase().trim());
           const allLearned = required.every(concept => learnedSet.has(concept));
-          if (allLearned && !found) {
-            found = project;
+          if (allLearned) {
+            matchingProjects.push(project);
           }
         });
-        if (found) {
-          setRecommendedProject(found);
+        
+        if (matchingProjects.length > 0) {
+          setAllMatchingProjects(matchingProjects);
+          setRecommendedProject(matchingProjects[0]);
+          setCurrentProjectIndex(0);
         } else {
           setRecommendedProject(null);
         }
@@ -64,7 +82,15 @@ function ProjectRecommender({ learnedConcepts, children }) {
 
   // Render prop for full UI control
   if (typeof children === 'function') {
-    return children({ recommendedProject, loading, error });
+    return children({ 
+      recommendedProject, 
+      loading, 
+      error, 
+      getNextProject, 
+      hasMultipleProjects: allMatchingProjects.length > 1,
+      currentProjectIndex,
+      totalProjects: allMatchingProjects.length
+    });
   }
 
   // Default fallback UI (not used in overlay integration)

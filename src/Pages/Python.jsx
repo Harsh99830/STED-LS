@@ -11,6 +11,7 @@ import Learned from "../assets/learned.png";
 import Applied from "../assets/applied.png";
 import Project from "../assets/project.png";
 import ProjectRecommender from '../components/ProjectRecommender';
+import SeeAnother from "../assets/SeeAnother.png";
 
 function Python() {
   const navigate = useNavigate();
@@ -411,9 +412,10 @@ function Python() {
                     >
                       ×
                     </button>
+                    
                     <div className="p-12">
                       <ProjectRecommender learnedConcepts={userData.python?.learnedConcepts}>
-                        {({ recommendedProject, loading, error }) => {
+                        {({ recommendedProject, loading, error, getNextProject, hasMultipleProjects, currentProjectIndex, totalProjects }) => {
                           if (loading) return (
                             <div className="flex items-center justify-center py-16">
                               <div className="text-center">
@@ -437,7 +439,25 @@ function Python() {
                           return (
                             <>
                               <div className="mb-10">
-                                <div className="text-center mb-8">
+                                <div className="text-center mb-8 relative">
+                                  {/* See Another Link */}
+                                  {hasMultipleProjects && (
+                                    <div className="absolute top-0 right-0 z-10 group">
+                                      <button
+                                        onClick={getNextProject}
+                                        className="text-purple-600 hover:text-purple-700 text-sm font-semibold transition-colors relative"
+                                      >
+                                        <img className="w-7" src={SeeAnother} alt="" />
+                                        {/* Hover Overlay */}
+                                        <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-20">
+                                          See Another
+                                          {/* Arrow pointing down */}
+                                          <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                                        </div>
+                                      </button>
+                                    </div>
+                                  )}
+                                  
                                   <h2 className="text-4xl font-bold mb-4 text-purple-700 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                                     {recommendedProject.title}
                                   </h2>

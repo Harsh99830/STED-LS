@@ -5,6 +5,9 @@ import { db } from '../firebase';
 import { getProjectConfig, checkTasksAndSubtasks, checkTasksAndSubtasksGemini } from './projectConfig';
 import { FaChevronDown } from 'react-icons/fa';
 import { FaQuestionCircle } from 'react-icons/fa';
+import cross from '../assets/cross.png';
+import applied from '../assets/applied.png';
+import tick from '../assets/applied.png';
 
 function Statement({ userCode, projectConfig }) {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -268,9 +271,9 @@ function Statement({ userCode, projectConfig }) {
                       {loadingTaskKey === taskKey ? (
                         <span className="loader mr-2" style={{ width: 16, height: 16, border: '2px solid #fff', borderTop: '2px solid #888', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
                       ) : taskCheckStatus[taskKey] === true ? (
-                        <span style={{ color: '#22c55e', fontSize: 18 }}>✔</span>
+                        <img src={tick} alt="" className='w-5' />
                       ) : taskCheckStatus[taskKey] === false ? (
-                        <span style={{ color: '#ef4444', fontSize: 18 }}>✖</span>
+                        <img src={cross} alt="" className='w-5' />
                       ) : (
                         'Check'
                       )}
@@ -281,29 +284,34 @@ function Statement({ userCode, projectConfig }) {
                       {task.subtasks && task.subtasks.map((subDesc, subIdx) => (
                         <li
                           key={subIdx}
-                          className="flex text-left gap-3 items-center"
-                          style={{ borderBottom: '1px solid #333', paddingBottom: 6, marginBottom: 4 }}
+                          className="flex text-left items-center justify-between"
+                          style={{ borderBottom: '1px solid #333', paddingBottom: 6, marginBottom: 4, paddingRight: 0 }}
                         >
-                          <input
-                            type="checkbox"
-                            checked={!!checked[taskKey]?.[subIdx]}
-                            onChange={() => handleCheck(taskKey, subIdx)}
-                            className="border-gray-600 focus:ring-2 bg-[#18181b]"
-                            style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0, borderRadius: 0 }}
-                          />
-                          <span
-                            className={`text-base ${checked[taskKey]?.[subIdx] ? 'line-through text-gray-500' : ''}`}
-                            style={{ color: checked[taskKey]?.[subIdx] ? '#6b7280' : '#f3f4f6' }}
-                          >
-                            {subDesc}
-                          </span>
-                          {/* Tick/cross for subtask check and reason */}
+                          <div className="flex items-center gap-3 flex-1">
+                            <input
+                              type="checkbox"
+                              checked={!!checked[taskKey]?.[subIdx]}
+                              onChange={() => handleCheck(taskKey, subIdx)}
+                              className="border-gray-600 focus:ring-2 bg-[#18181b]"
+                              style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0, borderRadius: 0 }}
+                            />
+                            <span
+                              className={`text-base ${checked[taskKey]?.[subIdx] ? 'line-through text-gray-500' : ''}`}
+                              style={{ color: checked[taskKey]?.[subIdx] ? '#6b7280' : '#f3f4f6' }}
+                            >
+                              {subDesc}
+                            </span>
+                          </div>
+                          
+                          {/* Tick/cross for subtask check and reason - positioned at right border */}
                           {loadingTaskKey === taskKey && (!subtaskCheckResults[taskKey] || subtaskCheckResults[taskKey][subIdx] === undefined) ? (
-                            <span className="loader ml-2" style={{ width: 14, height: 14, border: '2px solid #fff', borderTop: '2px solid #888', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
+                            <span className="loader" style={{ width: 14, height: 14, border: '2px solid #fff', borderTop: '2px solid #888', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite', marginRight: 0 }} />
                           ) : subtaskCheckResults[taskKey] && subtaskCheckResults[taskKey][subIdx] !== undefined ? (
-                            <>
-                              <span
-                                style={{ color: subtaskCheckResults[taskKey][subIdx].complete ? '#22c55e' : '#ef4444', fontSize: 16, marginLeft: 6, cursor: 'pointer', position: 'relative' }}
+                            <div style={{ position: 'relative', marginRight: 0 }}>
+                              <img
+                                src={subtaskCheckResults[taskKey][subIdx].complete ? applied : cross}
+                                alt=""
+                                className="w-5 cursor-pointer"
                                 onMouseEnter={e => {
                                   clearTimeout(hoverTimeout.current);
                                   const rect = e.target.getBoundingClientRect();
@@ -318,41 +326,38 @@ function Statement({ userCode, projectConfig }) {
                                     setHoveredReason({ taskKey: null, subIdx: null });
                                   }, 200);
                                 }}
-                              >
-                                {subtaskCheckResults[taskKey][subIdx].complete ? '✔' : '✖'}
-                                {/* Absolute reason box */}
-                                {(hoveredReason.taskKey === taskKey && hoveredReason.subIdx === subIdx) && (
-                                  <div
-                                    style={{
-                                      position: 'absolute',
-                                      top: 24,
-                                      left: hoveredReason.left ? 'auto' : 0,
-                                      right: hoveredReason.left ? 0 : 'auto',
-                                      zIndex: 100,
-                                      background: '#23232a',
-                                      color: '#e5e7eb',
-                                      fontSize: 11,
-                                      border: '1px solid #444',
-                                      borderRadius: 0,
-                                      padding: '6px 10px',
-                                      minWidth: 120,
-                                      maxWidth: 220,
-                                      whiteSpace: 'pre-line',
-                                      boxShadow: '0 2px 8px #0006',
-                                      transition: 'opacity 0.4s cubic-bezier(.4,0,.2,1), transform 0.4s cubic-bezier(.4,0,.2,1)',
-                                      opacity: 1,
-                                      transform: 'translateY(0px) scale(1)',
-                                    }}
-                                  >
-                                    {subtaskCheckResults[taskKey][subIdx].reason
-                                      .split(/(?<=[.!?])\s+/)
-                                      .slice(0, 2)
-                                      .join(' ')
-                                      .slice(0, 140)}
-                                  </div>
-                                )}
-                              </span>
-                            </>
+                              />
+                              {(hoveredReason.taskKey === taskKey && hoveredReason.subIdx === subIdx) && (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: 24,
+                                    left: hoveredReason.left ? 'auto' : 0,
+                                    right: hoveredReason.left ? 0 : 'auto',
+                                    zIndex: 100,
+                                    background: '#23232a',
+                                    color: '#e5e7eb',
+                                    fontSize: 11,
+                                    border: '1px solid #444',
+                                    borderRadius: 0,
+                                    padding: '6px 10px',
+                                    minWidth: 120,
+                                    maxWidth: 220,
+                                    whiteSpace: 'pre-line',
+                                    boxShadow: '0 2px 8px #0006',
+                                    transition: 'opacity 0.4s cubic-bezier(.4,0,.2,1), transform 0.4s cubic-bezier(.4,0,.2,1)',
+                                    opacity: 1,
+                                    transform: 'translateY(0px) scale(1)',
+                                  }}
+                                >
+                                  {subtaskCheckResults[taskKey][subIdx].reason
+                                    .split(/(?<=[.!?])\s+/)
+                                    .slice(0, 2)
+                                    .join(' ')
+                                    .slice(0, 140)}
+                                </div>
+                              )}
+                            </div>
                           ) : null}
                         </li>
                       ))}
@@ -405,9 +410,9 @@ function Statement({ userCode, projectConfig }) {
                       {loadingTaskKey === taskKey ? (
                         <span className="loader mr-2" style={{ width: 16, height: 16, border: '2px solid #fff', borderTop: '2px solid #888', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
                       ) : taskCheckStatus[taskKey] === true ? (
-                        <span style={{ color: '#22c55e', fontSize: 18 }}>✔</span>
+                        <img src={applied} alt="" className='w-5' />
                       ) : taskCheckStatus[taskKey] === false ? (
-                        <span style={{ color: '#ef4444', fontSize: 18 }}>✖</span>
+                        <img src={cross} alt="" className='w-5' />
                       ) : (
                         'Check'
                       )}
@@ -420,22 +425,24 @@ function Statement({ userCode, projectConfig }) {
                         .map(([subKey, subDesc], idx) => (
                           <li
                             key={subKey}
-                            className="flex text-left gap-3 items-center"
-                            style={{ borderBottom: '1px solid #333', paddingBottom: 6, marginBottom: 4 }}
+                            className="flex text-left items-center justify-between"
+                            style={{ borderBottom: '1px solid #333', paddingBottom: 6, marginBottom: 4, paddingRight: 0 }}
                           >
-                            <input
-                              type="checkbox"
-                              checked={!!checked[taskKey]?.[idx]}
-                              onChange={() => handleCheck(taskKey, idx)}
-                              className="border-gray-600 focus:ring-2 bg-[#18181b]"
-                              style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0, borderRadius: 0 }}
-                            />
-                            <span
-                              className={`text-base ${checked[taskKey]?.[idx] ? 'line-through text-gray-500' : ''}`}
-                              style={{ color: checked[taskKey]?.[idx] ? '#6b7280' : '#f3f4f6' }}
-                            >
-                              {subDesc}
-                            </span>
+                            <div className="flex items-center gap-3 flex-1">
+                              <input
+                                type="checkbox"
+                                checked={!!checked[taskKey]?.[idx]}
+                                onChange={() => handleCheck(taskKey, idx)}
+                                className="border-gray-600 focus:ring-2 bg-[#18181b]"
+                                style={{ background: '#18181b', width: 20, height: 20, minWidth: 20, minHeight: 20, flexShrink: 0, borderRadius: 0 }}
+                              />
+                              <span
+                                className={`text-base ${checked[taskKey]?.[idx] ? 'line-through text-gray-500' : ''}`}
+                                style={{ color: checked[taskKey]?.[idx] ? '#6b7280' : '#f3f4f6' }}
+                              >
+                                {subDesc}
+                              </span>
+                            </div>
                           </li>
                         ))}
                     </ul>
