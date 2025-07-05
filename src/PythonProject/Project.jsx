@@ -22,6 +22,7 @@ function Project() {
   const [showEndProjectOverlay, setShowEndProjectOverlay] = useState(false);
   const [showCongratulationsOverlay, setShowCongratulationsOverlay] = useState(false);
   const [showSubmitOverlay, setShowSubmitOverlay] = useState(false);
+  const [showFinalCongratulationsOverlay, setShowFinalCongratulationsOverlay] = useState(false);
   const [submitFeedback, setSubmitFeedback] = useState('');
   const [userCode, setUserCode] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
@@ -121,21 +122,28 @@ function Project() {
           const userPythonData = userPythonSnap.val();
           currentProject = userPythonData.PythonCurrentProject || 'Project1';
         }
-        // Save project data
-        const projectData = {
+        
+        // Save project data to PythonCompletedProjects
+        const completedProjectData = {
           code: userCode,
           chatHistory: chatMessages,
           completedAt: new Date().toISOString(),
-          projectType: projectConfig?.title || 'Personal Finance Tracker',
-          terminalOutput: terminalOutput
+          projectTitle: projectConfig?.title || 'Personal Finance Tracker',
+          conceptUsed: projectConfig?.Concept || '',
+          terminalOutput: terminalOutput,
+          projectKey: currentProject
         };
+        
+        // Save to users/python/PythonCompletedProjects
+        const completedProjectsRef = ref(db, 'users/' + user.id + '/python/PythonCompletedProjects/' + currentProject);
+        await update(completedProjectsRef, completedProjectData);
+        
         // Determine next project
         let nextProject = null;
         if (currentProject === 'Project1') nextProject = 'Project2';
         else if (currentProject === 'Project2') nextProject = 'Project3';
         // Add more as needed
         const updates = {
-          [`python/${currentProject}`]: projectData,
           'python/PythonProjectStarted': false
         };
         if (nextProject) {
@@ -145,16 +153,23 @@ function Project() {
       }
       console.log('Project submitted successfully');
       setShowCongratulationsOverlay(false);
-      navigate('/python');
+      setShowSubmitOverlay(false);
+      setShowFinalCongratulationsOverlay(true);
     } catch (err) {
       console.error('Failed to submit project:', err);
       setShowCongratulationsOverlay(false);
+      setShowSubmitOverlay(false);
       navigate('/python');
     }
   };
 
   const handleCongratulationsClose = () => {
     setShowCongratulationsOverlay(false);
+  };
+
+  const handleFinalCongratulationsClose = () => {
+    setShowFinalCongratulationsOverlay(false);
+    navigate('/python');
   };
 
   const handleSubmit = async () => {
@@ -346,6 +361,54 @@ function Project() {
         </div>
       )}
 
+      {/* Final Congratulations Overlay */}
+      {showFinalCongratulationsOverlay && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.8)',
+          zIndex: 1002,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '50px',
+            borderRadius: '25px',
+            minWidth: '500px',
+            textAlign: 'center',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
+            color: 'white',
+            animation: 'fadeInScale 0.6s ease-out'
+          }}>
+            <div style={{ fontSize: '5rem', marginBottom: '25px' }}>🎉</div>
+            <h2 className="text-4xl font-bold mb-6">Congratulations!</h2>
+            <p className="text-xl mb-4">You've successfully completed the <strong>{projectConfig?.title || 'Personal Finance Tracker'}</strong> project!</p>
+            <p className="text-lg mb-6">Your project has been saved and you're ready for the next challenge.</p>
+            
+            <div className="bg-white bg-opacity-20 rounded-xl p-6 mb-8">
+              <h3 className="text-xl font-semibold mb-3">Project Details</h3>
+              <div className="text-left space-y-2">
+                <p><strong>Project:</strong> {projectConfig?.title || 'Personal Finance Tracker'}</p>
+                <p><strong>Concepts Used:</strong> {projectConfig?.Concept || 'N/A'}</p>
+                <p><strong>Completed:</strong> {new Date().toLocaleDateString()}</p>
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleFinalCongratulationsClose} 
+              className="bg-white text-purple-700 px-10 py-4 rounded-xl hover:bg-gray-100 font-bold text-xl transition-colors shadow-lg"
+            >
+              Continue to Dashboard
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Submit Feedback Overlay */}
       {showSubmitOverlay && (
         <div style={{
@@ -427,12 +490,40 @@ function Project() {
               ))}
             </div>
             <div className="flex justify-end mt-8">
-              <button
-                onClick={() => setShowSubmitOverlay(false)}
-                className="px-7 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg text-lg"
-              >
-                Close
-              </button>
+              {(() => {
+                // Check if all tasks are completed (have ticks)
+                const allTasksCompleted = Object.entries(projectConfig.tasks || {}).every(([taskKey, task], idx) => {
+                  return taskCheckResults[idx] && taskCheckResults[idx].complete;
+                });
+                
+                if (allTasksCompleted) {
+                  return (
+                    <div className="flex justify-between w-full">
+                      <button
+                        onClick={() => setShowSubmitOverlay(false)}
+                        className="px-7 py-2 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg text-lg"
+                      >
+                        Close
+                      </button>
+                      <button
+                        onClick={handleCongratulationsSubmit}
+                        className="px-7 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg text-lg"
+                      >
+                        Submit Project
+                      </button>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <button
+                      onClick={() => setShowSubmitOverlay(false)}
+                      className="px-7 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors duration-200 shadow-lg text-lg"
+                    >
+                      Close
+                    </button>
+                  );
+                }
+              })()}
             </div>
           </div>
         </div>

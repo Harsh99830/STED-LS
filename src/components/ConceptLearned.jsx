@@ -5,7 +5,7 @@ import { useUser } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaChevronDown } from 'react-icons/fa';
 
-function ConceptLearned() {
+function ConceptLearned({ completedProjects = [] }) {
   const [showOverlay, setShowOverlay] = useState(false);
   const [allConcepts, setAllConcepts] = useState({ basic: [], intermediate: [], advanced: [] });
   const [learnedConcepts, setLearnedConcepts] = useState([]);
@@ -148,6 +148,17 @@ function ConceptLearned() {
     return learnedConcepts.some(c => c.category === category && c.concept === concept);
   };
 
+  // Check if a concept has been used in completed projects
+  const isConceptApplied = (concept) => {
+    return completedProjects.some(project => {
+      if (project.conceptUsed) {
+        const projectConcepts = project.conceptUsed.split(', ').map(c => c.trim());
+        return projectConcepts.includes(concept);
+      }
+      return false;
+    });
+  };
+
   return (
     <div className='text-left'>
       <div className="flex justify-between items-center mb-4">
@@ -210,7 +221,7 @@ function ConceptLearned() {
                             >
                               <span className="font-medium text-slate-700">{item.concept}</span>
                               <div className="flex items-center gap-2">
-                                {item.usedInProject === false && (
+                                {!isConceptApplied(item.concept) && (
                                   <span className="ml-3 px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold whitespace-nowrap">
                                     not applied
                                   </span>

@@ -24,13 +24,16 @@ function Python() {
     sqlSkill: 0,
     mlSkill: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [showProgress, setShowProgress] = useState(false);
-  const [projectData, setProjectData] = useState(null);
+  const [completedProjects, setCompletedProjects] = useState([]);
+  const [showProjectDetailsOverlay, setShowProjectDetailsOverlay] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
   const [projectLoading, setProjectLoading] = useState(false);
   const [projectError, setProjectError] = useState("");
+  const [projectData, setProjectData] = useState(null);
+  const [showProgress, setShowProgress] = useState(false);
   const [conceptStats, setConceptStats] = useState({ learned: 0, applied: 0, total: 0 });
   const [showProjectOverlay, setShowProjectOverlay] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -39,25 +42,28 @@ function Python() {
   }, [isLoaded, isSignedIn, navigate]);
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      const userRef = ref(db, "users/" + user.id);
-
-      get(userRef)
-        .then((snapshot) => {
-          if (snapshot.exists()) {
-            setUserData(snapshot.val());
-          } else {
-            console.log("No data available");
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-        })
-        .finally(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+      try {
+        const userRef = ref(db, 'users/' + user.id);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          setUserData(snapshot.val());
+          await fetchConceptStats();
+          await fetchCompletedProjects();
           setIsLoading(false);
-        });
-    }
-  }, [isLoaded, isSignedIn, user]);
+        } else {
+          console.log("No data available");
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
 
   useEffect(() => {
     if (userData.python && userData.python.PythonCurrentProject) {
@@ -84,32 +90,56 @@ function Python() {
     }
   }, [userData.python]);
 
-  useEffect(() => {
-    async function fetchConceptStats() {
-      if (!userData?.python) return;
-      // Fetch all concepts
-      const allConceptsRef = ref(db, 'PythonProject/AllConcepts/category');
-      const allConceptsSnap = await get(allConceptsRef);
-      let totalConcepts = 0;
-      if (allConceptsSnap.exists()) {
-        const data = allConceptsSnap.val();
-        totalConcepts = [
-          ...Object.values(data.basic || {}),
-          ...Object.values(data.intermediate || {}),
-          ...Object.values(data.advanced || {}),
-        ].length;
-      }
-      // Get learned concepts
-      let learnedConcepts = userData.python?.learnedConcepts || [];
-      if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
-        learnedConcepts = Object.values(learnedConcepts);
-      }
-      const learned = learnedConcepts.length;
-      const applied = learnedConcepts.filter(c => c.usedInProject).length;
-      setConceptStats({ learned, applied, total: totalConcepts });
+  const fetchConceptStats = async () => {
+    if (!userData?.python) return;
+    
+    // Fetch all concepts
+    const allConceptsRef = ref(db, 'PythonProject/AllConcepts/category');
+    const allConceptsSnap = await get(allConceptsRef);
+    let totalConcepts = 0;
+    if (allConceptsSnap.exists()) {
+      const data = allConceptsSnap.val();
+      totalConcepts = [
+        ...Object.values(data.basic || {}),
+        ...Object.values(data.intermediate || {}),
+        ...Object.values(data.advanced || {}),
+      ].length;
     }
+    
+    // Get learned concepts
+    let learnedConcepts = userData.python?.learnedConcepts || [];
+    if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+      learnedConcepts = Object.values(learnedConcepts);
+    }
+    const learned = learnedConcepts.length;
+    
+    // Analyze concepts used in completed projects
+    const conceptsUsedInProjects = new Set();
+    
+    // Extract concepts from completed projects
+    completedProjects.forEach(project => {
+      if (project.conceptUsed) {
+        const projectConcepts = project.conceptUsed.split(', ').map(concept => concept.trim());
+        projectConcepts.forEach(concept => {
+          if (concept) {
+            conceptsUsedInProjects.add(concept);
+          }
+        });
+      }
+    });
+    
+    // Count how many learned concepts have been used in projects
+    const applied = learnedConcepts.filter(concept => {
+      // Check if the concept name is in the concepts used in projects
+      return conceptsUsedInProjects.has(concept.concept || concept);
+    }).length;
+    
+    setConceptStats({ learned, applied, total: totalConcepts });
+  };
+
+  useEffect(() => {
     fetchConceptStats();
-  }, [userData]);
+  }, [userData, completedProjects]);
 
   const toggleProgress = () => {
     setShowProgress(!showProgress);
@@ -154,6 +184,37 @@ function Python() {
 
   const handleCloseProjectOverlay = () => {
     setShowProjectOverlay(false);
+  };
+
+  const fetchCompletedProjects = async () => {
+    if (!user) return;
+    try {
+      const completedProjectsRef = ref(db, 'users/' + user.id + '/python/PythonCompletedProjects');
+      const snapshot = await get(completedProjectsRef);
+      if (snapshot.exists()) {
+        const projects = snapshot.val();
+        const projectsArray = Object.entries(projects).map(([key, project]) => ({
+          key,
+          ...project
+        })).sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+        setCompletedProjects(projectsArray);
+      } else {
+        setCompletedProjects([]);
+      }
+    } catch (error) {
+      console.error('Error fetching completed projects:', error);
+      setCompletedProjects([]);
+    }
+  };
+
+  const handleProjectClick = (project) => {
+    setSelectedProject(project);
+    setShowProjectDetailsOverlay(true);
+  };
+
+  const handleCloseProjectDetails = () => {
+    setShowProjectDetailsOverlay(false);
+    setSelectedProject(null);
   };
 
   if (isLoading) {
@@ -208,7 +269,7 @@ function Python() {
                   <div>
                     <p className="text-sm text-slate-600">SP(STED Points)</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                      16
+                      {completedProjects.length * 10 + conceptStats.learned * 2 + conceptStats.applied * 5}
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
@@ -227,7 +288,7 @@ function Python() {
                   <div>
                     <p className="text-sm text-slate-600">Projects Completed</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                      {userData.tasksCompleted || 0}
+                      {completedProjects.length}
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
@@ -331,7 +392,7 @@ function Python() {
               transition={{ duration: 0.5 }}
               className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
-              <ConceptLearned />
+              <ConceptLearned completedProjects={completedProjects} />
             </motion.div>
 
             {/* Project Card - Make sticky on large screens */}
@@ -414,7 +475,7 @@ function Python() {
                     </button>
                     
                     <div className="p-12">
-                      <ProjectRecommender learnedConcepts={userData.python?.learnedConcepts}>
+                      <ProjectRecommender learnedConcepts={userData.python?.learnedConcepts} completedProjects={completedProjects}>
                         {({ recommendedProject, loading, error, getNextProject, hasMultipleProjects, currentProjectIndex, totalProjects }) => {
                           if (loading) return (
                             <div className="flex items-center justify-center py-16">
@@ -540,37 +601,172 @@ function Python() {
       {/* Project History Section */}
       <div className="w-full mx-auto lg:px-8 text-left mb-10">
         <h2 className="text-2xl font-bold text-slate-800 mb-6">Project History</h2>
-        <div className="bg-white hover:bg-[#f7f7f7]  rounded-lg shadow-md p-6 cursor-pointer">
-          {(() => {
-            const pythonData = userData.python || {};
-            // Get all project keys like Project1, Project2, ...
-            const projectKeys = Object.keys(pythonData).filter(k => /^Project\d+$/i.test(k));
-            // Sort by completion date descending
-            const projects = projectKeys
-              .map(k => ({ key: k, ...pythonData[k] }))
-              .filter(p => p.completedAt)
-              .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
-            if (projects.length === 0) {
-              return <div className="text-slate-500 italic">No completed projects yet.</div>;
-            }
-            return (
-              <ul className="divide-y divide-slate-200">
-                {projects.map((p, idx) => (
-                  <li key={p.key} className=" flex flex-col md:flex-row  gap-2 md:gap-6">
-                    <div className="flex-1">
-                      <div className="text-2xl font-semibold text-slate-800">{p.projectType || p.key}</div>
-                      <div className="text-slate-500 text-sm mt-5">Completed: {new Date(p.completedAt).toLocaleDateString()}</div>
-                    </div>
-                    <div className="flex-none flex flex-col items-end gap-2 md:gap-3">
-                      <span className="inline-block  text-slate-700 px-3 py-1 pt-6 text-lg">1h:14m:16s</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            );
-          })()}
+        <div className="bg-white hover:bg-[#f7f7f7] rounded-lg shadow-md p-6">
+          {completedProjects.length === 0 ? (
+            <div className="text-slate-500 italic">No completed projects yet.</div>
+          ) : (
+            <ul className="divide-y divide-slate-200">
+              {completedProjects.map((project, idx) => (
+                <li 
+                  key={project.key} 
+                  className="flex flex-col md:flex-row gap-2 md:gap-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => handleProjectClick(project)}
+                >
+                  <div className="flex-1">
+                    <div className="text-2xl font-semibold text-slate-800">{project.projectTitle || project.key}</div>
+                    <div className="text-slate-500 text-sm mt-2">Completed: {new Date(project.completedAt).toLocaleDateString()}</div>
+                  </div>
+                  <div className="flex-none flex flex-col items-end gap-2 md:gap-3">
+                    <span className="inline-block text-slate-700 px-3 py-1 text-lg">Click to view details</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
+
+      {/* Project Details Overlay */}
+      <AnimatePresence>
+        {showProjectDetailsOverlay && selectedProject && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+            onClick={handleCloseProjectDetails}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={handleCloseProjectDetails}
+                className="absolute top-6 right-8 text-slate-700 hover:text-purple-600 text-4xl font-bold z-10 transition-colors"
+              >
+                ×
+              </button>
+              
+              <div className="p-8 overflow-y-auto max-h-[90vh]">
+                {/* Project Header */}
+                <div className="mb-8 border-b border-gray-200 pb-6">
+                  <h2 className="text-3xl font-bold mb-6 text-purple-700">{selectedProject.projectTitle}</h2>
+                  
+                  {/* Concepts Used Section */}
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-200">
+                    <h3 className="text-lg font-semibold text-purple-700 mb-4 flex items-center gap-2">
+                      <span className="text-purple-600">📚</span>
+                      Concepts Used
+                    </h3>
+                    <div className="flex flex-wrap gap-3">
+                      {selectedProject.conceptUsed ? 
+                        selectedProject.conceptUsed.split(', ').map((concept, index) => (
+                          <span
+                            key={index}
+                            className="inline-block bg-white text-purple-700 px-4 py-2 rounded-full text-sm font-medium border border-purple-300 shadow-sm hover:shadow-md transition-shadow"
+                          >
+                            {concept.trim()}
+                          </span>
+                        )) : 
+                        <span className="text-gray-500 italic">No concepts specified</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                {/* Code Section with Dropdown */}
+                <div className="mb-8">
+                  <details className="group">
+                    <summary className="flex items-center justify-between cursor-pointer p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                        <span className="text-purple-600">💻</span>
+                        Project Code
+                      </h3>
+                      <svg 
+                        className="w-5 h-5 text-gray-600 group-open:rotate-180 transition-transform" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </summary>
+                    <div className="mt-4">
+                      <div className="bg-gray-900 text-green-400 p-6 rounded-lg overflow-x-auto">
+                        <pre className="text-sm text-left text-white leading-relaxed">{selectedProject.code}</pre>
+                      </div>
+                    </div>
+                  </details>
+                </div>
+
+                {/* Terminal Output Section with Dropdown */}
+                {selectedProject.terminalOutput && selectedProject.terminalOutput.length > 0 && (
+                  <div className="mb-8">
+                    <details className="group">
+                      <summary className="flex items-center justify-between cursor-pointer p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                          <span className="text-purple-600">🖥️</span>
+                          Terminal Output
+                        </h3>
+                        <svg 
+                          className="w-5 h-5 text-gray-600 group-open:rotate-180 transition-transform" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </summary>
+                      <div className="mt-4">
+                        <div className="bg-gray-900 text-green-400 p-6 rounded-lg overflow-x-auto">
+                          <pre className="text-sm leading-relaxed">{selectedProject.terminalOutput.join('\n')}</pre>
+                        </div>
+                      </div>
+                    </details>
+                  </div>
+                )}
+
+                {/* Project Statistics */}
+                <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6 border border-purple-100">
+                  <h3 className="text-xl font-semibold mb-4 text-purple-700 flex items-center gap-2">
+                    <span>📊</span>
+                    Project Statistics
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white rounded-lg p-4 border border-purple-200">
+                      <div className="text-sm text-gray-600 mb-1">Code Length</div>
+                      <div className="text-lg font-semibold text-purple-700">
+                        {selectedProject.code ? selectedProject.code.split('\n').length : 0} lines
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-purple-200">
+                      <div className="text-sm text-gray-600 mb-1">Completion Date</div>
+                      <div className="text-lg font-semibold text-purple-700">
+                        {new Date(selectedProject.completedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {new Date(selectedProject.completedAt).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

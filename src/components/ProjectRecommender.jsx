@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { useUser } from '@clerk/clerk-react';
 
 // Accepts a render prop for full control of UI
-function ProjectRecommender({ learnedConcepts, children }) {
+function ProjectRecommender({ learnedConcepts, completedProjects = [], children }) {
   const [recommendedProject, setRecommendedProject] = useState(null);
   const [allMatchingProjects, setAllMatchingProjects] = useState([]);
   const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
@@ -63,9 +63,36 @@ function ProjectRecommender({ learnedConcepts, children }) {
           }
         });
         
-        if (matchingProjects.length > 0) {
-          setAllMatchingProjects(matchingProjects);
-          setRecommendedProject(matchingProjects[0]);
+        // Filter out completed projects
+        const completedProjectKeys = new Set(completedProjects.map(p => p.projectKey));
+        
+        const availableProjects = matchingProjects.filter(project => {
+          // Check if this project has been completed - try multiple possible key formats
+          const projectId = project.id || project.title;
+          const projectTitle = project.title;
+          
+          // Try different variations of the project key
+          const possibleKeys = [
+            projectId,
+            projectId?.toLowerCase(),
+            projectId?.toUpperCase(),
+            projectTitle,
+            projectTitle?.toLowerCase(),
+            projectTitle?.toUpperCase(),
+            // Handle the case where project.id is "project1" but saved as "Project1"
+            projectId?.replace(/^project/, 'Project'),
+            // Handle the case where project.id is "project1" but saved as "Project1"
+            projectId?.replace(/^Project/, 'project')
+          ];
+          
+          const isCompleted = possibleKeys.some(key => completedProjectKeys.has(key));
+          
+          return !isCompleted;
+        });
+        
+        if (availableProjects.length > 0) {
+          setAllMatchingProjects(availableProjects);
+          setRecommendedProject(availableProjects[0]);
           setCurrentProjectIndex(0);
         } else {
           setRecommendedProject(null);
@@ -78,7 +105,7 @@ function ProjectRecommender({ learnedConcepts, children }) {
     if (learnedConcepts && user) {
       fetchAndRecommend();
     }
-  }, [learnedConcepts, user]);
+  }, [learnedConcepts, user, completedProjects]);
 
   // Render prop for full UI control
   if (typeof children === 'function') {
