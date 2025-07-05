@@ -213,6 +213,14 @@ function Statement({ userCode, projectConfig }) {
           )}
         </span>
       </h1>
+      
+      {project.Concept && (
+        <div className="text-center mb-6">
+          <p className="text-sm text-gray-400" style={{ fontSize: '14px', color: '#9ca3af' }}>
+            <span className='font-semibold'>Concepts Used:</span> {project.Concept}
+          </p>
+        </div>
+      )}
 
       <div className="space-y-6 mt-10">
         {project.tasks

@@ -402,31 +402,71 @@ function Python() {
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.9, opacity: 0 }}
                     transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                    className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden"
+                    className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
                       onClick={handleCloseProjectOverlay}
-                      className="absolute top-4 right-6 text-slate-700 hover:text-purple-600 text-3xl font-bold z-10"
+                      className="absolute top-6 right-8 text-slate-700 hover:text-purple-600 text-4xl font-bold z-10 transition-colors"
                     >
                       ×
                     </button>
-                    <div className="p-8">
+                    <div className="p-12">
                       <ProjectRecommender learnedConcepts={userData.python?.learnedConcepts}>
                         {({ recommendedProject, loading, error }) => {
-                          if (loading) return <div>Loading project recommendation...</div>;
-                          if (error) return <div className="text-red-500">{error}</div>;
-                          if (!recommendedProject) return <div>No suitable project found for your learned concepts yet.</div>;
+                          if (loading) return (
+                            <div className="flex items-center justify-center py-16">
+                              <div className="text-center">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                                <div className="text-xl text-gray-600">Loading project recommendation...</div>
+                              </div>
+                            </div>
+                          );
+                          if (error) return (
+                            <div className="text-center py-16">
+                              <div className="text-red-500 text-xl mb-4">⚠️</div>
+                              <div className="text-red-500 text-lg">{error}</div>
+                            </div>
+                          );
+                          if (!recommendedProject) return (
+                            <div className="text-center py-16">
+                              <div className="text-gray-500 text-xl mb-4">🔍</div>
+                              <div className="text-gray-600 text-lg">No suitable project found for your learned concepts yet.</div>
+                            </div>
+                          );
                           return (
                             <>
-                              <div className="mb-6">
-                                <h2 className="text-2xl font-bold mb-2 text-purple-700">{recommendedProject.title}</h2>
-                                <p className="text-gray-700 mb-4">{recommendedProject.description}</p>
-                                <div className="mb-2 text-sm text-gray-500">
-                                  Required Concepts: {recommendedProject.Concept}
+                              <div className="mb-10">
+                                <div className="text-center mb-8">
+                                  <h2 className="text-4xl font-bold mb-4 text-purple-700 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                                    {recommendedProject.title}
+                                  </h2>
+                                  <div className="w-24 h-1 bg-gradient-to-r from-purple-500 to-purple-700 mx-auto rounded-full"></div>
+                                </div>
+                                
+                                <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-8 mb-8 border border-purple-100">
+                                  <p className="text-gray-700 text-lg leading-relaxed mb-6">{recommendedProject.description}</p>
+                                  
+                                  <div className="bg-white rounded-xl p-6 border border-purple-200">
+                                    <h3 className="text-lg font-semibold text-purple-700 mb-3 flex items-center gap-2">
+                                      <span className="text-purple-600">📚</span>
+                                      Required Concepts
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                      {recommendedProject.Concept.split(', ').map((concept, index) => (
+                                        <span
+                                          key={index}
+                                          className="inline-block bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm font-medium border border-purple-200"
+                                        >
+                                          {concept.trim()}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                              <div className="flex gap-3">
+                              
+                              <div className="flex gap-4">
                                 <button
                                   onClick={async () => {
                                     // Set this project as the user's current project in Firebase
@@ -452,13 +492,13 @@ function Python() {
                                     setShowProjectOverlay(false);
                                     navigate('/python/project');
                                   }}
-                                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+                                  className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
                                 >
                                   🚀 Start Project
                                 </button>
                                 <button
                                   onClick={handleCloseProjectOverlay}
-                                  className="px-6 py-3 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                                  className="px-8 py-4 border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 rounded-xl transition-all duration-300 font-semibold text-lg"
                                 >
                                   Cancel
                                 </button>
