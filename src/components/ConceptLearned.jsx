@@ -21,6 +21,14 @@ function ConceptLearned({ completedProjects = [] }) {
   const [showAddSourceOverlay, setShowAddSourceOverlay] = useState(false);
   const [newSource, setNewSource] = useState({ sourceName: '', sourceLink: '' });
   const [addingSource, setAddingSource] = useState(false);
+  const [editingStatus, setEditingStatus] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
+  const [savingStatus, setSavingStatus] = useState(false);
+  const [showAppliedConceptsOverlay, setShowAppliedConceptsOverlay] = useState(false);
+  const [appliedConceptsData, setAppliedConceptsData] = useState([]);
+  const [showAppliedDetails, setShowAppliedDetails] = useState(false);
+  const [selectedConceptForDetails, setSelectedConceptForDetails] = useState(null);
+  const [showAppliedDetailsOverlay, setShowAppliedDetailsOverlay] = useState(false);
   const { user } = useUser();
 
   // Fetch all concepts and user's learned concepts
@@ -106,7 +114,16 @@ function ConceptLearned({ completedProjects = [] }) {
     // Prepare sources array if source information is provided
     let sources = [];
     if (newSource.sourceName && newSource.sourceLink) {
-      sources = [newSource];
+      // Validate and format the URL
+      let formattedLink = newSource.sourceLink.trim();
+      if (!formattedLink.startsWith('http://') && !formattedLink.startsWith('https://')) {
+        formattedLink = 'https://' + formattedLink;
+      }
+      
+      sources = [{
+        ...newSource,
+        sourceLink: formattedLink
+      }];
     }
     
     // Avoid duplicates by concept+category
@@ -176,6 +193,90 @@ function ConceptLearned({ completedProjects = [] }) {
     });
   };
 
+  // Check if a concept has been mastered (used in more than 5 projects)
+  const isConceptMastered = (concept) => {
+    const projectsUsingConcept = completedProjects.filter(project => {
+      if (project.conceptUsed) {
+        const projectConcepts = project.conceptUsed.split(', ').map(c => c.trim());
+        return projectConcepts.includes(concept);
+      }
+      return false;
+    });
+    return projectsUsingConcept.length > 5;
+  };
+
+  // Helper function to ensure URLs have proper protocol
+  const formatUrl = (url) => {
+    if (!url) return '';
+    let formattedUrl = url.trim();
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = 'https://' + formattedUrl;
+    }
+    return formattedUrl;
+  };
+
+  // Handle clicking on applied concepts count
+  const handleAppliedConceptsClick = () => {
+    // Use the learnedConcepts state that's already fetched
+    const appliedConcepts = learnedConcepts.filter(concept => {
+      return isConceptApplied(concept.concept || concept) || isConceptMastered(concept.concept || concept);
+    });
+
+    // For each applied concept, find which projects used it
+    const appliedConceptsWithProjects = appliedConcepts.map(concept => {
+      const conceptName = concept.concept || concept;
+      const projectsUsingConcept = completedProjects.filter(project => {
+        if (project.conceptUsed) {
+          const projectConcepts = project.conceptUsed.split(', ').map(c => c.trim());
+          return projectConcepts.includes(conceptName);
+        }
+        return false;
+      });
+
+      return {
+        concept: conceptName,
+        category: concept.category,
+        projects: projectsUsingConcept,
+        isMastered: isConceptMastered(conceptName)
+      };
+    });
+
+    setAppliedConceptsData(appliedConceptsWithProjects);
+    setShowAppliedConceptsOverlay(true);
+  };
+
+  // Handle showing applied details for a specific concept
+  const handleShowAppliedDetails = (conceptName) => {
+    const projectsUsingConcept = completedProjects.filter(project => {
+      if (project.conceptUsed) {
+        const projectConcepts = project.conceptUsed.split(', ').map(c => c.trim());
+        return projectConcepts.includes(conceptName);
+      }
+      return false;
+    });
+
+    setSelectedConceptForDetails({
+      concept: conceptName,
+      projects: projectsUsingConcept
+    });
+    
+    // If we're in the applied concepts overlay, show the details overlay
+    if (showAppliedConceptsOverlay) {
+      setShowAppliedDetailsOverlay(true);
+    } else {
+      // If we're in the concept details overlay, show inline details
+      setShowAppliedDetails(true);
+    }
+  };
+
+  // Expose the function globally so it can be called from Python.jsx
+  React.useEffect(() => {
+    window.handleAppliedConceptsClick = handleAppliedConceptsClick;
+    return () => {
+      delete window.handleAppliedConceptsClick;
+    };
+  }, [completedProjects, learnedConcepts]);
+
   // Handle concept click to show details overlay
   const handleConceptClick = async (concept, category) => {
     try {
@@ -185,6 +286,9 @@ function ConceptLearned({ completedProjects = [] }) {
       
       let sources = [];
       let addedAt = null;
+      let status = null;
+      let isApplied = false;
+      
       if (learnedConceptsSnap.exists()) {
         const learnedConceptsData = learnedConceptsSnap.val();
         const conceptKey = `${category}:${concept}`;
@@ -195,6 +299,8 @@ function ConceptLearned({ completedProjects = [] }) {
             sources = Array.isArray(conceptData.sources) ? conceptData.sources : Object.values(conceptData.sources || {});
           }
           addedAt = conceptData.addedAt || null;
+          status = conceptData.status || null;
+          isApplied = isConceptApplied(concept);
         }
       }
       
@@ -202,7 +308,9 @@ function ConceptLearned({ completedProjects = [] }) {
         name: concept,
         category: category,
         learnedFrom: sources,
-        addedAt: addedAt
+        addedAt: addedAt,
+        status: status,
+        isApplied: isApplied
       });
       setShowConceptDetailsOverlay(true);
     } catch (err) {
@@ -211,7 +319,9 @@ function ConceptLearned({ completedProjects = [] }) {
         name: concept,
         category: category,
         learnedFrom: [],
-        addedAt: null
+        addedAt: null,
+        status: null,
+        isApplied: false
       });
       setShowConceptDetailsOverlay(true);
     }
@@ -223,12 +333,72 @@ function ConceptLearned({ completedProjects = [] }) {
     setShowAddSourceOverlay(true);
   };
 
+  // Handle editing concept status
+  const handleEditStatus = () => {
+    setNewStatus(selectedConceptDetails.status || '');
+    setEditingStatus(true);
+  };
+
+  // Save updated concept status
+  const handleSaveStatus = async () => {
+    if (!user || !selectedConceptDetails || !newStatus) return;
+    
+    setSavingStatus(true);
+    try {
+      // Get the existing learnedConcepts object
+      const learnedConceptsRef = ref(db, `users/${user.id}/python/learnedConcepts`);
+      const learnedConceptsSnap = await get(learnedConceptsRef);
+      
+      let learnedConceptsData = {};
+      if (learnedConceptsSnap.exists()) {
+        learnedConceptsData = learnedConceptsSnap.val();
+      }
+      
+      // Create concept key
+      const conceptKey = `${selectedConceptDetails.category}:${selectedConceptDetails.name}`;
+      
+      // Update the concept data with new status
+      const updatedConceptData = {
+        ...learnedConceptsData[conceptKey],
+        status: newStatus
+      };
+      
+      // Update the learnedConcepts object
+      await update(ref(db, `users/${user.id}/python/learnedConcepts`), {
+        [conceptKey]: updatedConceptData
+      });
+      
+      // Update local state
+      setSelectedConceptDetails(prev => ({
+        ...prev,
+        status: newStatus
+      }));
+      
+      setEditingStatus(false);
+      setNewStatus('');
+    } catch (err) {
+      console.error('Error saving status:', err);
+    }
+    setSavingStatus(false);
+  };
+
   // Save new source to Firebase
   const handleSaveSource = async () => {
     if (!user || !selectedConceptDetails || !newSource.sourceName || !newSource.sourceLink) return;
     
     setAddingSource(true);
     try {
+      // Validate and format the URL
+      let formattedLink = newSource.sourceLink.trim();
+      if (!formattedLink.startsWith('http://') && !formattedLink.startsWith('https://')) {
+        formattedLink = 'https://' + formattedLink;
+      }
+      
+      const sourceWithFormattedLink = {
+        ...newSource,
+        sourceLink: formattedLink
+      };
+      
       // Get the existing learnedConcepts object
       const learnedConceptsRef = ref(db, `users/${user.id}/python/learnedConcepts`);
       const learnedConceptsSnap = await get(learnedConceptsRef);
@@ -250,7 +420,7 @@ function ConceptLearned({ completedProjects = [] }) {
       }
       
       // Add new source
-      const updatedSources = [...existingSources, newSource];
+      const updatedSources = [...existingSources, sourceWithFormattedLink];
       
       // Update the concept data with new sources
       const updatedConceptData = {
@@ -342,7 +512,11 @@ function ConceptLearned({ completedProjects = [] }) {
                               <div className="flex items-center gap-2 min-w-[200px] justify-end">
                                 {/* Application Status - Fixed width container */}
                                 <div className="w-20 flex justify-center">
-                                  {isConceptApplied(item.concept) ? (
+                                  {isConceptMastered(item.concept) ? (
+                                    <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold whitespace-nowrap border border-purple-300">
+                                      mastered
+                                    </span>
+                                  ) : isConceptApplied(item.concept) ? (
                                     <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold whitespace-nowrap border border-green-300">
                                       applied
                                     </span>
@@ -542,18 +716,91 @@ function ConceptLearned({ completedProjects = [] }) {
             
             {/* Concept Name */}
             <div className="mb-8">
-              <h2 className="text-4xl font-bold text-purple-700 mb-2">
-                {selectedConceptDetails.name}
-              </h2>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4 mb-2">
+                <h2 className="text-4xl font-bold text-purple-700">
+                  {selectedConceptDetails.name}
+                </h2>
                 <span className="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium capitalize">
                   {selectedConceptDetails.category}
                 </span>
+              </div>
+              <div className="flex items-center gap-3 mb-3">
                 {selectedConceptDetails.addedAt && (
                   <span className="text-sm text-slate-500">
                     📅 Added on {new Date(selectedConceptDetails.addedAt).toLocaleDateString()} at {new Date(selectedConceptDetails.addedAt).toLocaleTimeString()}
                   </span>
                 )}
+              </div>
+              
+              {/* Concept Status and Application Status */}
+              <div className="flex items-center justify-between">
+                {/* Application Status */}
+                <div className="flex items-center gap-2">
+                  {selectedConceptDetails.isApplied ? (
+                    <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold border border-green-300">
+                      Applied
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold border border-yellow-300">
+                      Not Applied
+                    </span>
+                  )}
+                </div>
+                
+                {/* Concept Status - Right Side */}
+                <div className="flex items-center gap-2">
+                  {editingStatus ? (
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={newStatus}
+                        onChange={(e) => setNewStatus(e.target.value)}
+                        className="border border-slate-300 rounded px-2 py-1 text-xs"
+                        disabled={savingStatus}
+                      >
+                        <option value="">Select status</option>
+                        <option value="understood">Understood</option>
+                        <option value="partially understood">Partially Understood</option>
+                        <option value="still confused">Still Confused</option>
+                      </select>
+                      <button
+                        onClick={handleSaveStatus}
+                        disabled={savingStatus || !newStatus}
+                        className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs font-medium transition-colors"
+                      >
+                        {savingStatus ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={() => { setEditingStatus(false); setNewStatus(''); }}
+                        disabled={savingStatus}
+                        className="bg-slate-500 hover:bg-slate-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      {selectedConceptDetails.status ? (
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold border
+                            ${selectedConceptDetails.status === 'understood' ? 'bg-green-100 text-green-700 border-green-300' : ''}
+                            ${selectedConceptDetails.status === 'partially understood' ? 'bg-orange-100 text-orange-700 border-orange-300' : ''}
+                            ${selectedConceptDetails.status === 'still confused' ? 'bg-red-100 text-red-700 border-red-300' : ''}
+                          `}
+                        >
+                          {selectedConceptDetails.status}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-xs">No status set</span>
+                      )}
+                      <button
+                        onClick={handleEditStatus}
+                        className="text-purple-600 hover:text-purple-800 text-xs underline"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -583,7 +830,7 @@ function ConceptLearned({ completedProjects = [] }) {
                           {source.sourceName}
                         </h4>
                         <a 
-                          href={source.sourceLink} 
+                          href={formatUrl(source.sourceLink)} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-purple-600 hover:text-purple-800 text-sm underline"
@@ -593,7 +840,7 @@ function ConceptLearned({ completedProjects = [] }) {
                       </div>
                       <div className="ml-4">
                         <a 
-                          href={source.sourceLink} 
+                          href={formatUrl(source.sourceLink)} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -605,6 +852,60 @@ function ConceptLearned({ completedProjects = [] }) {
                   </div>
                 ))}
               </div>
+              
+              {/* See Applied Details Link - Only for applied concepts */}
+              {selectedConceptDetails.isApplied && (
+                <div className="flex justify-center pt-6 border-t border-slate-200">
+                  {showAppliedDetails ? (
+                    <div className="w-full bg-slate-50 rounded-lg p-4 border border-slate-200">
+                      <div className="text-left mb-5">
+                        <h4 className="text-lg text-slate-800">
+                          <span className='font-semibold'>Applied into:</span> <span className='text-purple-600'>{selectedConceptForDetails?.projects?.length || 0} project</span>
+                        </h4>
+                      </div>
+                      <div className="space-y-2">
+                        {selectedConceptForDetails?.projects?.map((project, index) => (
+                          <div key={index} className="bg-white rounded-lg p-3 border border-slate-200">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h5 className="text-sm font-medium text-slate-800">
+                                  {project.projectTitle}
+                                </h5>
+                                <p className="text-xs text-slate-600">
+                                  {project.completedAt ? (
+                                    new Date(project.completedAt).toString() !== 'Invalid Date' ? (
+                                      `${new Date(project.completedAt).toLocaleDateString()} at ${new Date(project.completedAt).toLocaleTimeString()}`
+                                    ) : (
+                                      'Date not available'
+                                    )
+                                  ) : (
+                                    'Date not available'
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="text-center mt-3">
+                        <button
+                          onClick={() => setShowAppliedDetails(false)}
+                          className="text-purple-600 hover:text-purple-800 text-sm underline cursor-pointer"
+                        >
+                          Hide Details
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleShowAppliedDetails(selectedConceptDetails.name)}
+                      className="text-purple-600 hover:text-purple-800 text-sm underline cursor-pointer"
+                    >
+                      See Applied Details
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -671,6 +972,146 @@ function ConceptLearned({ completedProjects = [] }) {
               >
                 {addingSource ? 'Adding...' : 'Add Source'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Applied Concepts Overlay */}
+      {showAppliedConceptsOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+            <button
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold"
+              onClick={() => setShowAppliedConceptsOverlay(false)}
+            >
+              ×
+            </button>
+            
+            <div className="mb-4">
+              <h2 className="text-2xl font-semibold text-slate-800">
+                Concepts Applied
+              </h2>
+            </div>
+
+            <div className='pt-3 flex flex-col space-y-2'>
+              {['basic', 'intermediate', 'advanced'].map((category) => {
+                const categoryConcepts = appliedConceptsData.filter(concept => concept.category === category);
+                const learnedConceptsInCategory = learnedConcepts.filter(concept => concept.category === category).length;
+                const appliedCount = categoryConcepts.length;
+                const isOpen = openCategory === category;
+
+                return (
+                  <div key={category} className="bg-slate-50 p-3 rounded-lg shadow-sm">
+                    <div
+                      className="flex justify-between items-center cursor-pointer"
+                      onClick={() => toggleCategory(category)}
+                    >
+                      <div className='text-lg font-medium text-slate-700 capitalize'>
+                        {category} <span className='font-normal text-slate-500'>({appliedCount}/{learnedConceptsInCategory})</span>
+                      </div>
+                      <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                        <FaChevronDown className='text-slate-500' />
+                      </motion.div>
+                    </div>
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                          animate={{ height: 'auto', opacity: 1, marginTop: '12px' }}
+                          exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="border-t border-slate-200 pt-3">
+                            {categoryConcepts.length > 0 ? (
+                              <div className="space-y-2">
+                                {categoryConcepts.map((conceptData) => (
+                                  <div
+                                    key={conceptData.concept}
+                                    className="w-full flex items-center justify-between bg-slate-100 rounded-lg px-4 py-2 shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-200 transition-colors"
+                                    onClick={() => {
+                                      setShowAppliedConceptsOverlay(false);
+                                      handleConceptClick(conceptData.concept, conceptData.category);
+                                    }}
+                                  >
+                                    <span className="font-medium text-slate-700">{conceptData.concept}</span>
+                                    <div className="flex items-center gap-2">
+                                      {conceptData.isMastered ? (
+                                        <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold whitespace-nowrap border border-purple-300">
+                                          mastered
+                                        </span>
+                                      ) : (
+                                        <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-semibold whitespace-nowrap border border-green-300">
+                                          applied
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="italic text-slate-400">No applied concepts in this category.</div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Applied Details Overlay */}
+      {showAppliedDetailsOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+            <button
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold"
+              onClick={() => setShowAppliedDetailsOverlay(false)}
+            >
+              ×
+            </button>
+            
+            <div className="mb-4">
+              <h2 className="text-2xl font-semibold text-slate-800">
+                {selectedConceptForDetails?.concept} - Applied Details
+              </h2>
+            </div>
+
+            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+              <div className="text-left mb-5">
+                <h4 className="text-lg text-slate-800">
+                  <span className='font-semibold'>Applied into:</span> <span className='text-purple-600'>{selectedConceptForDetails?.projects?.length || 0} project</span>
+                </h4>
+              </div>
+              <div className="space-y-2">
+                {selectedConceptForDetails?.projects?.map((project, index) => (
+                  <div key={index} className="bg-white rounded-lg p-3 border border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h5 className="text-sm font-medium text-slate-800">
+                          {project.projectTitle}
+                        </h5>
+                        <p className="text-xs text-slate-600">
+                          {project.completedAt ? (
+                            new Date(project.completedAt).toString() !== 'Invalid Date' ? (
+                              `${new Date(project.completedAt).toLocaleDateString()} at ${new Date(project.completedAt).toLocaleTimeString()}`
+                            ) : (
+                              'Date not available'
+                            )
+                          ) : (
+                            'Date not available'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

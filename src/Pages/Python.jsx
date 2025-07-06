@@ -320,7 +320,13 @@ function Python() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
-                className="bg-white rounded-lg shadow-md p-6"
+                className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => {
+                  // Pass the function to ConceptLearned component
+                  if (window.handleAppliedConceptsClick) {
+                    window.handleAppliedConceptsClick();
+                  }
+                }}
               >
                 <div className="flex items-center justify-between">
                   <div>
