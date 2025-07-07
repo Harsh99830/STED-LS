@@ -156,151 +156,83 @@ function Profile() {
 
                         {/* Skills Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            {/* Python Skills */}
-                            <Link to={"/python"}>
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
-                            >
-                                <div className="flex items-center mb-3">
-                                    <img src={python} alt="Python" className="w-6 h-6 mr-2" />
-                                    <h2 className="text-lg font-semibold text-slate-800">Python</h2>
-                                </div>
-                                <div className="space-y-2">
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-sm text-slate-600">Concept learned</span>
-                                            <span className="text-sm font-medium text-slate-800">16%</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `16%` }}></div>
-                                        </div>
-                                        <div className="text-sm text-right font-medium text-slate-800">8/50</div>
-                                    </div>
-                                    {/* Concepts Applied */}
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-sm text-slate-600">Concepts applied</span>
-                                            <span className="text-sm font-medium text-slate-800">25%</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
-                                        </div>
-                                        <div className="text-sm text-right font-medium text-slate-800">2/8</div>
-                                    </div>
-                                    <p className="text-sm text-slate-600">SP Earned: 16</p>
-                                </div>
-                            </motion.div>
-                            </Link>
-
-                            {/* Power BI Skills */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
-                            >
-                                <div className="flex items-center mb-3">
-                                    <img src={PowerBi} alt="Power BI" className="w-6 h-6 mr-2" />
-                                    <h2 className="text-lg font-semibold text-slate-800">Power BI</h2>
-                                </div>
-                                <div className="space-y-2">
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-sm text-slate-600">Concept learned</span>
-                                            <span className="text-sm font-medium text-slate-800">{userData.powerbi?.PowerBiSkill || 0}%</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${userData.powerbi?.PowerBiSkill || 0}%` }}></div>
-                                        </div>
-                                        <div className="text-sm text-right font-medium text-slate-800">{userData.powerbi?.PowerBiSkill ? `${userData.powerbi?.PowerBiSkill}%` : '0%'}</div>
-                                    </div>
-                                    {/* Concepts Applied */}
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-sm text-slate-600">Concepts applied</span>
-                                            <span className="text-sm font-medium text-slate-800">25%</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
-                                        </div>
-                                        <div className="text-sm text-right font-medium text-slate-800">2/8</div>
-                                    </div>
-                                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('powerbi')}</p>
-                                </div>
-                            </motion.div>
-
-                            {/* Data Science Skills */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
-                            >
-                                <div className="flex items-center mb-3">
-                                    <span className="text-xl mr-2">📊</span>
-                                    <h2 className="text-lg font-semibold text-slate-800">Data Science</h2>
-                                </div>
-                                <div className="space-y-2">
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-sm text-slate-600">Concept learned</span>
-                                            <span className="text-sm font-medium text-slate-800">{userData['data-science']?.dataSkill || 0}%</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div className="bg-green-600 h-1.5 rounded-full" style={{ width: `${userData['data-science']?.dataSkill || 0}%` }}></div>
-                                        </div>
-                                        <div className="text-sm text-right font-medium text-slate-800">{userData['data-science']?.dataSkill ? `${userData['data-science']?.dataSkill}%` : '0%'}</div>
-                                    </div>
-                                    {/* Concepts Applied */}
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-sm text-slate-600">Concepts applied</span>
-                                            <span className="text-sm font-medium text-slate-800">25%</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
-                                        </div>
-                                        <div className="text-sm text-right font-medium text-slate-800">2/8</div>
-                                    </div>
-                                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('data-science')}</p>
-                                </div>
-                            </motion.div>
-
-                            {/* Public Speaking Skills */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
-                            >
-                                <div className="flex items-center mb-3">
-                                    <span className="text-xl mr-2">🎤</span>
-                                    <h2 className="text-lg font-semibold text-slate-800">Public Speaking</h2>
-                                </div>
-                                <div className="space-y-2">
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-sm text-slate-600">Concept learned</span>
-                                            <span className="text-sm font-medium text-slate-800">{userData['public-speaking']?.speakingSkill || 0}%</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div className="bg-yellow-500 h-1.5 rounded-full" style={{ width: `${userData['public-speaking']?.speakingSkill || 0}%` }}></div>
-                                        </div>
-                                        <div className="text-sm text-right font-medium text-slate-800">{userData['public-speaking']?.speakingSkill ? `${userData['public-speaking']?.speakingSkill}%` : '0%'}</div>
-                                    </div>
-                                    {/* Concepts Applied */}
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-sm text-slate-600">Concepts applied</span>
-                                            <span className="text-sm font-medium text-slate-800">25%</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
-                                        </div>
-                                        <div className="text-sm text-right font-medium text-slate-800">2/8</div>
-                                    </div>
-                                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('public-speaking')}</p>
-                                </div>
-                            </motion.div>
+                            {/* Show only started skills */}
+                            {(() => {
+                                const skillMap = {
+                                    'python': {
+                                        node: 'python',
+                                        currentProjectField: 'PythonCurrentProject',
+                                        img: python,
+                                        label: 'Python',
+                                        route: '/python',
+                                    },
+                                    'data-science': {
+                                        node: 'data-science',
+                                        currentProjectField: 'DataScienceCurrentProject',
+                                        img: null,
+                                        label: 'Data Science',
+                                        icon: <span className="text-xl mr-2">📊</span>,
+                                        route: '/data-science',
+                                    },
+                                    'public-speaking': {
+                                        node: 'public-speaking',
+                                        currentProjectField: 'PublicSpeakingCurrentProject',
+                                        img: null,
+                                        label: 'Public Speaking',
+                                        icon: <span className="text-xl mr-2">🎤</span>,
+                                        route: '/public-speaking',
+                                    },
+                                    'powerbi': {
+                                        node: 'powerbi',
+                                        currentProjectField: 'PowerBiCurrentProject',
+                                        img: PowerBi,
+                                        label: 'Power BI',
+                                        route: '/powerbi',
+                                    },
+                                };
+                                const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
+                                    userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
+                                );
+                                if (startedSkills.length === 0) return <div className="text-center text-slate-500 col-span-full py-8">No skills started yet.</div>;
+                                return startedSkills.map(([key, skill]) => (
+                                    <Link to={skill.route} key={key}>
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
+                                        >
+                                            <div className="flex items-center mb-3">
+                                                {skill.img ? <img src={skill.img} alt={skill.label} className="w-6 h-6 mr-2" /> : skill.icon}
+                                                <h2 className="text-lg font-semibold text-slate-800">{skill.label}</h2>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div>
+                                                    <div className="flex justify-between mb-1">
+                                                        <span className="text-sm text-slate-600">Concept learned</span>
+                                                        <span className="text-sm font-medium text-slate-800">{userData[skill.node]?.[skill.label.replace(/\s/g, '') + 'Skill'] || 0}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                                        <div className={`h-1.5 rounded-full ${key === 'python' ? 'bg-purple-600' : key === 'powerbi' ? 'bg-blue-600' : key === 'data-science' ? 'bg-green-600' : 'bg-yellow-500'}`} style={{ width: `${userData[skill.node]?.[skill.label.replace(/\s/g, '') + 'Skill'] || 0}%` }}></div>
+                                                    </div>
+                                                    <div className="text-sm text-right font-medium text-slate-800">{userData[skill.node]?.[skill.label.replace(/\s/g, '') + 'Skill'] ? `${userData[skill.node]?.[skill.label.replace(/\s/g, '') + 'Skill']}%` : '0%'}</div>
+                                                </div>
+                                                {/* Concepts Applied */}
+                                                <div>
+                                                    <div className="flex justify-between mb-1">
+                                                        <span className="text-sm text-slate-600">Concepts applied</span>
+                                                        <span className="text-sm font-medium text-slate-800">25%</span>
+                                                    </div>
+                                                    <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                                                    </div>
+                                                    <div className="text-sm text-right font-medium text-slate-800">2/8</div>
+                                                </div>
+                                                <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP(key)}</p>
+                                            </div>
+                                        </motion.div>
+                                    </Link>
+                                ));
+                            })()}
                         </div>
 
                         {/* Project History */}

@@ -18,6 +18,9 @@ function Home() {
   const [userData, setUserData] = useState(null)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const navigate = useNavigate();
+  const [pythonSP, setPythonSP] = useState(0);
+  const [pythonStats, setPythonStats] = useState({ learned: 0, applied: 0 });
+  const [pythonProjects, setPythonProjects] = useState([]);
 
   // Mock data for demonstration
   useEffect(() => {
@@ -130,8 +133,45 @@ function Home() {
           setUserData(snapshot.val());
         }
       }).finally(() => setIsLoadingProfile(false));
+
+      // Fetch Python completed projects
+      const completedProjectsRef = ref(db, 'users/' + user.id + '/python/PythonCompletedProjects');
+      get(completedProjectsRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const projects = Object.values(snapshot.val() || {});
+          setPythonProjects(projects);
+        } else {
+          setPythonProjects([]);
+        }
+      });
+
+      // Fetch Python learned/applied concepts
+      get(userRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          let learnedConcepts = data.python?.learnedConcepts || [];
+          if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+            learnedConcepts = Object.values(learnedConcepts);
+          }
+          const learned = learnedConcepts.length;
+          // Applied: count learned concepts that are used in any completed project
+          const conceptsUsed = new Set();
+          (Object.values(data.python?.PythonCompletedProjects || {})).forEach(project => {
+            if (project.conceptUsed) {
+              project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+            }
+          });
+          const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
+          setPythonStats({ learned, applied });
+        }
+      });
     }
   }, [isLoaded, isSignedIn, user]);
+
+  useEffect(() => {
+    // Calculate Python SP as in Python page
+    setPythonSP(pythonProjects.length * 10 + pythonStats.learned * 2 + pythonStats.applied * 5);
+  }, [pythonProjects, pythonStats]);
 
   return (
     <>
@@ -370,7 +410,39 @@ function Home() {
                     )}
                   </div>
                   <h3 className="font-semibold text-lg text-center text-slate-800 drop-shadow">{user?.fullName || 'Student'}</h3>
-                  <p className="text-center text-sm mb-2 text-slate-600">Total SP: 16</p>
+                  {(() => {
+                    // Calculate total SP for all started skills
+                    let totalSP = 0;
+                    const skillMap = {
+                      'python': {
+                        node: 'python',
+                        currentProjectField: 'PythonCurrentProject',
+                      },
+                      'data-science': {
+                        node: 'data-science',
+                        currentProjectField: 'DataScienceCurrentProject',
+                      },
+                      'public-speaking': {
+                        node: 'public-speaking',
+                        currentProjectField: 'PublicSpeakingCurrentProject',
+                      },
+                      'powerbi': {
+                        node: 'powerbi',
+                        currentProjectField: 'PowerBiCurrentProject',
+                      },
+                    };
+                    const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
+                      userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
+                    );
+                    startedSkills.forEach(([key]) => {
+                      if (key === 'python') {
+                        totalSP += pythonSP;
+                      } else {
+                        totalSP += calculateSkillSP(key);
+                      }
+                    });
+                    return <p className="text-center text-sm mb-2 text-slate-600">Total SP: {totalSP}</p>;
+                  })()}
                   <div className="flex flex-wrap justify-center gap-1 mb-2">
                     {userData.projectHistory && userData.projectHistory.length > 0 ? (
                       Array.from(new Set(userData.projectHistory.map(p => p.skill))).map((skill) => {
@@ -382,44 +454,57 @@ function Home() {
                     ) : null}
                   </div>
                   {/* Skills and SP List */}
-                  {userData.projectHistory && userData.projectHistory.length > 0 ? (
-                    <div className="w-full mt-4">
-                      <h4 className="text-slate-700 font-semibold text-sm mb-2">Your Skills & SP</h4>
-                      <div className="flex flex-col gap-2">
-                        {Array.from(new Set(userData.projectHistory.map(p => p.skill))).map((skill) => {
-                          const skillSP = userData.projectHistory.filter(p => p.skill === skill).reduce((acc, p) => acc + (p.sp || 0), 0);
-                          return (
-                            <div key={skill} className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
-                              <span className="text-purple-700 font-semibold">{skill && skill.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
-                              <span className="font-semibold text-purple-700">{skillSP} SP</span>
+                  {(() => {
+                    // Define started skills logic
+                    const skillMap = {
+                      'python': {
+                        node: 'python',
+                        currentProjectField: 'PythonCurrentProject',
+                        label: 'Python',
+                      },
+                      'data-science': {
+                        node: 'data-science',
+                        currentProjectField: 'DataScienceCurrentProject',
+                        label: 'Data Science',
+                      },
+                      'public-speaking': {
+                        node: 'public-speaking',
+                        currentProjectField: 'PublicSpeakingCurrentProject',
+                        label: 'Public Speaking',
+                      },
+                      'powerbi': {
+                        node: 'powerbi',
+                        currentProjectField: 'PowerBiCurrentProject',
+                        label: 'Power BI',
+                      },
+                    };
+                    const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
+                      userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
+                    );
+                    if (startedSkills.length === 0) return null;
+                    // Calculate SP for each started skill
+                    const calculateSkillSP = (skillKey) => {
+                      if (!userData.projectHistory) return 0;
+                      return userData.projectHistory
+                        .filter(project => project.skill === skillKey)
+                        .reduce((acc, project) => acc + (project.sp || 0), 0);
+                    };
+                    return (
+                      <div className="w-full mt-4">
+                        <h4 className="text-slate-700 font-semibold text-sm mb-2">Your Skills & SP</h4>
+                        <div className="flex flex-col gap-2">
+                          {startedSkills.map(([key, skill]) => (
+                            <div key={key} className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
+                              <span className="text-purple-700 font-semibold">{skill.label}</span>
+                              <span className="font-semibold text-purple-700">
+                                {key === 'python' ? `${pythonSP} SP` : `${calculateSkillSP(key)} SP`}
+                              </span>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-full mt-4">
-                      <h4 className="text-slate-700 font-semibold text-sm mb-2">Your Skills & SP</h4>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
-                          <span className="text-purple-700 font-semibold">Python</span>
-                          <span className="font-semibold text-purple-700">16 SP</span>
-                        </div>
-                        <div className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
-                          <span className="text-purple-700 font-semibold">Data Science</span>
-                          <span className="font-semibold text-purple-700">0 SP</span>
-                        </div>
-                        <div className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
-                          <span className="text-purple-700 font-semibold">Public Speaking</span>
-                          <span className="font-semibold text-purple-700">0 SP</span>
-                        </div>
-                        <div className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
-                          <span className="text-purple-700 font-semibold">Power BI</span>
-                          <span className="font-semibold text-purple-700">0 SP</span>
+                          ))}
                         </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </>
               ) : (
                 <div className="text-slate-500 text-center">No profile data</div>

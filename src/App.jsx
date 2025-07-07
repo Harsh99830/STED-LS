@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './App.css';
 import Start from './Pages/Start';
@@ -18,6 +18,33 @@ import Profile from './Pages/Profile';
 import UserProfile from './Pages/UserProfile';
 
 function App() {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  if (!isOnline) {
+    return (
+      <div style={{ minHeight: '100vh' }} className="flex flex-col items-center justify-center bg-slate-50">
+        <div className="text-3xl font-bold text-slate-800 mb-4">No internet connection</div>
+        <button
+          className="bg-purple-600 hover:bg-purple-700 text-white text-lg font-semibold px-8 py-4 rounded-lg shadow-md transition-colors"
+          onClick={() => window.location.reload()}
+        >
+          Refresh
+        </button>
+      </div>
+    );
+  }
+
   return (
     <Routes>
       <Route path="/" element={<Start />} />

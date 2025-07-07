@@ -12,6 +12,7 @@ import Applied from "../assets/applied.png";
 import Project from "../assets/project.png";
 import ProjectRecommender from '../components/ProjectRecommender';
 import SeeAnother from "../assets/SeeAnother.png";
+import { getProjectConfig } from '../PythonProject/projectConfig';
 
 function Python() {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ function Python() {
   const [conceptStats, setConceptStats] = useState({ learned: 0, applied: 0, total: 0 });
   const [showProjectOverlay, setShowProjectOverlay] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentProjectTitle, setCurrentProjectTitle] = useState('');
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -217,6 +219,33 @@ function Python() {
     setSelectedProject(null);
   };
 
+  // Add handler for ending project
+  const handleEndProject = async () => {
+    if (!user) return;
+    const userRef = ref(db, 'users/' + user.id);
+    await update(userRef, { 'python/PythonProjectStarted': false });
+    setUserData(prev => ({
+      ...prev,
+      python: {
+        ...prev.python,
+        PythonProjectStarted: false
+      }
+    }));
+  };
+
+  useEffect(() => {
+    // Fetch project title for the current project
+    const fetchProjectTitle = async () => {
+      if (userData.python?.PythonCurrentProject) {
+        const config = await getProjectConfig(userData.python.PythonCurrentProject);
+        setCurrentProjectTitle(config?.title || userData.python.PythonCurrentProject);
+      } else {
+        setCurrentProjectTitle('');
+      }
+    };
+    fetchProjectTitle();
+  }, [userData.python?.PythonCurrentProject]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
@@ -243,6 +272,30 @@ function Python() {
           hideProgressButton={true}
         />
       </div>
+
+      {/* Project Continue/End Box */}
+      {userData.python?.PythonProjectStarted && (
+        <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-6 flex flex-col md:flex-row items-center justify-between mb-8 mt-6 max-w-3xl mx-auto shadow">
+          <div className="flex-1 flex flex-col md:flex-row items-center gap-4">
+            <span className="text-lg font-semibold text-yellow-800">Current Project:</span>
+            <span className="text-xl font-bold text-yellow-900">{currentProjectTitle || 'Untitled Project'}</span>
+          </div>
+          <div className="flex gap-4 mt-4 md:mt-0">
+            <button
+              className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2 rounded-lg shadow"
+              onClick={() => navigate('/python/project')}
+            >
+              Continue Project
+            </button>
+            <button
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-2 rounded-lg shadow"
+              onClick={handleEndProject}
+            >
+              End Project
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main content with sidebar */}
       <div className="flex flex-col lg:flex-row">
