@@ -4,7 +4,7 @@ import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import { useUser } from "@clerk/clerk-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getDatabase, ref, get, update } from "firebase/database";
+import { getDatabase, ref, get, update, onValue } from "firebase/database";
 import { db } from "../firebase";
 import ConceptLearned from "../components/ConceptLearned";
 import Learned from "../assets/learned.png";
@@ -44,27 +44,33 @@ function Python() {
   }, [isLoaded, isSignedIn, navigate]);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user) return;
-      try {
-        const userRef = ref(db, 'users/' + user.id);
-        const snapshot = await get(userRef);
-          if (snapshot.exists()) {
-            setUserData(snapshot.val());
-          await fetchConceptStats();
-          await fetchCompletedProjects();
-          setIsLoading(false);
-          } else {
-            console.log("No data available");
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        setIsLoading(false);
-    }
+    if (!user) return;
+    // Real-time listener for user data
+    const userRef = ref(db, 'users/' + user.id);
+    const unsubscribeUser = onValue(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setUserData(snapshot.val());
+      }
+      setIsLoading(false);
+    });
+    // Real-time listener for completed projects
+    const completedProjectsRef = ref(db, 'users/' + user.id + '/python/PythonCompletedProjects');
+    const unsubscribeProjects = onValue(completedProjectsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const projects = snapshot.val();
+        const projectsArray = Object.entries(projects).map(([key, project]) => ({
+          key,
+          ...project
+        }));
+        setCompletedProjects(projectsArray);
+      } else {
+        setCompletedProjects([]);
+      }
+    });
+    return () => {
+      unsubscribeUser();
+      unsubscribeProjects();
     };
-
-    fetchUserData();
   }, [user]);
 
   useEffect(() => {
@@ -186,27 +192,6 @@ function Python() {
 
   const handleCloseProjectOverlay = () => {
     setShowProjectOverlay(false);
-  };
-
-  const fetchCompletedProjects = async () => {
-    if (!user) return;
-    try {
-      const completedProjectsRef = ref(db, 'users/' + user.id + '/python/PythonCompletedProjects');
-      const snapshot = await get(completedProjectsRef);
-      if (snapshot.exists()) {
-        const projects = snapshot.val();
-        const projectsArray = Object.entries(projects).map(([key, project]) => ({
-          key,
-          ...project
-        })).sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
-        setCompletedProjects(projectsArray);
-      } else {
-        setCompletedProjects([]);
-      }
-    } catch (error) {
-      console.error('Error fetching completed projects:', error);
-      setCompletedProjects([]);
-    }
   };
 
   const handleProjectClick = (project) => {

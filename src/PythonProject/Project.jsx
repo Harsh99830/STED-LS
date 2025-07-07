@@ -3,7 +3,7 @@ import CodeEditor from './CodeEditor';
 import Statement from './Statement';
 import AI from './AI';
 import { useUser } from '@clerk/clerk-react';
-import { ref, update, get } from 'firebase/database';
+import { ref, update, get, onValue } from 'firebase/database';
 import { db } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 import cross from '../assets/cross.png';
@@ -37,11 +37,10 @@ function Project() {
 
   // Load project configuration
   useEffect(() => {
-    const fetchConfig = async () => {
       if (!user) return;
-      try {
         const userRef = ref(db, 'users/' + user.id + '/python');
-        const userSnap = await get(userRef);
+    // Set up real-time listener for python node
+    const unsubscribe = onValue(userRef, async (userSnap) => {
         if (userSnap.exists()) {
           const userData = userSnap.val();
           const projectKey = userData.PythonCurrentProject;
@@ -50,11 +49,8 @@ function Project() {
             setProjectConfig(config);
           }
         }
-      } catch (err) {
-        setProjectConfig(null);
-      }
-    };
-    fetchConfig();
+    });
+    return () => unsubscribe();
   }, [user]);
 
   // Handle browser back button and page refresh

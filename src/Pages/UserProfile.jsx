@@ -7,45 +7,81 @@ import python from "../assets/python.png";
 import PowerBi from "../assets/PowerBi.png";
 import learned from "../assets/learned.png";
 import applied from "../assets/applied.png";
-
-// Mock data for demonstration
-const mockStudents = [
-  {
-    id: 1,
-    name: 'Alex Chen',
-    avatar: '👨‍💻',
-    level: 'Intermediate',
-    skills: ['Python', 'Data Science'],
-    conceptsLearned: 15,
-    projectsCompleted: 3,
-    isOnline: true,
-    lastActive: '2 minutes ago',
-    observers: [2, 3],
-    observing: [3],
-    projectHistory: [
-      { name: 'Personal Finance Tracker', description: 'A finance app', completedDate: '2024-06-01', sp: 10, skill: 'python' },
-      { name: 'Data Dashboard', description: 'BI dashboard', completedDate: '2024-06-05', sp: 10, skill: 'powerbi' }
-    ],
-    python: { PythonSkill: 16 },
-    powerbi: { PowerBiSkill: 40 },
-    'data-science': { dataSkill: 20 },
-    'public-speaking': { speakingSkill: 0 },
-  },
-  // ...add more mock students as needed
-];
+import { db } from '../firebase';
+import { ref, get } from 'firebase/database';
 
 export default function UserProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const student = mockStudents.find((s) => String(s.id) === id);
-  const [userData, setUserData] = useState(student || {});
+  const [userData, setUserData] = useState(null);
   const [selectedSkill, setSelectedSkill] = useState(null);
   const [activeSkillDetailTab, setActiveSkillDetailTab] = useState('sp');
   const skillDetailRef = useRef(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (student) setUserData(student);
-  }, [student]);
+    async function fetchUser() {
+      if (id === '1') {
+        // Static Alex Chen
+        setUserData({
+          id: 1,
+          name: 'Alex Chen',
+          avatar: '👨‍💻',
+          level: 'Intermediate',
+          email: 'alex.chen@email.com',
+          skills: ['Python', 'Data Science'],
+          conceptsLearned: 15,
+          projectsCompleted: 3,
+          isOnline: true,
+          lastActive: '2 minutes ago',
+          observers: [2, 3],
+          observing: [3],
+          projectHistory: [
+            { name: 'Personal Finance Tracker', description: 'A finance app', completedDate: '2024-06-01', sp: 10, skill: 'python' },
+            { name: 'Data Dashboard', description: 'BI dashboard', completedDate: '2024-06-05', sp: 10, skill: 'powerbi' }
+          ],
+          python: { PythonSkill: 16 },
+          powerbi: { PowerBiSkill: 40 },
+          'data-science': { dataSkill: 20 },
+          'public-speaking': { speakingSkill: 0 },
+        });
+        setLoading(false);
+      } else {
+        // Fetch from Firebase
+        const userRef = ref(db, 'users/' + id);
+        const snap = await get(userRef);
+        if (snap.exists()) {
+          const data = snap.val();
+          // Map Firebase data to the same structure as Alex Chen
+          const skills = ['python', 'powerbi', 'data-science', 'public-speaking'].filter(k => data[k]);
+          const projectHistory = data.projectHistory || [];
+          setUserData({
+            id,
+            name: data.name || data.fullName || data.username || 'Student',
+            avatar: data.avatar || '👤',
+            level: data.level || '',
+            email: data.email || data.emailAddress || '',
+            skills: skills.length > 0 ? skills : ['no skills'],
+            conceptsLearned: (data.python?.learnedConcepts ? Object.keys(data.python.learnedConcepts).length : 0),
+            projectsCompleted: projectHistory.length,
+            isOnline: true,
+            lastActive: '',
+            observers: data.observers || [],
+            observing: data.observing || [],
+            projectHistory,
+            python: data.python || {},
+            powerbi: data.powerbi || {},
+            'data-science': data['data-science'] || {},
+            'public-speaking': data['public-speaking'] || {},
+          });
+        } else {
+          setUserData(null);
+        }
+        setLoading(false);
+      }
+    }
+    fetchUser();
+  }, [id]);
 
   useEffect(() => {
     if (selectedSkill) {
@@ -71,7 +107,14 @@ export default function UserProfile() {
     return userData.projectHistory.filter(project => project.skill === skill).reduce((acc, project) => acc + (project.sp || 0), 0);
   };
 
-  if (!student) {
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="text-2xl text-slate-600 mb-4">Loading profile...</div>
+      </div>
+    );
+  }
+  if (!userData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="text-2xl text-slate-600 mb-4">Student not found</div>
@@ -271,12 +314,15 @@ export default function UserProfile() {
             <div className="bg-white rounded-lg shadow-md p-6 mb-8">
               <div className="flex items-center space-x-6 w-full">
                 <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-4xl">{student.avatar}</span>
+                  <span className="text-4xl">{userData.avatar}</span>
                 </div>
                 <div className="flex-1 flex items-center justify-between">
-                  <div>
-                    <h1 className="text-2xl font-bold text-slate-800">{student.name}</h1>
-                    <p className="text-slate-600 text-left pt-2">Total SP: 76</p>
+                  <div className='text-left'>
+                    <h1 className="text-2xl font-bold text-slate-800">{userData.name}</h1>
+                    {userData.email && (
+                      <p className="text-slate-500 text-sm pt-1">{userData.email}</p>
+                    )}
+                    <p className="text-slate-600 text-left pt-2">Total SP: {calculateTotalSP()}</p>
                   </div>
                   <button className="border border-purple-600 text-purple-600 px-12 py-2 rounded-4xl text-sm font-medium hover:bg-purple-700 hover:text-white transition-colors ml-6">
                     Observe

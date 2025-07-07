@@ -122,10 +122,10 @@ export const detectGamingAttempts = (userCode) => {
 
 export const checkTasksAndSubtasks = (userCode, config) => {
   if (!config || !config.tasks) return {};
-
+  
   const tasks = {};
   const userCodeClean = userCode.replace(/\s+/g, ' ').toLowerCase();
-
+  
   Object.entries(config.tasks).forEach(([taskKey, task]) => {
     const subtasks = task.subtasks || [];
     const codeChecks = task.codeChecks || [];

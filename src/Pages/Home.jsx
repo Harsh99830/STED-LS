@@ -9,10 +9,11 @@ import Feed from '../components/Feed'
 import openImg from '../assets/open.png'
 import python from '../assets/python.png';
 import PowerBi from '../assets/PowerBi.png';
+import DiscoverStudents from './DiscoverStudents';
 
 function Home() {
   const { user, isLoaded, isSignedIn } = useUser()
-  const [activeTab, setActiveTab] = useState('my-learning')
+  const [activeTab, setActiveTab] = useState(() => localStorage.getItem('sted-active-tab') || 'my-learning')
   const [students, setStudents] = useState([])
   const [learningActivities, setLearningActivities] = useState([])
   const [userData, setUserData] = useState(null)
@@ -173,6 +174,12 @@ function Home() {
     setPythonSP(pythonProjects.length * 10 + pythonStats.learned * 2 + pythonStats.applied * 5);
   }, [pythonProjects, pythonStats]);
 
+  // When tab changes, persist to localStorage
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    localStorage.setItem('sted-active-tab', tabId);
+  };
+
   return (
     <>
     <div className="min-h-screen bg-slate-50">
@@ -190,7 +197,7 @@ function Home() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`px-6 py-2 rounded-md font-medium text-sm transition-colors ${
                   activeTab === tab.id
                     ? 'bg-purple-600 text-white shadow-sm'
@@ -258,36 +265,51 @@ function Home() {
                       </div>
                     );
                   }
-                  return startedSkills.map(([key, skill]) => (
-                    <Link to={skill.route} key={key}>
-                      <div className="bg-white rounded-lg shadow-md p-6">
-                        <div className="flex items-center mb-3">
-                          {skill.img ? <img src={skill.img} alt={skill.label} className="w-6 h-6 mr-2" /> : skill.icon}
-                          <h3 className="text-lg font-semibold text-slate-800">{skill.label}</h3>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <div>
-                            <div className="flex justify-between text-xs pb-2 text-slate-600">
-                              <span>Concepts learned</span>
-                              <span className="text-xs text-right font-medium text-slate-800">8/50</span>
-                            </div>
-                            <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
-                              <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: '16%' }}></div>
-                            </div>
-                          </div>
-                          <div>
-                            <div className="flex justify-between text-xs pb-2 text-slate-600">
-                              <span>Concepts Applied</span>
-                              <span className="text-xs text-right font-medium text-slate-800">2/8</span>
-                            </div>
-                            <div className="w-full bg-slate-200 rounded-full h-1.5">
-                              <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
-                            </div>
-                          </div>
-                        </div>
+                  return startedSkills.map(([key, skill]) => {
+                    // Calculate learned/applied and total for Python
+                    let learned = 0, applied = 0, total = 0;
+                    if (key === 'python') {
+                      learned = pythonStats.learned;
+                      applied = pythonStats.applied;
+                      // Total concepts for Python from Concepts.json
+                      total = 15 + 20 + 15; // basic + intermediate + advanced
+                    } else {
+                      // Placeholder for other skills
+                      learned = 8;
+                      applied = 2;
+                      total = 50;
+                    }
+                    return (
+                      <Link to={skill.route} key={key}>
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-center mb-3">
+                            {skill.img ? <img src={skill.img} alt={skill.label} className="w-6 h-6 mr-2" /> : skill.icon}
+                            <h3 className="text-lg font-semibold text-slate-800">{skill.label}</h3>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <div>
+                      <div className="flex justify-between text-xs pb-2 text-slate-600">
+                        <span>Concepts learned</span> 
+                                <span className="text-xs text-right font-medium text-slate-800">{learned}/{total}</span>
                       </div>
-                    </Link>
-                  ));
+                      <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
+                                <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${total > 0 ? (learned / total) * 100 : 0}%` }}></div>
+                      </div>
+                    </div>
+                    <div>
+                    <div className="flex justify-between text-xs pb-2 text-slate-600">
+                        <span>Concepts Applied</span> 
+                                <span className="text-xs text-right font-medium text-slate-800">{applied}/{learned}</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: `${learned > 0 ? (applied / learned) * 100 : 0}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                </Link>
+                    );
+                  });
                 })()}
               </div>
             )}
@@ -338,48 +360,7 @@ function Home() {
             )}
 
             {activeTab === 'discover' && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6 max-h-140 overflow-y-auto"
-              >
-                <div className="flex flex-col md:flex-row md:flex-wrap gap-6">
-                  {students.map((student) => (
-                    <motion.div
-                      key={student.id}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow border border-slate-200 flex flex-col w-72 max-w-xs mx-auto cursor-pointer"
-                      onClick={() => navigate(`/userprofile/${student.id}`)}
-                    >
-                      <div className="flex flex-col items-center w-full">
-                        <div className="text-5xl mb-3">{student.avatar}</div>
-                        <div className="flex flex-col items-center mb-2">
-                          <h3 className="font-semibold text-slate-800 text-lg">{student.name}</h3>
-                          <span className={`w-2 h-2 rounded-full mt-1 ${student.isOnline ? 'bg-green-500' : 'bg-slate-300'}`}></span>
-                        </div>
-                        <div className="flex flex-wrap justify-center gap-1 mb-2">
-                          {student.skills.slice(0, 2).map((skill) => (
-                            <span key={skill} className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs">
-                              {skill}
-                            </span>
-                          ))}
-                          {student.skills.length > 2 && (
-                            <span className="bg-slate-200 text-slate-700 px-2 py-1 rounded-full text-xs">
-                              +{student.skills.length - 2}
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-4 flex w-full justify-center">
-                          <button className=" border border-purple-600 text-purple-600 px-12 py-2 rounded-4xl text-sm font-medium hover:bg-purple-700 hover:text-white transition-colors">
-                            Observe
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
+              <DiscoverStudents />
             )}
           </div>
 
@@ -490,9 +471,9 @@ function Home() {
                         .reduce((acc, project) => acc + (project.sp || 0), 0);
                     };
                     return (
-                      <div className="w-full mt-4">
-                        <h4 className="text-slate-700 font-semibold text-sm mb-2">Your Skills & SP</h4>
-                        <div className="flex flex-col gap-2">
+                    <div className="w-full mt-4">
+                      <h4 className="text-slate-700 font-semibold text-sm mb-2">Your Skills & SP</h4>
+                      <div className="flex flex-col gap-2">
                           {startedSkills.map(([key, skill]) => (
                             <div key={key} className="flex justify-between items-center bg-slate-100 rounded px-3 py-1 text-sm">
                               <span className="text-purple-700 font-semibold">{skill.label}</span>
