@@ -29,6 +29,9 @@ function ConceptLearned({ completedProjects = [] }) {
   const [showAppliedDetails, setShowAppliedDetails] = useState(false);
   const [selectedConceptForDetails, setSelectedConceptForDetails] = useState(null);
   const [showAppliedDetailsOverlay, setShowAppliedDetailsOverlay] = useState(false);
+  const [showPointsHistoryOverlay, setShowPointsHistoryOverlay] = useState(false);
+  const [pointsHistory, setPointsHistory] = useState([]);
+  const [pointsHistoryLoading, setPointsHistoryLoading] = useState(false);
   const { user } = useUser();
 
   // Fetch all concepts and user's learned concepts
@@ -66,6 +69,17 @@ function ConceptLearned({ completedProjects = [] }) {
 
     fetchData();
   }, [user]);
+
+  // Expose functions globally for other components to use
+  useEffect(() => {
+    window.handlePointsClick = handlePointsClick;
+    window.handleAppliedConceptsClick = handleAppliedConceptsClick;
+    
+    return () => {
+      delete window.handlePointsClick;
+      delete window.handleAppliedConceptsClick;
+    };
+  }, [learnedConcepts, completedProjects]);
 
   // Open overlay
   const handleOpenOverlay = () => {
@@ -269,14 +283,6 @@ function ConceptLearned({ completedProjects = [] }) {
     }
   };
 
-  // Expose the function globally so it can be called from Python.jsx
-  React.useEffect(() => {
-    window.handleAppliedConceptsClick = handleAppliedConceptsClick;
-    return () => {
-      delete window.handleAppliedConceptsClick;
-    };
-  }, [completedProjects, learnedConcepts]);
-
   // Handle concept click to show details overlay
   const handleConceptClick = async (concept, category) => {
     try {
@@ -447,6 +453,81 @@ function ConceptLearned({ completedProjects = [] }) {
     setAddingSource(false);
   };
 
+  // Calculate total STED points
+  const calculateTotalPoints = () => {
+    const projectPoints = completedProjects.length * 10; // 10 points per project
+    const learnedPoints = learnedConcepts.length * 2; // 2 points per learned concept
+    const appliedPoints = learnedConcepts.filter(concept => 
+      isConceptApplied(concept.concept)
+    ).length * 5; // 5 points per applied concept
+    
+    return projectPoints + learnedPoints + appliedPoints;
+  };
+
+  // Fetch points history data
+  const fetchPointsHistory = async () => {
+    if (!user) return;
+    
+    setPointsHistoryLoading(true);
+    try {
+      const history = [];
+      
+      // Add project completions
+      completedProjects.forEach((project, index) => {
+        history.push({
+          id: `project-${index}`,
+          type: 'project',
+          title: project.projectTitle || `Project ${index + 1}`,
+          points: 10,
+          date: project.completedAt || new Date().toISOString(),
+          description: 'Project completion'
+        });
+      });
+      
+      // Add concept learning
+      learnedConcepts.forEach((concept, index) => {
+        history.push({
+          id: `concept-${index}`,
+          type: 'concept',
+          title: concept.concept,
+          points: 2,
+          date: concept.addedAt || new Date().toISOString(),
+          description: `Learned ${concept.category} concept`,
+          category: concept.category
+        });
+      });
+      
+      // Add concept applications
+      learnedConcepts.forEach((concept, index) => {
+        if (isConceptApplied(concept.concept)) {
+          history.push({
+            id: `applied-${index}`,
+            type: 'applied',
+            title: concept.concept,
+            points: 5,
+            date: new Date().toISOString(), // Use current date as approximation
+            description: `Applied ${concept.category} concept in project`,
+            category: concept.category
+          });
+        }
+      });
+      
+      // Sort by date (newest first)
+      history.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      setPointsHistory(history);
+    } catch (err) {
+      console.error('Error fetching points history:', err);
+    }
+    setPointsHistoryLoading(false);
+  };
+
+  // Handle STED points click
+  const handlePointsClick = () => {
+    fetchPointsHistory();
+    setShowPointsHistoryOverlay(true);
+  };
+
   return (
     <div className='text-left'>
       <div className="flex justify-between items-center mb-4">
@@ -469,6 +550,28 @@ function ConceptLearned({ completedProjects = [] }) {
           ></div>
         </div>
         <span className='text-sm font-medium text-slate-600'>{totalLearned}/{totalConcepts}</span>
+      </div>
+
+      {/* STED Points Display */}
+      <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+        <div 
+          className="flex items-center justify-between cursor-pointer hover:bg-purple-100 transition-colors p-2 rounded"
+          onClick={handlePointsClick}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-lg">📊</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-slate-800">STED Points</h3>
+              <p className="text-sm text-slate-600">Click to view history</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-purple-700">{calculateTotalPoints()}</div>
+            <div className="text-xs text-slate-500">Total Points</div>
+          </div>
+        </div>
       </div>
 
       <div className='pt-3 flex flex-col space-y-2'>
@@ -522,9 +625,9 @@ function ConceptLearned({ completedProjects = [] }) {
                                     </span>
                                   ) : (
                                     <span className="px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold whitespace-nowrap border border-yellow-300">
-                                      not applied
-                                    </span>
-                                  )}
+                                    not applied
+                                  </span>
+                                )}
                                 </div>
                                 
                                 {/* Divider */}
@@ -534,17 +637,17 @@ function ConceptLearned({ completedProjects = [] }) {
                                 
                                 {/* Concept Status - Fixed width container */}
                                 <div className="w-32 flex justify-center">
-                                  {item.status && (
-                                    <span
+                                {item.status && (
+                                  <span
                                       className={`px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap border
                                         ${item.status === 'understood' ? 'bg-green-100 text-green-700 border-green-300' : ''}
                                         ${item.status === 'partially understood' ? 'bg-orange-100 text-orange-700 border-orange-300' : ''}
                                         ${item.status === 'still confused' ? 'bg-red-100 text-red-700 border-red-300' : ''}
-                                      `}
-                                    >
-                                      {item.status}
-                                    </span>
-                                  )}
+                                    `}
+                                  >
+                                    {item.status}
+                                  </span>
+                                )}
                                 </div>
                               </div>
                             </div>
@@ -1113,6 +1216,128 @@ function ConceptLearned({ completedProjects = [] }) {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* STED Points History Overlay */}
+      {showPointsHistoryOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-4xl relative max-h-[90vh] overflow-y-auto">
+            <button
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold"
+              onClick={() => setShowPointsHistoryOverlay(false)}
+            >
+              ×
+            </button>
+            
+            <div className="mb-6 flex flex-col items-center justify-center">
+              <h2 className="text-3xl font-bold text-slate-800 mb-2 text-center">
+                📊 STED Points History
+              </h2>
+              <div className="flex flex-col items-center justify-center mt-2 mb-2">
+                <span className="font-extrabold text-purple-700 text-5xl md:text-6xl leading-tight mb-1">{calculateTotalPoints()}</span>
+                <span className="font-semibold text-slate-800 text-lg md:text-2xl tracking-wide">Total Points Earned</span>
+              </div>
+            </div>
+
+            {pointsHistoryLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                <span className="ml-3 text-slate-600">Loading points history...</span>
+              </div>
+            ) : pointsHistory.length > 0 ? (
+              <div className="space-y-4">
+                {/* Points Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm">🚀</span>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-600">Projects</p>
+                        <p className="text-xl font-bold text-green-700">{completedProjects.length * 10} pts</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm">📚</span>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-600">Concepts Learned</p>
+                        <p className="text-xl font-bold text-blue-700">{learnedConcepts.length * 2} pts</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm">⚡</span>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-600">Concepts Applied</p>
+                        <p className="text-xl font-bold text-purple-700">
+                          {learnedConcepts.filter(concept => isConceptApplied(concept.concept)).length * 5} pts
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Points History List */}
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-slate-800 mb-4">Detailed History</h3>
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {pointsHistory.map((item) => (
+                      <div key={item.id} className="bg-white rounded-lg p-4 border border-slate-200 hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                              item.type === 'project' ? 'bg-green-100' :
+                              item.type === 'concept' ? 'bg-blue-100' :
+                              'bg-purple-100'
+                            }`}>
+                              <span className={`text-sm ${
+                                item.type === 'project' ? 'text-green-600' :
+                                item.type === 'concept' ? 'text-blue-600' :
+                                'text-purple-600'
+                              }`}>
+                                {item.type === 'project' ? '🚀' : 
+                                 item.type === 'concept' ? '📚' : '⚡'}
+                              </span>
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-slate-800">{item.title}</h4>
+                              <p className="text-sm text-slate-600">{item.description}</p>
+                              {item.category && (
+                                <span className="inline-block bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs mt-1">
+                                  {item.category}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-purple-700">+{item.points}</div>
+                            <div className="text-xs text-slate-500">
+                              {new Date(item.date).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📊</div>
+                <h3 className="text-xl font-semibold text-slate-800 mb-2">No Points History Yet</h3>
+                <p className="text-slate-600">Complete projects and learn concepts to start earning STED points!</p>
+              </div>
+            )}
           </div>
         </div>
       )}

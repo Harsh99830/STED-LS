@@ -47,19 +47,19 @@ function Python() {
       try {
         const userRef = ref(db, 'users/' + user.id);
         const snapshot = await get(userRef);
-        if (snapshot.exists()) {
-          setUserData(snapshot.val());
+          if (snapshot.exists()) {
+            setUserData(snapshot.val());
           await fetchConceptStats();
           await fetchCompletedProjects();
           setIsLoading(false);
-        } else {
-          console.log("No data available");
+          } else {
+            console.log("No data available");
           setIsLoading(false);
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
         setIsLoading(false);
-      }
+    }
     };
 
     fetchUserData();
@@ -91,22 +91,22 @@ function Python() {
   }, [userData.python]);
 
   const fetchConceptStats = async () => {
-    if (!userData?.python) return;
+      if (!userData?.python) return;
     
-    // Fetch all concepts
-    const allConceptsRef = ref(db, 'PythonProject/AllConcepts/category');
-    const allConceptsSnap = await get(allConceptsRef);
-    let totalConcepts = 0;
-    if (allConceptsSnap.exists()) {
-      const data = allConceptsSnap.val();
-      totalConcepts = [
-        ...Object.values(data.basic || {}),
-        ...Object.values(data.intermediate || {}),
-        ...Object.values(data.advanced || {}),
-      ].length;
-    }
+      // Fetch all concepts
+      const allConceptsRef = ref(db, 'PythonProject/AllConcepts/category');
+      const allConceptsSnap = await get(allConceptsRef);
+      let totalConcepts = 0;
+      if (allConceptsSnap.exists()) {
+        const data = allConceptsSnap.val();
+        totalConcepts = [
+          ...Object.values(data.basic || {}),
+          ...Object.values(data.intermediate || {}),
+          ...Object.values(data.advanced || {}),
+        ].length;
+      }
     
-    // Get learned concepts
+      // Get learned concepts
     let learnedConcepts = userData.python?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
@@ -134,7 +134,7 @@ function Python() {
       return conceptsUsedInProjects.has(concept.concept || concept);
     }).length;
     
-    setConceptStats({ learned, applied, total: totalConcepts });
+      setConceptStats({ learned, applied, total: totalConcepts });
   };
 
   useEffect(() => {
@@ -263,7 +263,13 @@ function Python() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="bg-white rounded-lg shadow-md p-6"
+                className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => {
+                  // Call the points history function from ConceptLearned component
+                  if (window.handlePointsClick) {
+                    window.handlePointsClick();
+                  }
+                }}
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -473,12 +479,12 @@ function Python() {
                     className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <button
-                      onClick={handleCloseProjectOverlay}
+                        <button
+                          onClick={handleCloseProjectOverlay}
                       className="absolute top-6 right-8 text-slate-700 hover:text-purple-600 text-4xl font-bold z-10 transition-colors"
-                    >
-                      ×
-                    </button>
+                        >
+                          ×
+                        </button>
                     
                     <div className="p-12">
                       <ProjectRecommender learnedConcepts={userData.python?.learnedConcepts} completedProjects={completedProjects}>
@@ -488,8 +494,8 @@ function Python() {
                               <div className="text-center">
                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
                                 <div className="text-xl text-gray-600">Loading project recommendation...</div>
-                              </div>
-                            </div>
+                      </div>
+                    </div>
                           );
                           if (error) return (
                             <div className="text-center py-16">
@@ -538,23 +544,23 @@ function Python() {
                                     <h3 className="text-lg font-semibold text-purple-700 mb-3 flex items-center gap-2">
                                       <span className="text-purple-600">📚</span>
                                       Required Concepts
-                                    </h3>
+                        </h3>
                                     <div className="flex flex-wrap gap-2">
                                       {recommendedProject.Concept.split(', ').map((concept, index) => (
                                         <span
-                                          key={index}
+                              key={index}
                                           className="inline-block bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm font-medium border border-purple-200"
-                                        >
+                            >
                                           {concept.trim()}
                                         </span>
-                                      ))}
+                          ))}
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                              
+                      </div>
+
                               <div className="flex gap-4">
-                                <button
+                        <button
                                   onClick={async () => {
                                     // Set this project as the user's current project in Firebase
                                     if (!user) return;
@@ -580,16 +586,16 @@ function Python() {
                                     navigate('/python/project');
                                   }}
                                   className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
-                                >
-                                  🚀 Start Project
-                                </button>
-                                <button
-                                  onClick={handleCloseProjectOverlay}
+                        >
+                          🚀 Start Project
+                        </button>
+                        <button
+                          onClick={handleCloseProjectOverlay}
                                   className="px-8 py-4 border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 rounded-xl transition-all duration-300 font-semibold text-lg"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
+                        >
+                          Cancel
+                        </button>
+                      </div>
                             </>
                           );
                         }}
@@ -611,23 +617,23 @@ function Python() {
           {completedProjects.length === 0 ? (
             <div className="text-slate-500 italic">No completed projects yet.</div>
           ) : (
-            <ul className="divide-y divide-slate-200">
+              <ul className="divide-y divide-slate-200">
               {completedProjects.map((project, idx) => (
                 <li 
                   key={project.key} 
                   className="flex flex-col md:flex-row gap-2 md:gap-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => handleProjectClick(project)}
                 >
-                  <div className="flex-1">
+                    <div className="flex-1">
                     <div className="text-2xl font-semibold text-slate-800">{project.projectTitle || project.key}</div>
                     <div className="text-slate-500 text-sm mt-2">Completed: {new Date(project.completedAt).toLocaleDateString()}</div>
-                  </div>
-                  <div className="flex-none flex flex-col items-end gap-2 md:gap-3">
+                    </div>
+                    <div className="flex-none flex flex-col items-end gap-2 md:gap-3">
                     <span className="inline-block text-slate-700 px-3 py-1 text-lg">Click to view details</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                    </div>
+                  </li>
+                ))}
+              </ul>
           )}
         </div>
       </div>
