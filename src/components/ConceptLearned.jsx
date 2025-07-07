@@ -552,28 +552,6 @@ function ConceptLearned({ completedProjects = [] }) {
         <span className='text-sm font-medium text-slate-600'>{totalLearned}/{totalConcepts}</span>
       </div>
 
-      {/* STED Points Display */}
-      <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
-        <div 
-          className="flex items-center justify-between cursor-pointer hover:bg-purple-100 transition-colors p-2 rounded"
-          onClick={handlePointsClick}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-lg">📊</span>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-slate-800">STED Points</h3>
-              <p className="text-sm text-slate-600">Click to view history</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-purple-700">{calculateTotalPoints()}</div>
-            <div className="text-xs text-slate-500">Total Points</div>
-          </div>
-        </div>
-      </div>
-
       <div className='pt-3 flex flex-col space-y-2'>
         {['basic', 'intermediate', 'advanced'].map((category) => {
           const counts = getCounts(category);
