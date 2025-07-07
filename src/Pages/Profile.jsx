@@ -116,11 +116,39 @@ function Profile() {
 
     // Calculate total SP
     const calculateTotalSP = () => {
-        let total = 16;
-        if (userData.projectHistory) {
-            total = userData.projectHistory.reduce((acc, project) => acc + (project.sp || 0), 0);
+        let totalSP = 0;
+        // Python SP: (projects * 10) + (learned * 2) + (applied * 5)
+        let pythonSP = 0;
+        if (userData && userData.python) {
+            // Count completed projects
+            const pythonProjects = Object.values(userData.python.PythonCompletedProjects || {});
+            // Count learned concepts
+            let learnedConcepts = userData.python.learnedConcepts || [];
+            if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+                learnedConcepts = Object.values(learnedConcepts);
+            }
+            const learned = learnedConcepts.length;
+            // Applied: count learned concepts that are used in any completed project
+            const conceptsUsed = new Set();
+            pythonProjects.forEach(project => {
+                if (project.conceptUsed) {
+                    project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+                }
+            });
+            const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
+            pythonSP = pythonProjects.length * 10 + learned * 2 + applied * 5;
         }
-        return total;
+        totalSP += pythonSP;
+        // Other skills: sum SP from projectHistory
+        if (userData && userData.projectHistory) {
+            const otherSkills = ['data-science', 'public-speaking', 'powerbi'];
+            otherSkills.forEach(skill => {
+                totalSP += userData.projectHistory
+                    .filter(project => project.skill === skill)
+                    .reduce((acc, project) => acc + (project.sp || 0), 0);
+            });
+        }
+        return totalSP;
     };
 
     // Calculate skill-specific SP
@@ -183,109 +211,85 @@ function Profile() {
                        
 
                         {/* Skills Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            {/* Show only started skills */}
-                            {(() => {
-                                const skillMap = {
-                                    'python': {
-                                        node: 'python',
-                                        currentProjectField: 'PythonCurrentProject',
-                                        img: python,
-                                        label: 'Python',
-                                        route: '/python',
-                                    },
-                                    'data-science': {
-                                        node: 'data-science',
-                                        currentProjectField: 'DataScienceCurrentProject',
-                                        img: null,
-                                        label: 'Data Science',
-                                        icon: <span className="text-xl mr-2">📊</span>,
-                                        route: '/data-science',
-                                    },
-                                    'public-speaking': {
-                                        node: 'public-speaking',
-                                        currentProjectField: 'PublicSpeakingCurrentProject',
-                                        img: null,
-                                        label: 'Public Speaking',
-                                        icon: <span className="text-xl mr-2">🎤</span>,
-                                        route: '/public-speaking',
-                                    },
-                                    'powerbi': {
-                                        node: 'powerbi',
-                                        currentProjectField: 'PowerBiCurrentProject',
-                                        img: PowerBi,
-                                        label: 'Power BI',
-                                        route: '/powerbi',
-                                    },
-                                };
-                                const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
-                                    userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
-                                );
-                                if (startedSkills.length === 0) return <div className="text-center text-slate-500 col-span-full py-8">No skills started yet.</div>;
-                                return startedSkills.map(([key, skill]) => {
-                                    // Calculate learned/applied and total for Python
-                                    let learned = 0, applied = 0, total = 0;
-                                    if (key === 'python') {
-                                        // Get learned concepts
-                                        let learnedConcepts = userData.python?.learnedConcepts || [];
-                                        if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
-                                            learnedConcepts = Object.values(learnedConcepts);
-                                        }
-                                        learned = learnedConcepts.length;
-                                        // Applied: count learned concepts that are used in any completed project
-                                        const conceptsUsed = new Set();
-                                        (Object.values(userData.python?.PythonCompletedProjects || {})).forEach(project => {
-                                            if (project.conceptUsed) {
-                                                project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
-                                            }
-                                        });
-                                        applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
-                                        total = 15 + 20 + 15; // basic + intermediate + advanced
-                                    } else {
-                                        // Placeholder for other skills
-                                        learned = 8;
-                                        applied = 2;
-                                        total = 50;
+                        {(() => {
+                          const skillMap = {
+                            'python': { node: 'python', currentProjectField: 'PythonCurrentProject', img: python, label: 'Python', route: '/python' },
+                            'data-science': { node: 'data-science', currentProjectField: 'DataScienceCurrentProject', img: null, label: 'Data Science', icon: <span className="text-xl mr-2">📊</span>, route: '/data-science' },
+                            'public-speaking': { node: 'public-speaking', currentProjectField: 'PublicSpeakingCurrentProject', img: null, label: 'Public Speaking', icon: <span className="text-xl mr-2">🎤</span>, route: '/public-speaking' },
+                            'powerbi': { node: 'powerbi', currentProjectField: 'PowerBiCurrentProject', img: PowerBi, label: 'Power BI', route: '/powerbi' },
+                          };
+                          const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
+                            userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
+                          );
+                          const gridClass = startedSkills.length === 1 ? 'grid grid-cols-1 gap-4 mb-6' : 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6';
+                          if (startedSkills.length === 0) return <div className="text-center text-slate-500 col-span-full py-8">No skills started yet.</div>;
+                          return (
+                            <div className={gridClass}>
+                              {startedSkills.map(([key, skill]) => {
+                                // Calculate learned/applied and total for Python
+                                let learned = 0, applied = 0, total = 0;
+                                if (key === 'python') {
+                                  // Get learned concepts
+                                  let learnedConcepts = userData.python?.learnedConcepts || [];
+                                  if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+                                    learnedConcepts = Object.values(learnedConcepts);
+                                  }
+                                  learned = learnedConcepts.length;
+                                  // Applied: count learned concepts that are used in any completed project
+                                  const conceptsUsed = new Set();
+                                  (Object.values(userData.python?.PythonCompletedProjects || {})).forEach(project => {
+                                    if (project.conceptUsed) {
+                                      project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
                                     }
-                                    return (
-                                        <Link to={skill.route} key={key}>
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
-                            >
-                                <div className="flex items-center mb-3">
-                                                    {skill.img ? <img src={skill.img} alt={skill.label} className="w-6 h-6 mr-2" /> : skill.icon}
-                                                    <h2 className="text-lg font-semibold text-slate-800">{skill.label}</h2>
-                                </div>
-                                <div className="space-y-2">
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                                            <span className="text-sm text-slate-600">Concepts learned</span>
-                                                            <span className="text-sm font-medium text-slate-800">{learned}/{total}</span>
+                                  });
+                                  applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
+                                  total = 15 + 20 + 15; // basic + intermediate + advanced
+                                } else {
+                                  // Placeholder for other skills
+                                  learned = 8;
+                                  applied = 2;
+                                  total = 50;
+                                }
+                                return (
+                                  <Link to={skill.route} key={key}>
+                                    <motion.div
+                                      initial={{ opacity: 0, y: 20 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
+                                    >
+                                      <div className="flex items-center mb-3">
+                                        {skill.img ? <img src={skill.img} alt={skill.label} className="w-6 h-6 mr-2" /> : skill.icon}
+                                        <h2 className="text-lg font-semibold text-slate-800">{skill.label}</h2>
+                                      </div>
+                                      <div className="space-y-2">
+                                        <div>
+                                          <div className="flex justify-between mb-1">
+                                            <span className="text-sm text-slate-600">Concepts learned</span>
+                                            <span className="text-sm font-medium text-slate-800">{learned}/{total}</span>
+                                          </div>
+                                          <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                            <div className={`h-1.5 rounded-full ${key === 'python' ? 'bg-purple-600' : key === 'powerbi' ? 'bg-blue-600' : key === 'data-science' ? 'bg-green-600' : 'bg-yellow-500'}`} style={{ width: `${total > 0 ? (learned / total) * 100 : 0}%` }}></div>
+                                          </div>
                                         </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                                            <div className={`h-1.5 rounded-full ${key === 'python' ? 'bg-purple-600' : key === 'powerbi' ? 'bg-blue-600' : key === 'data-science' ? 'bg-green-600' : 'bg-yellow-500'}`} style={{ width: `${total > 0 ? (learned / total) * 100 : 0}%` }}></div>
+                                        {/* Concepts Applied */}
+                                        <div>
+                                          <div className="flex justify-between mb-1">
+                                            <span className="text-sm mt-3 text-slate-600">Concepts applied</span>
+                                            <span className="text-sm font-medium text-slate-800">{applied}/{learned}</span>
+                                          </div>
+                                          <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                            <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: `${learned > 0 ? (applied / learned) * 100 : 0}%` }}></div>
+                                          </div>
                                         </div>
-                                    </div>
-                                    {/* Concepts Applied */}
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                                            <span className="text-sm mt-3 text-slate-600">Concepts applied</span>
-                                                            <span className="text-sm font-medium text-slate-800">{applied}/{learned}</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                                            <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: `${learned > 0 ? (applied / learned) * 100 : 0}%` }}></div>
-                                        </div>
-                                    </div>
-                                                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP(key)}</p>
-                                </div>
-                            </motion.div>
-                            </Link>
-                                    );
-                                });
-                            })()}
-                        </div>
+                                        <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP(key)}</p>
+                                      </div>
+                                    </motion.div>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
 
                         {/* Project History */}
                         <div className="bg-white rounded-lg shadow-md p-6">

@@ -23,6 +23,14 @@ function Home() {
   const [pythonStats, setPythonStats] = useState({ learned: 0, applied: 0 });
   const [pythonProjects, setPythonProjects] = useState([]);
 
+  // Add calculateSkillSP at the top level inside Home
+  const calculateSkillSP = (skillKey) => {
+    if (!userData || !userData.projectHistory) return 0;
+    return userData.projectHistory
+      .filter(project => project.skill === skillKey)
+      .reduce((acc, project) => acc + (project.sp || 0), 0);
+  };
+
   // Mock data for demonstration
   useEffect(() => {
     // Simulate fetching students and activities
@@ -463,13 +471,6 @@ function Home() {
                       userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
                     );
                     if (startedSkills.length === 0) return null;
-                    // Calculate SP for each started skill
-                    const calculateSkillSP = (skillKey) => {
-                      if (!userData.projectHistory) return 0;
-                      return userData.projectHistory
-                        .filter(project => project.skill === skillKey)
-                        .reduce((acc, project) => acc + (project.sp || 0), 0);
-                    };
                     return (
                     <div className="w-full mt-4">
                       <h4 className="text-slate-700 font-semibold text-sm mb-2">Your Skills & SP</h4>

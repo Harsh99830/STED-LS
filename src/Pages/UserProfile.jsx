@@ -2,13 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import python from "../assets/python.png";
 import PowerBi from "../assets/PowerBi.png";
 import learned from "../assets/learned.png";
 import applied from "../assets/applied.png";
 import { db } from '../firebase';
 import { ref, get } from 'firebase/database';
+import { getProjectConfig } from '../PythonProject/projectConfig';
+import { FaChevronDown } from 'react-icons/fa';
 
 export default function UserProfile() {
   const { id } = useParams();
@@ -18,6 +20,9 @@ export default function UserProfile() {
   const [activeSkillDetailTab, setActiveSkillDetailTab] = useState('sp');
   const skillDetailRef = useRef(null);
   const [loading, setLoading] = useState(true);
+  const [pythonProjectTitles, setPythonProjectTitles] = useState({});
+  const [openLearnedCategory, setOpenLearnedCategory] = useState(null);
+  const [openAppliedCategory, setOpenAppliedCategory] = useState(null);
 
   useEffect(() => {
     async function fetchUser() {
@@ -98,6 +103,26 @@ export default function UserProfile() {
     }
   }, [selectedSkill]);
 
+  // Fetch missing Python project titles on mount or when userData changes
+  useEffect(() => {
+    async function fetchTitles() {
+      if (!userData?.python?.PythonCompletedProjects) return;
+      const pythonProjects = Object.entries(userData.python.PythonCompletedProjects);
+      const titles = {};
+      for (const [key, project] of pythonProjects) {
+        if (project.projectTitle) {
+          titles[key] = project.projectTitle;
+        } else {
+          // Try to fetch from config
+          const config = await getProjectConfig(key);
+          titles[key] = config?.title || key;
+        }
+      }
+      setPythonProjectTitles(titles);
+    }
+    fetchTitles();
+  }, [userData?.python?.PythonCompletedProjects]);
+
   const calculateTotalSP = () => {
     if (!userData.projectHistory) return 0;
     return userData.projectHistory.reduce((acc, project) => acc + (project.sp || 0), 0);
@@ -105,6 +130,39 @@ export default function UserProfile() {
   const calculateSkillSP = (skill) => {
     if (!userData.projectHistory) return 0;
     return userData.projectHistory.filter(project => project.skill === skill).reduce((acc, project) => acc + (project.sp || 0), 0);
+  };
+
+  // Calculate Python SP and total SP using the same logic as /python and /home
+  const getPythonSP = () => {
+    if (!userData || !userData.python) return 0;
+    const pythonProjects = userData.python.PythonCompletedProjects ? Object.values(userData.python.PythonCompletedProjects) : [];
+    let learnedConcepts = userData.python.learnedConcepts || [];
+    if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+      learnedConcepts = Object.values(learnedConcepts);
+    }
+    const learned = learnedConcepts.length;
+    // Applied: count learned concepts that are used in any completed project
+    const conceptsUsed = new Set();
+    pythonProjects.forEach(project => {
+      if (project.conceptUsed) {
+        project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+      }
+    });
+    const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
+    return pythonProjects.length * 10 + learned * 2 + applied * 5;
+  };
+
+  const getTotalSP = () => {
+    let totalSP = getPythonSP();
+    if (userData && userData.projectHistory) {
+      const otherSkills = ['data-science', 'public-speaking', 'powerbi'];
+      otherSkills.forEach(skill => {
+        totalSP += userData.projectHistory
+          .filter(project => project.skill === skill)
+          .reduce((acc, project) => acc + (project.sp || 0), 0);
+      });
+    }
+    return totalSP;
   };
 
   if (loading) {
@@ -134,8 +192,35 @@ export default function UserProfile() {
     };
 
     const skillName = skillNameMapping[selectedSkill];
-    const projects = userData.projectHistory?.filter(p => p.skill === selectedSkill) || [];
-    const sp = calculateSkillSP(selectedSkill);
+    let projects = [], sp = 0, learned = 0, applied = 0, total = 0, learnedConcepts = [], appliedConcepts = [];
+    if (selectedSkill === 'python') {
+      projects = userData.python?.PythonCompletedProjects ? Object.values(userData.python.PythonCompletedProjects) : [];
+      sp = projects.length * 10;
+      learnedConcepts = userData.python?.learnedConcepts || [];
+      if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+        learnedConcepts = Object.values(learnedConcepts);
+      }
+      learned = learnedConcepts.length;
+      // Applied: count learned concepts that are used in any completed project
+      const conceptsUsed = new Set();
+      projects.forEach(project => {
+        if (project.conceptUsed) {
+          project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+        }
+      });
+      appliedConcepts = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept));
+      applied = appliedConcepts.length;
+      total = 15 + 20 + 15; // basic + intermediate + advanced
+    } else {
+      projects = userData.projectHistory?.filter(p => p.skill === selectedSkill) || [];
+      sp = projects.reduce((acc, project) => acc + (project.sp || 0), 0);
+      // For other skills, use available data or show message
+      learnedConcepts = projects.length > 0 && projects[0].learnedConceptsList ? projects[0].learnedConceptsList : [];
+      learned = learnedConcepts.length;
+      appliedConcepts = projects.length > 0 && projects[0].appliedConceptsList ? projects[0].appliedConceptsList : [];
+      applied = appliedConcepts.length;
+      total = projects.length > 0 && projects[0].totalConcepts ? projects[0].totalConcepts : 0;
+    }
 
     const detailContent = {
       sp: (
@@ -144,7 +229,7 @@ export default function UserProfile() {
           <p className="mb-4">Total STED Points earned in {skillName}: <span className="font-bold">{sp}</span></p>
           <ul className="list-disc pl-6 space-y-2">
             {projects.filter(p => p.sp > 0).map((p, i) => (
-              <li key={i}>{p.name}: <span className="font-semibold">+{p.sp} SP</span></li>
+              <li key={i}>{p.name || p.projectTitle || p._projectKey}: <span className="font-semibold">+{p.sp} SP</span></li>
             ))}
           </ul>
         </motion.div>
@@ -155,12 +240,28 @@ export default function UserProfile() {
           <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
             {projects.length > 0 ? projects.map((p, i) => (
               <div key={i} className="bg-slate-100 rounded p-3">
-                <div className="font-medium text-slate-800">{p.name}</div>
+                <div className="font-medium text-slate-800">{p.name || p.projectTitle || p._projectKey}</div>
                 <div className="text-slate-600 text-sm">{p.description}</div>
                 <div className="flex items-center text-xs text-slate-500 mt-1">
-                  <span>{p.completedDate}</span>
+                  <span>
+                    {p.completedDate || p.completedAt ? (
+                      <>
+                        {new Date(p.completedDate || p.completedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                        <span className="mx-1">|</span>
+                        {new Date(p.completedDate || p.completedAt).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
+                      </>
+                    ) : null}
+                  </span>
                   <span className="mx-2">|</span>
-                  <span>+{p.sp} SP</span>
+                  <span>+10 SP</span>
                 </div>
               </div>
             )) : <div className="text-slate-500">No projects completed yet.</div>}
@@ -170,19 +271,95 @@ export default function UserProfile() {
       learned: (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <h4 className="text-lg font-semibold text-slate-800 mb-2">Concepts Learned in {skillName}</h4>
-          <p className="mb-4">Total concepts learned: <span className="font-bold">8/50</span></p>
-          <div className="flex flex-wrap gap-2">
-            {[...Array(8).keys()].map(i => (
-              <span key={i} className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">Learned Concept #{i + 1}</span>
-            ))}
-          </div>
+          <p className="mb-4">Total concepts learned: <span className="font-bold">{learned}{total ? `/${total}` : ''}</span></p>
+          {['basic', 'intermediate', 'advanced'].map((category) => {
+            const categoryConcepts = learnedConcepts.filter(c => c.category === category);
+            const isOpen = openLearnedCategory === category;
+            if (categoryConcepts.length === 0) return null;
+            return (
+              <div key={category} className="bg-slate-50 p-3 rounded-lg shadow-sm mb-2">
+                <div
+                  className="flex justify-between items-center cursor-pointer"
+                  onClick={() => setOpenLearnedCategory(isOpen ? null : category)}
+                >
+                  <div className='text-base font-medium text-slate-700 capitalize'>
+                    {category} <span className='font-normal text-slate-500'>({categoryConcepts.length})</span>
+                  </div>
+                  <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                    <FaChevronDown className='text-slate-500' />
+                  </motion.div>
+                </div>
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.ul
+                      initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                      animate={{ height: 'auto', opacity: 1, marginTop: '12px' }}
+                      exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden list-disc pl-6 space-y-1"
+                    >
+                      {categoryConcepts.map((c, i) => (
+                        <li
+                          key={i}
+                          className="w-full flex items-center justify-between bg-slate-100 rounded-lg px-4 py-2 shadow-sm border border-slate-200 cursor-pointer hover:bg-green-100 transition-colors mb-1"
+                        >
+                          <span className="font-medium text-slate-700 truncate block max-w-full" style={{overflowWrap: 'anywhere'}}>{c.concept || c}</span>
+                        </li>
+                      ))}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+          {learnedConcepts.length === 0 && <div className="text-slate-500">No concepts learned yet.</div>}
         </motion.div>
       ),
       applied: (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <h4 className="text-lg font-semibold text-slate-800 mb-2">Concepts Applied in {skillName}</h4>
-          <p className="mb-4">Total concepts applied: <span className="font-bold">0/8</span></p>
-          <div className="text-slate-500">No concepts applied in projects yet.</div>
+          <p className="mb-4">Total concepts applied: <span className="font-bold">{applied}{learned ? `/${learned}` : ''}</span></p>
+          {['basic', 'intermediate', 'advanced'].map((category) => {
+            const categoryConcepts = appliedConcepts.filter(c => c.category === category);
+            const isOpen = openAppliedCategory === category;
+            if (categoryConcepts.length === 0) return null;
+            return (
+              <div key={category} className="bg-slate-50 p-3 rounded-lg shadow-sm mb-2">
+                <div
+                  className="flex justify-between items-center cursor-pointer"
+                  onClick={() => setOpenAppliedCategory(isOpen ? null : category)}
+                >
+                  <div className='text-base font-medium text-slate-700 capitalize'>
+                    {category} <span className='font-normal text-slate-500'>({categoryConcepts.length})</span>
+                  </div>
+                  <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                    <FaChevronDown className='text-slate-500' />
+                  </motion.div>
+                </div>
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.ul
+                      initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                      animate={{ height: 'auto', opacity: 1, marginTop: '12px' }}
+                      exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden list-disc pl-6 space-y-1"
+                    >
+                      {categoryConcepts.map((c, i) => (
+                        <li
+                          key={i}
+                          className="w-full flex items-center justify-between bg-slate-100 rounded-lg px-4 py-2 shadow-sm border border-slate-200 cursor-pointer hover:bg-yellow-100 transition-colors mb-1"
+                        >
+                          <span className="font-medium text-slate-700 truncate block max-w-full" style={{overflowWrap: 'anywhere'}}>{c.concept || c}</span>
+                        </li>
+                      ))}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+          {appliedConcepts.length === 0 && <div className="text-slate-500">No concepts applied in projects yet.</div>}
         </motion.div>
       )
     };
@@ -234,62 +411,39 @@ export default function UserProfile() {
           </button>
         </div>
         {/* Metric Boxes */}
-        <div className="grid grid-cols-1 h-100 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* STED Points */}
-          <div
-            onClick={() => setActiveSkillDetailTab('sp')}
-            className={`bg-white rounded-lg shadow-md h-20 flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'sp' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">SP (STED Points)</p>
-                <h3 className="text-2xl font-bold text-slate-800 mt-1">{sp}</h3>
-              </div>
-            </div>
-            <div className="absolute top-3 right-3 bg-purple-50 p-2 rounded-full">
-            </div>
-          </div>
+        <div className="flex flex-row justify-center gap-8 mb-8">
           {/* Projects Completed */}
           <div
             onClick={() => setActiveSkillDetailTab('projects')}
-            className={`bg-white rounded-lg shadow-md h-20 flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'projects' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
+            className={`bg-white rounded-lg shadow-md h-24 w-80 max-w-xs flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'projects' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Projects Completed</p>
-                <h3 className="text-2xl font-bold text-slate-800 mt-1">{projects.length}</h3>
-              </div>
+            <div className="flex flex-col justify-center items-center w-full h-full">
+              <p className="text-sm text-slate-600">Projects Completed</p>
+              <h3 className="text-2xl font-bold text-slate-800 mt-1">{projects.length}</h3>
             </div>
-            <div className="absolute top-3 right-3 bg-purple-50 p-2 rounded-full">
-            </div>
+            <div className="absolute top-3 right-3 bg-purple-50 p-2 rounded-full"></div>
           </div>
           {/* Concepts Learned */}
           <div
             onClick={() => setActiveSkillDetailTab('learned')}
-            className={`bg-white rounded-lg shadow-md p-6 h-20 flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'learned' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
+            className={`bg-white rounded-lg shadow-md h-24 w-80 max-w-xs flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'learned' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Concepts Learned</p>
-                <h3 className="text-2xl font-bold text-slate-800 mt-1">8/50</h3>
-              </div>
+            <div className="flex flex-col justify-center items-center w-full h-full">
+              <p className="text-sm text-slate-600">Concepts Learned</p>
+              <h3 className="text-2xl font-bold text-slate-800 mt-1">{learned}{total ? `/${total}` : ''}</h3>
             </div>
-            <div className="absolute top-3 right-3 bg-purple-50 p-2 rounded-full">
-            </div>
+            <div className="absolute top-3 right-3 bg-purple-50 p-2 rounded-full"></div>
           </div>
           {/* Concepts Applied */}
           <div
             onClick={() => setActiveSkillDetailTab('applied')}
-            className={`bg-white rounded-lg shadow-md p-6 h-20 flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'applied' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
+            className={`bg-white rounded-lg shadow-md h-24 w-80 max-w-xs flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'applied' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Concepts Applied</p>
-                <h3 className="text-2xl font-bold text-slate-800 mt-1">0/8</h3>
-              </div>
+            <div className="flex flex-col justify-center items-center w-full h-full">
+              <p className="text-sm text-slate-600">Concepts Applied</p>
+              <h3 className="text-2xl font-bold text-slate-800 mt-1">{applied}{learned ? `/${learned}` : ''}</h3>
             </div>
-            <div className="absolute top-3 right-3 bg-yellow-50 p-2 rounded-full">
-            </div>
+            <div className="absolute top-3 right-3 bg-yellow-50 p-2 rounded-full"></div>
           </div>
         </div>
 
@@ -322,7 +476,9 @@ export default function UserProfile() {
                     {userData.email && (
                       <p className="text-slate-500 text-sm pt-1">{userData.email}</p>
                     )}
-                    <p className="text-slate-600 text-left pt-2">Total SP: {calculateTotalSP()}</p>
+                    <div className="flex flex-col gap-1 pt-2">
+                      <span className="text-slate-600 text-left">Total SP: <span className="font-semibold">{getTotalSP()}</span></span>
+                    </div>
                   </div>
                   <button className="border border-purple-600 text-purple-600 px-12 py-2 rounded-4xl text-sm font-medium hover:bg-purple-700 hover:text-white transition-colors ml-6">
                     Observe
@@ -344,169 +500,206 @@ export default function UserProfile() {
             {/* Skills Grid */}
             {selectedSkill ? renderSkillDetails() : (
               <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {/* Only show Python skill if Python is the only started skill */}
-                {userData && userData.python && userData.python.PythonCurrentProject &&
-                  (!userData.powerbi?.PowerBiCurrentProject && !userData['data-science']?.DataScienceCurrentProject && !userData['public-speaking']?.PublicSpeakingCurrentProject) ? (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('python')}>
-                    <div className="flex items-center mb-3">
-                      <img src={python} alt="Python" className="w-6 h-6 mr-2" />
-                      <h3 className="text-lg font-semibold text-slate-800">Python</h3>
+                {(() => {
+                  const skillMap = {
+                    'python': { node: 'python', currentProjectField: 'PythonCurrentProject' },
+                    'data-science': { node: 'data-science', currentProjectField: 'DataScienceCurrentProject' },
+                    'public-speaking': { node: 'public-speaking', currentProjectField: 'PublicSpeakingCurrentProject' },
+                    'powerbi': { node: 'powerbi', currentProjectField: 'PowerBiCurrentProject' },
+                  };
+                  const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
+                    userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
+                  );
+                  const gridClass = startedSkills.length === 1 ? 'grid grid-cols-1 gap-4 mb-6' : 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6';
+                  return (
+                    <div className={gridClass}>
+                      {/* Show only started skills, matching /profile logic */}
+                      {(() => {
+                        const skillMap = {
+                          'python': {
+                            node: 'python',
+                            currentProjectField: 'PythonCurrentProject',
+                            img: python,
+                            label: 'Python',
+                            route: '/python',
+                          },
+                          'data-science': {
+                            node: 'data-science',
+                            currentProjectField: 'DataScienceCurrentProject',
+                            img: null,
+                            label: 'Data Science',
+                            icon: <span className="text-xl mr-2">📊</span>,
+                            route: '/data-science',
+                          },
+                          'public-speaking': {
+                            node: 'public-speaking',
+                            currentProjectField: 'PublicSpeakingCurrentProject',
+                            img: null,
+                            label: 'Public Speaking',
+                            icon: <span className="text-xl mr-2">🎤</span>,
+                            route: '/public-speaking',
+                          },
+                          'powerbi': {
+                            node: 'powerbi',
+                            currentProjectField: 'PowerBiCurrentProject',
+                            img: PowerBi,
+                            label: 'Power BI',
+                            route: '/powerbi',
+                          },
+                        };
+                        const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
+                          userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
+                        );
+                        if (startedSkills.length === 0) return <div className="text-center text-slate-500 col-span-full py-8">No skills started yet.</div>;
+                        return startedSkills.map(([key, skill]) => {
+                          // Calculate learned/applied and total for Python
+                          let learned = 0, applied = 0, total = 0;
+                          if (key === 'python') {
+                            let learnedConcepts = userData.python?.learnedConcepts || [];
+                            if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+                              learnedConcepts = Object.values(learnedConcepts);
+                            }
+                            learned = learnedConcepts.length;
+                            // Applied: count learned concepts that are used in any completed project
+                            const conceptsUsed = new Set();
+                            (Object.values(userData.python?.PythonCompletedProjects || {})).forEach(project => {
+                              if (project.conceptUsed) {
+                                project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+                              }
+                            });
+                            applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
+                            total = 15 + 20 + 15; // basic + intermediate + advanced
+                          } else {
+                            // Placeholder for other skills
+                            learned = 8;
+                            applied = 2;
+                            total = 50;
+                          }
+                          return (
+                            <React.Fragment key={key}>
+                              <div
+                                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
+                                onClick={() => setSelectedSkill(key)}
+                              >
+                                <div className="flex items-center mb-3">
+                                  {skill.img ? <img src={skill.img} alt={skill.label} className="w-6 h-6 mr-2" /> : skill.icon}
+                                  <h3 className="text-lg font-semibold text-slate-800">{skill.label}</h3>
+                                </div>
+                                <div className="space-y-2">
+                                  <div>
+                                    <div className="flex justify-between mb-1">
+                                      <span className="text-sm text-slate-600">Concepts learned</span>
+                                      <span className="text-sm font-medium text-slate-800">{learned}/{total}</span>
+                                    </div>
+                                    <div className="w-full bg-slate-200 rounded-full h-1.5 min-w-0">
+                                      <div
+                                        className={`h-1.5 rounded-full ${key === 'python' ? 'bg-purple-600' : key === 'powerbi' ? 'bg-blue-600' : key === 'data-science' ? 'bg-green-600' : 'bg-yellow-500'}`}
+                                        style={{ width: `${total > 0 ? (learned / total) * 100 : 0}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="flex justify-between mt-5 mb-1">
+                                      <span className="text-sm text-slate-600">Concepts applied</span>
+                                      <span className="text-sm font-medium text-slate-800">{applied}/{learned}</span>
+                                    </div>
+                                    <div className="w-full bg-slate-200 rounded-full h-1.5 min-w-0">
+                                      <div
+                                        className="bg-yellow-400 h-1.5 rounded-full max-w-full transition-all duration-300"
+                                        style={{ width: `${learned > 0 ? (applied / learned) * 100 : 0}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                  <p className="text-sm text-slate-600">SP Earned: <span className="">{getPythonSP()}</span></p>
+                                </div>
+                              </div>
+                            </React.Fragment>
+                          );
+                        });
+                      })()}
                     </div>
-                    <div className="space-y-2">
-                      <div className='mb-5'>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-slate-600">Concepts learned</span>
-                          <span className="text-sm font-medium text-slate-800">8/50</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                          <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-slate-600">Concepts applied</span>
-                          <span className="text-sm font-medium text-slate-800">2/8</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                          <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
-                        </div>
-                      </div>
-                      <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
+                  );
+                })()}
+                {/* Project History */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-slate-800">Project History</h2>
+                    <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                      {/* Count merged projects */}
+                      {(() => {
+                        const pythonProjects = userData.python?.PythonCompletedProjects ? Object.values(userData.python.PythonCompletedProjects) : [];
+                        const otherProjects = userData.projectHistory || [];
+                        return pythonProjects.length + otherProjects.length;
+                      })()} Projects
                     </div>
-                  </motion.div>
-                ) : (
-                  <>
-                  {/* Power BI Skills */}
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('powerbi')}>
-                    <div className="flex items-center mb-3">
-                      <img src={PowerBi} alt="Power BI" className="w-6 h-6 mr-2" />
-                      <h3 className="text-lg font-semibold text-slate-800">Power BI</h3>
-                    </div>
-                    <div className="space-y-2">
-                      <div className='mb-5'>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-slate-600">Concepts learned</span>
-                          <span className="text-sm font-medium text-slate-800">8/50</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                          <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-slate-600">Concepts applied</span>
-                          <span className="text-sm font-medium text-slate-800">2/8</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                          <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
-                        </div>
-                      </div>
-                      <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
-                    </div>
-                  </motion.div>
-                  {/* Data Science Skills */}
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('data-science')}>
-                    <div className="flex items-center mb-3">
-                      <span className="text-xl mr-2">📊</span>
-                      <h3 className="text-lg font-semibold text-slate-800">Data Science</h3>
-                    </div>
-                    <div className="space-y-2">
-                      <div className='mb-5'>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-slate-600">Concepts learned</span>
-                          <span className="text-sm font-medium text-slate-800">8/50</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                          <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-slate-600">Concepts applied</span>
-                          <span className="text-sm font-medium text-slate-800">2/8</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                          <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
-                        </div>
-                      </div>
-                      <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
-                    </div>
-                  </motion.div>
-                  {/* Public Speaking Skills */}
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('public-speaking')}>
-                    <div className="flex items-center mb-3">
-                      <span className="text-xl mr-2">🎤</span>
-                      <h3 className="text-lg font-semibold text-slate-800">Public Speaking</h3>
-                    </div>
-                    <div className="space-y-2">
-                      <div className='mb-5'>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-slate-600">Concepts learned</span>
-                          <span className="text-sm font-medium text-slate-800">8/50</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                          <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm text-slate-600">Concepts applied</span>
-                          <span className="text-sm font-medium text-slate-800">2/8</span>
-                        </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                          <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
-                        </div>
-                      </div>
-                      <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
-                    </div>
-                  </motion.div>
-                  </>
-                )}
-              </div>
-              {/* Project History */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-slate-800">Project History</h2>
-                  <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                    {userData.projectHistory?.length || 0} Projects
+                  </div>
+                  <div className="space-y-6 text-left">
+                    {(() => {
+                      const pythonProjects = userData.python?.PythonCompletedProjects ? Object.entries(userData.python.PythonCompletedProjects).map(([key, p]) => ({...p, skill: 'python', _projectKey: key})) : [];
+                      const otherProjects = userData.projectHistory || [];
+                      // Merge and sort by completedDate if available, else by name
+                      const allProjects = [...pythonProjects, ...otherProjects];
+                      if (allProjects.length === 0) return <p className="text-slate-600 text-center">No projects completed yet.</p>;
+                      // Optionally sort by date descending
+                      allProjects.sort((a, b) => {
+                        if (a.completedDate && b.completedDate) {
+                          return new Date(b.completedDate) - new Date(a.completedDate);
+                        }
+                        return (b.name || '').localeCompare(a.name || '');
+                      });
+                      return allProjects.map((project, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex items-start space-x-4 border-b border-slate-200 pb-4 last:border-0"
+                        >
+                          <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                              {project.skill === 'python' && <img src={python} alt="Python" className="w-6 h-6" />}
+                              {project.skill === 'powerbi' && <img src={PowerBi} alt="Power BI" className="w-6 h-6" />}
+                              {project.skill === 'data-science' && <span className="text-xl">📊</span>}
+                              {project.skill === 'public-speaking' && <span className="text-xl">🎤</span>}
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-lg font-medium text-slate-800">
+                                {project.skill === 'python'
+                                  ? (project.projectTitle || pythonProjectTitles[project._projectKey] || project._projectKey)
+                                  : project.name}
+                              </h3>
+                              <span className="text-sm text-slate-500 text-right min-w-fit">
+                                {project.completedAt ? (
+                                  <>
+                                    {new Date(project.completedAt).toLocaleDateString('en-US', {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric'
+                                    })}
+                                    <span className="mx-1">|</span>
+                                    {new Date(project.completedAt).toLocaleTimeString('en-US', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      hour12: true
+                                    })}
+                                  </>
+                                ) : null}
+                              </span>
+                            </div>
+                            <p className="text-slate-600 text-sm">{project.description}</p>
+                            <div className="flex items-center mt-2 space-x-4">
+                              <span className="text-sm font-medium text-green-600">+10 SP</span>
+                              <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                {project.skill && project.skill.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              </span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ));
+                    })()}
                   </div>
                 </div>
-                <div className="space-y-6">
-                  {userData.projectHistory && userData.projectHistory.length > 0 ? (
-                    userData.projectHistory.map((project, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex items-start space-x-4 border-b border-slate-200 pb-4 last:border-0"
-                      >
-                        <div className="flex-shrink-0">
-                          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                            {project.skill === 'python' && <img src={python} alt="Python" className="w-6 h-6" />}
-                            {project.skill === 'powerbi' && <img src={PowerBi} alt="Power BI" className="w-6 h-6" />}
-                            {project.skill === 'data-science' && <span className="text-xl">📊</span>}
-                            {project.skill === 'public-speaking' && <span className="text-xl">🎤</span>}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-medium text-slate-800">{project.name}</h3>
-                          <p className="text-slate-600 text-sm">{project.description}</p>
-                          <div className="flex items-center mt-2 space-x-4">
-                            <span className="text-sm text-slate-500">{project.completedDate}</span>
-                            <span className="text-sm font-medium text-green-600">+{project.sp} SP</span>
-                            <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                              {project.skill.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))
-                  ) : (
-                    <p className="text-slate-600 text-center">No projects completed yet.</p>
-                  )}
-                </div>
-              </div>
               </>
             )}
           </div>
