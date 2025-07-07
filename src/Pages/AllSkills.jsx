@@ -221,6 +221,7 @@ function AllSkills() {
                                                 </div>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {/* Only show started skills */}
                                                 {startedSkills.map((skill, index) => (
                                                     <motion.div
                                                         key={skill.key}

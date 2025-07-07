@@ -169,116 +169,86 @@ function Home() {
           <div className="flex-1 max-w-300 w-full">
             {activeTab === 'my-learning' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                {/* Python Learning Card */}
-                <Link to={'/python'}>
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <div className="flex items-center mb-3">
-                    <img src={python} alt="Python" className="w-6 h-6 mr-2" />
-                    <h3 className="text-lg font-semibold text-slate-800">Python Learning</h3>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <div>
-                      <div className="flex justify-between text-xs pb-2 text-slate-600">
-                        <span>Concepts learned</span> 
-                        <span className="text-xs text-right font-medium text-slate-800">8/50</span>
+                {/* Show only started skills, matching AllSkills logic */}
+                {(() => {
+                  const skillMap = {
+                    'python': {
+                      route: '/python',
+                      node: 'python',
+                      currentProjectField: 'PythonCurrentProject',
+                      img: python,
+                      label: 'Python Learning',
+                    },
+                    'data-science': {
+                      route: '/data-science',
+                      node: 'data-science',
+                      currentProjectField: 'DataScienceCurrentProject',
+                      img: null,
+                      label: 'Data Science Learning',
+                      icon: <span className="text-xl mr-2">📊</span>,
+                    },
+                    'public-speaking': {
+                      route: '/public-speaking',
+                      node: 'public-speaking',
+                      currentProjectField: 'PublicSpeakingCurrentProject',
+                      img: null,
+                      label: 'Public Speaking Learning',
+                      icon: <span className="text-xl mr-2">🎤</span>,
+                    },
+                    'powerbi': {
+                      route: '/powerbi',
+                      node: 'powerbi',
+                      currentProjectField: 'PowerBiCurrentProject',
+                      img: PowerBi,
+                      label: 'Power BI Learning',
+                    },
+                  };
+                  const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
+                    userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
+                  );
+                  if (startedSkills.length === 0) {
+                    return (
+                      <div className="col-span-full flex flex-col items-center justify-center py-16">
+                        <button
+                          className="bg-purple-600 hover:bg-purple-700 text-white text-lg font-semibold px-8 py-4 rounded-lg shadow-md transition-colors"
+                          onClick={() => navigate('/all-skills')}
+                        >
+                          Add Skills
+                        </button>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
-                        <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: '16%' }}></div>
+                    );
+                  }
+                  return startedSkills.map(([key, skill]) => (
+                    <Link to={skill.route} key={key}>
+                      <div className="bg-white rounded-lg shadow-md p-6">
+                        <div className="flex items-center mb-3">
+                          {skill.img ? <img src={skill.img} alt={skill.label} className="w-6 h-6 mr-2" /> : skill.icon}
+                          <h3 className="text-lg font-semibold text-slate-800">{skill.label}</h3>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <div>
+                            <div className="flex justify-between text-xs pb-2 text-slate-600">
+                              <span>Concepts learned</span>
+                              <span className="text-xs text-right font-medium text-slate-800">8/50</span>
+                            </div>
+                            <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
+                              <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: '16%' }}></div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between text-xs pb-2 text-slate-600">
+                              <span>Concepts Applied</span>
+                              <span className="text-xs text-right font-medium text-slate-800">2/8</span>
+                            </div>
+                            <div className="w-full bg-slate-200 rounded-full h-1.5">
+                              <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                    <div className="flex justify-between text-xs pb-2 text-slate-600">
-                        <span>Concepts Applied</span> 
-                        <span className="text-xs text-right font-medium text-slate-800">2/8</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                </Link>
-                {/* Power BI Learning Card */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <div className="flex items-center mb-3">
-                    <img src={PowerBi} alt="Power BI" className="w-6 h-6 mr-2" />
-                    <h3 className="text-lg font-semibold text-slate-800">Power BI Learning</h3>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <div>
-                    <div className="flex justify-between text-xs pb-2 text-slate-600">
-                        <span>Concepts learned</span> 
-                        <span className="text-xs text-right font-medium text-slate-800">7/20</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
-                        <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: '40%' }}></div>
-                      </div>
-                    </div>
-                    <div>
-                    <div className="flex justify-between text-xs pb-2 text-slate-600">
-                        <span>Concepts Applied</span> 
-                        <span className="text-xs text-right font-medium text-slate-800">2/7</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '20%' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* Data Science Learning Card */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <div className="flex items-center mb-3">
-                    <span className="text-xl mr-2">📊</span>
-                    <h3 className="text-lg font-semibold text-slate-800">Data Science Learning</h3>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <div>
-                    <div className="flex justify-between text-xs pb-2 text-slate-600">
-                        <span>Concepts learned</span> 
-                        <span className="text-xs text-right font-medium text-slate-800">10/65</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
-                        <div className="bg-green-600 h-1.5 rounded-full" style={{ width: '20%' }}></div>
-                      </div>
-                    </div>
-                    <div>
-                    <div className="flex justify-between text-xs pb-2 text-slate-600">
-                        <span>Concepts Applied</span> 
-                        <span className="text-xs text-right font-medium text-slate-800">3/10</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '15%' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* Public Speaking Learning Card */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <div className="flex items-center mb-3">
-                    <span className="text-xl mr-2">🎤</span>
-                    <h3 className="text-lg font-semibold text-slate-800">Public Speaking Learning</h3>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <div>
-                    <div className="flex justify-between text-xs pb-2 text-slate-600">
-                        <span>Concepts learned</span> 
-                        <span className="text-xs text-right font-medium text-slate-800">0/10</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
-                        <div className="bg-yellow-500 h-1.5 rounded-full" style={{ width: '0%' }}></div>
-                      </div>
-                    </div>
-                    <div>
-                    <div className="flex justify-between text-xs pb-2 text-slate-600">
-                        <span>Concepts Applied</span> 
-                        <span className="text-xs text-right font-medium text-slate-800">0</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-yellow-500 h-1.5 rounded-full" style={{ width: '0%' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                    </Link>
+                  ));
+                })()}
               </div>
             )}
 

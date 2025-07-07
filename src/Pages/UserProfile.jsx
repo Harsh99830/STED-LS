@@ -299,118 +299,124 @@ export default function UserProfile() {
             {selectedSkill ? renderSkillDetails() : (
               <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {/* Python Skills */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('python')}>
-                  <div className="flex items-center mb-3">
-                    <img src={python} alt="Python" className="w-6 h-6 mr-2" />
-                    <h3 className="text-lg font-semibold text-slate-800">Python</h3>
-                  </div>
-                  <div className="space-y-2">
-                    <div className='mb-5'>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concepts learned</span>
-                        <span className="text-sm font-medium text-slate-800">8/50</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
-                      </div>
+                {/* Only show Python skill if Python is the only started skill */}
+                {userData && userData.python && userData.python.PythonCurrentProject &&
+                  (!userData.powerbi?.PowerBiCurrentProject && !userData['data-science']?.DataScienceCurrentProject && !userData['public-speaking']?.PublicSpeakingCurrentProject) ? (
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('python')}>
+                    <div className="flex items-center mb-3">
+                      <img src={python} alt="Python" className="w-6 h-6 mr-2" />
+                      <h3 className="text-lg font-semibold text-slate-800">Python</h3>
                     </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concepts applied</span>
-                        <span className="text-sm font-medium text-slate-800">2/8</span>
+                    <div className="space-y-2">
+                      <div className='mb-5'>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm text-slate-600">Concepts learned</span>
+                          <span className="text-sm font-medium text-slate-800">8/50</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                          <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
+                        </div>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm text-slate-600">Concepts applied</span>
+                          <span className="text-sm font-medium text-slate-800">2/8</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                          <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                        </div>
                       </div>
+                      <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
                     </div>
-                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
-                  </div>
-                </motion.div>
-                {/* Power BI Skills */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('powerbi')}>
-                  <div className="flex items-center mb-3">
-                    <img src={PowerBi} alt="Power BI" className="w-6 h-6 mr-2" />
-                    <h3 className="text-lg font-semibold text-slate-800">Power BI</h3>
-                  </div>
-                  <div className="space-y-2">
-                    <div className='mb-5'>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concepts learned</span>
-                        <span className="text-sm font-medium text-slate-800">8/50</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
-                      </div>
+                  </motion.div>
+                ) : (
+                  <>
+                  {/* Power BI Skills */}
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('powerbi')}>
+                    <div className="flex items-center mb-3">
+                      <img src={PowerBi} alt="Power BI" className="w-6 h-6 mr-2" />
+                      <h3 className="text-lg font-semibold text-slate-800">Power BI</h3>
                     </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concepts applied</span>
-                        <span className="text-sm font-medium text-slate-800">2/8</span>
+                    <div className="space-y-2">
+                      <div className='mb-5'>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm text-slate-600">Concepts learned</span>
+                          <span className="text-sm font-medium text-slate-800">8/50</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                          <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
+                        </div>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm text-slate-600">Concepts applied</span>
+                          <span className="text-sm font-medium text-slate-800">2/8</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                          <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                        </div>
                       </div>
+                      <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
                     </div>
-                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
-                  </div>
-                </motion.div>
-                {/* Data Science Skills */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('data-science')}>
-                  <div className="flex items-center mb-3">
-                    <span className="text-xl mr-2">📊</span>
-                    <h3 className="text-lg font-semibold text-slate-800">Data Science</h3>
-                  </div>
-                  <div className="space-y-2">
-                    <div className='mb-5'>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concepts learned</span>
-                        <span className="text-sm font-medium text-slate-800">8/50</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
-                      </div>
+                  </motion.div>
+                  {/* Data Science Skills */}
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('data-science')}>
+                    <div className="flex items-center mb-3">
+                      <span className="text-xl mr-2">📊</span>
+                      <h3 className="text-lg font-semibold text-slate-800">Data Science</h3>
                     </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concepts applied</span>
-                        <span className="text-sm font-medium text-slate-800">2/8</span>
+                    <div className="space-y-2">
+                      <div className='mb-5'>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm text-slate-600">Concepts learned</span>
+                          <span className="text-sm font-medium text-slate-800">8/50</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                          <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
+                        </div>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm text-slate-600">Concepts applied</span>
+                          <span className="text-sm font-medium text-slate-800">2/8</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                          <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                        </div>
                       </div>
+                      <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
                     </div>
-                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
-                  </div>
-                </motion.div>
-                {/* Public Speaking Skills */}
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('public-speaking')}>
-                  <div className="flex items-center mb-3">
-                    <span className="text-xl mr-2">🎤</span>
-                    <h3 className="text-lg font-semibold text-slate-800">Public Speaking</h3>
-                  </div>
-                  <div className="space-y-2">
-                    <div className='mb-5'>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concepts learned</span>
-                        <span className="text-sm font-medium text-slate-800">8/50</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
-                      </div>
+                  </motion.div>
+                  {/* Public Speaking Skills */}
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedSkill('public-speaking')}>
+                    <div className="flex items-center mb-3">
+                      <span className="text-xl mr-2">🎤</span>
+                      <h3 className="text-lg font-semibold text-slate-800">Public Speaking</h3>
                     </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm text-slate-600">Concepts applied</span>
-                        <span className="text-sm font-medium text-slate-800">2/8</span>
+                    <div className="space-y-2">
+                      <div className='mb-5'>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm text-slate-600">Concepts learned</span>
+                          <span className="text-sm font-medium text-slate-800">8/50</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                          <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${userData.python?.PythonSkill || 0}%` }}></div>
+                        </div>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-1.5">
-                        <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                      <div>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm text-slate-600">Concepts applied</span>
+                          <span className="text-sm font-medium text-slate-800">2/8</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                          <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: '25%' }}></div>
+                        </div>
                       </div>
+                      <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
                     </div>
-                    <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP('python')}</p>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                  </>
+                )}
               </div>
               {/* Project History */}
               <div className="bg-white rounded-lg shadow-md p-6">
