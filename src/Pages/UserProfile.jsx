@@ -17,7 +17,7 @@ export default function UserProfile() {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [selectedSkill, setSelectedSkill] = useState(null);
-  const [activeSkillDetailTab, setActiveSkillDetailTab] = useState('sp');
+  const [activeSkillDetailTab, setActiveSkillDetailTab] = useState('projects');
   const skillDetailRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [pythonProjectTitles, setPythonProjectTitles] = useState({});
@@ -91,7 +91,7 @@ export default function UserProfile() {
 
   useEffect(() => {
     if (selectedSkill) {
-      setActiveSkillDetailTab('sp');
+      setActiveSkillDetailTab('projects');
       setTimeout(() => {
         if (skillDetailRef.current) {
           // Calculate the offset to scroll so the skill name is just below the top
@@ -224,46 +224,62 @@ export default function UserProfile() {
     }
 
     const detailContent = {
-      sp: (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <h4 className="text-lg font-semibold text-slate-800 mb-2">STED Points Breakdown</h4>
-          <p className="mb-4">Total STED Points earned in {skillName}: <span className="font-bold">{sp}</span></p>
-          <ul className="list-disc pl-6 space-y-2">
-            {projects.filter(p => p.sp > 0).map((p, i) => (
-              <li key={i}>{p.name || p.projectTitle || p._projectKey}: <span className="font-semibold">+{p.sp} SP</span></li>
-            ))}
-          </ul>
-        </motion.div>
-      ),
       projects: (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <h4 className="text-lg font-semibold text-slate-800 mb-2">{skillName} Projects</h4>
           <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
             {projects.length > 0 ? projects.map((p, i) => (
-              <div key={i} className="bg-slate-100 rounded p-3">
-                <div className="font-medium text-slate-800">{p.name || p.projectTitle || p._projectKey}</div>
-                <div className="text-slate-600 text-sm">{p.description}</div>
-                <div className="flex items-center text-xs text-slate-500 mt-1">
-                  <span>
-                    {p.completedDate || p.completedAt ? (
-                      <>
-                        {new Date(p.completedDate || p.completedAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                        <span className="mx-1">|</span>
-                        {new Date(p.completedDate || p.completedAt).toLocaleTimeString('en-US', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true
-                        })}
-                      </>
-                    ) : null}
-                  </span>
-                  <span className="mx-2">|</span>
-                  <span>+10 SP</span>
+              <div key={i} className="bg-slate-100 rounded p-3 flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="font-medium text-slate-800">{p.name || p.projectTitle || p._projectKey}</div>
+                  <div className="text-slate-600 text-sm">{p.description}</div>
+                  <div className="flex items-center text-xs text-slate-500 mt-1">
+                    <span>
+                      {p.completedDate || p.completedAt ? (
+                        <>
+                          {new Date(p.completedDate || p.completedAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                          <span className="mx-1">|</span>
+                          {new Date(p.completedDate || p.completedAt).toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                          })}
+                        </>
+                      ) : null}
+                    </span>
+                    <span className="mx-2">|</span>
+                    <span>+10 SP</span>
+                  </div>
                 </div>
+                {/* Share/Preview buttons for Python projects */}
+                {selectedSkill === 'python' && p.publicUrl && (
+                  <div className="flex gap-2 mt-2 md:mt-0 md:ml-4">
+                    <button
+                      className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-xs font-semibold border border-purple-200 transition-colors"
+                      onClick={() => {
+                        const url = p.publicUrl.replace('/public/python-project/', '/python-project/');
+                        navigator.clipboard.writeText(window.location.origin + url);
+                        setCopiedProjectId(p._projectKey);
+                        setTimeout(() => setCopiedProjectId(null), 1500);
+                      }}
+                    >
+                      {copiedProjectId === p._projectKey ? 'Copied!' : 'Share'}
+                    </button>
+                    <a
+                      href={p.publicUrl.replace('/public/python-project/', '/python-project/')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-semibold border border-blue-200 transition-colors"
+                      style={{ fontWeight: 500 }}
+                    >
+                      Preview
+                    </a>
+                  </div>
+                )}
               </div>
             )) : <div className="text-slate-500">No projects completed yet.</div>}
           </div>
@@ -272,7 +288,6 @@ export default function UserProfile() {
       learned: (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <h4 className="text-lg font-semibold text-slate-800 mb-2">Concepts Learned in {skillName}</h4>
-          <p className="mb-4">Total concepts learned: <span className="font-bold">{learned}{total ? `/${total}` : ''}</span></p>
           {['basic', 'intermediate', 'advanced'].map((category) => {
             const categoryConcepts = learnedConcepts.filter(c => c.category === category);
             const isOpen = openLearnedCategory === category;
@@ -319,7 +334,6 @@ export default function UserProfile() {
       applied: (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <h4 className="text-lg font-semibold text-slate-800 mb-2">Concepts Applied in {skillName}</h4>
-          <p className="mb-4">Total concepts applied: <span className="font-bold">{applied}{learned ? `/${learned}` : ''}</span></p>
           {['basic', 'intermediate', 'advanced'].map((category) => {
             const categoryConcepts = appliedConcepts.filter(c => c.category === category);
             const isOpen = openAppliedCategory === category;
