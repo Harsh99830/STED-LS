@@ -36,6 +36,7 @@ function Python() {
   const [showProjectOverlay, setShowProjectOverlay] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentProjectTitle, setCurrentProjectTitle] = useState('');
+  const [copiedProjectId, setCopiedProjectId] = useState(null);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -668,9 +669,35 @@ function Python() {
                     </div>
                     <div className="flex-none flex flex-col items-end gap-2 md:gap-3">
                     <span className="inline-block text-slate-700 px-3 py-1 text-lg">Click to view details</span>
+                    {project.publicUrl && (
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-xs font-semibold border border-purple-200 transition-colors"
+                          onClick={e => {
+                            e.stopPropagation();
+                            const url = project.publicUrl.replace('/public/python-project/', '/python-project/');
+                            navigator.clipboard.writeText(window.location.origin + url);
+                            setCopiedProjectId(project._projectKey);
+                            setTimeout(() => setCopiedProjectId(null), 1500);
+                          }}
+                        >
+                          {copiedProjectId === project._projectKey ? 'Copied!' : 'Share'}
+                        </button>
+                        <a
+                          href={project.publicUrl.replace('/public/python-project/', '/python-project/')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-semibold border border-blue-200 transition-colors"
+                          style={{ fontWeight: 500 }}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          Preview
+                        </a>
+                      </div>
+                    )}
                     </div>
-                  </li>
-                ))}
+                </li>
+              ))}
               </ul>
           )}
         </div>

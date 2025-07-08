@@ -120,6 +120,7 @@ function Project() {
         }
         
         // Save project data to PythonCompletedProjects
+        const publicUrl = `/python-project/${user.id}/${currentProject}`;
         const completedProjectData = {
           code: userCode,
           chatHistory: chatMessages,
@@ -127,7 +128,8 @@ function Project() {
           projectTitle: projectConfig?.title || 'Personal Finance Tracker',
           conceptUsed: projectConfig?.Concept || '',
           terminalOutput: terminalOutput,
-          projectKey: currentProject
+          projectKey: currentProject,
+          publicUrl
         };
         
         // Save to users/python/PythonCompletedProjects

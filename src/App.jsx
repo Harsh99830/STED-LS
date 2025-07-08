@@ -16,6 +16,7 @@ import Project from './PythonProject/Project';
 import PowerBi from './Pages/PowerBi';
 import Profile from './Pages/Profile';
 import UserProfile from './Pages/UserProfile';
+import PublicPythonProject from './PythonProject/PublicPythonProject';
 
 function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -125,6 +126,7 @@ function App() {
         }
       />
       <Route path="/userprofile/:id" element={<UserProfile />} />
+      <Route path="/python-project/:userId/:projectId" element={<PublicPythonProject />} />
     </Routes>
   );
 }

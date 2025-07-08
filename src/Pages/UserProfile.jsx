@@ -23,6 +23,7 @@ export default function UserProfile() {
   const [pythonProjectTitles, setPythonProjectTitles] = useState({});
   const [openLearnedCategory, setOpenLearnedCategory] = useState(null);
   const [openAppliedCategory, setOpenAppliedCategory] = useState(null);
+  const [copiedProjectId, setCopiedProjectId] = useState(null);
 
   useEffect(() => {
     async function fetchUser() {
@@ -693,6 +694,32 @@ export default function UserProfile() {
                               <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                 {project.skill && project.skill.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                               </span>
+                              {/* Share button for Python projects with publicUrl */}
+                              {project.skill === 'python' && project.publicUrl && (
+                                <>
+                                  <button
+                                    className="ml-2 px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-xs font-semibold border border-purple-200 transition-colors"
+                                    onClick={() => {
+                                      // Ensure the URL uses /python-project/ instead of /public/python-project/
+                                      const url = project.publicUrl.replace('/public/python-project/', '/python-project/');
+                                      navigator.clipboard.writeText(window.location.origin + url);
+                                      setCopiedProjectId(project._projectKey);
+                                      setTimeout(() => setCopiedProjectId(null), 1500);
+                                    }}
+                                  >
+                                    {copiedProjectId === project._projectKey ? 'Copied!' : 'Share'}
+                                  </button>
+                                  <a
+                                    href={project.publicUrl.replace('/public/python-project/', '/python-project/')}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-semibold border border-blue-200 transition-colors"
+                                    style={{ fontWeight: 500 }}
+                                  >
+                                    Preview
+                                  </a>
+                                </>
+                              )}
                             </div>
                           </div>
                         </motion.div>

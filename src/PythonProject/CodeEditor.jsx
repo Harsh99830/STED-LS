@@ -6,7 +6,7 @@ const defaultCode = `async def __main__():
 
 await __main__()`;
 
-function CodeEditor({ onCodeChange, onStuckClick, onOutputChange }) {
+function CodeEditor({ onCodeChange, onStuckClick, onOutputChange, value, readOnly, hideTerminal }) {
   const [code, setCode] = useState(defaultCode);
   const [outputLines, setOutputLines] = useState([]);
   const [pyodide, setPyodide] = useState(null);
@@ -132,9 +132,10 @@ builtins.input = input_async
           height="100%"
           language="python"
           theme="vs-dark"
-          value={code}
-          onChange={(value) => setCode(value || '')}
+          value={value !== undefined ? value : code}
+          onChange={readOnly ? undefined : (val) => setCode(val || '')}
           options={{
+            readOnly: !!readOnly,
             minimap: { enabled: false },
             fontSize: 14,
             lineNumbers: 'on',
@@ -143,75 +144,78 @@ builtins.input = input_async
           }}
         />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#1e1e1e', borderTop: '1px solid #555' }}>
-        <button
-          onClick={runPython}
-          style={{
-            background: '#007acc',
-            color: 'white',
-            padding: '8px 16px',
-            border: 'none',
-            cursor: 'pointer',
-            borderRadius: '5px'
-          }}
-        >
-          Run
-        </button>
-
-        <button
-          onClick={() => onStuckClick && onStuckClick()}
-          style={{
-            background: '#222',
-            color: '#fff',
-            padding: '8px 16px',
-            cursor: 'pointer',
-            borderRadius: '5px',
-            border: '2px solid #007acc'
-          }}
-        >
-          Stuck?
-        </button>
-      </div>
-
-      <div className='text-left' style={{ background: 'black', color: '#dcdcdc', padding: '10px', height: '250px', overflowY: 'auto', borderTop: '1px solid #555' }}>
-        <strong>Terminal:</strong>
-        <pre style={{ whiteSpace: 'pre-wrap', marginTop: '10px' }}>
-          {outputLines.map((line, idx) => (
-            <div key={idx}>{line}</div>
-          ))}
-        </pre>
-
-        {waitingInput && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-            <span style={{ color: 'white' }}>{promptText}</span>
-            <input
-              autoFocus
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleInputSubmit()}
-              placeholder="Enter input..."
-              style={{
-                background: '#333',
-                color: 'white',
-                border: '1px solid #555',
-                padding: '5px',
-              }}
-            />
+      {!hideTerminal && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#1e1e1e', borderTop: '1px solid #555' }}>
             <button
-              onClick={handleInputSubmit}
+              onClick={runPython}
               style={{
                 background: '#007acc',
                 color: 'white',
+                padding: '8px 16px',
                 border: 'none',
-                padding: '5px 10px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                borderRadius: '5px'
               }}
+              disabled={!!readOnly}
             >
-              Enter
+              Run
+            </button>
+            <button
+              onClick={() => onStuckClick && onStuckClick()}
+              style={{
+                background: '#222',
+                color: '#fff',
+                padding: '8px 16px',
+                cursor: readOnly ? 'not-allowed' : 'pointer',
+                borderRadius: '5px',
+                border: '2px solid #007acc'
+              }}
+              disabled={!!readOnly}
+            >
+              Stuck?
             </button>
           </div>
-        )}
-      </div>
+          <div className='text-left' style={{ background: 'black', color: '#dcdcdc', padding: '10px', height: '250px', overflowY: 'auto', borderTop: '1px solid #555' }}>
+            <strong>Terminal:</strong>
+            <pre style={{ whiteSpace: 'pre-wrap', marginTop: '10px' }}>
+              {outputLines.map((line, idx) => (
+                <div key={idx}>{line}</div>
+              ))}
+            </pre>
+            {waitingInput && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                <span style={{ color: 'white' }}>{promptText}</span>
+                <input
+                  autoFocus
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleInputSubmit()}
+                  placeholder="Enter input..."
+                  style={{
+                    background: '#333',
+                    color: 'white',
+                    border: '1px solid #555',
+                    padding: '5px',
+                  }}
+                />
+                <button
+                  onClick={handleInputSubmit}
+                  style={{
+                    background: '#007acc',
+                    color: 'white',
+                    border: 'none',
+                    padding: '5px 10px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Enter
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
