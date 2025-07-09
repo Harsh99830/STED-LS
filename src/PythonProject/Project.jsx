@@ -15,6 +15,7 @@ import {
   analyzeTerminalOutput, 
   validateCodeLogic 
 } from './projectConfig';
+import { runPythonCode } from './pythonRunner';
 
 function Project() {
   const [rightPanel, setRightPanel] = useState('statement');
@@ -266,6 +267,25 @@ function Project() {
         results.push({ subtask, complete: isComplete });
       }
       setSubtaskCheckResults(prev => ({ ...prev, [taskKey]: results }));
+    }
+  };
+
+  // Add a function to run code using the shared runner
+  const handleRun = async () => {
+    setTerminalOutput([]);
+    setError('');
+    try {
+      await runPythonCode({
+        code: userCode,
+        onOutput: (lines) => setTerminalOutput(prev => [...prev, ...lines]),
+        onInput: (prompt, resolve) => {
+          // Show input UI, then call resolve(inputValue)
+          // You may need to wire this to your terminal input logic
+        },
+        isPreview: false
+      });
+    } catch (err) {
+      setTerminalOutput(prev => [...prev, '❌ Error: ' + err.message]);
     }
   };
 

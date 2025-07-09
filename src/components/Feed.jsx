@@ -63,6 +63,18 @@ function Feed() {
           </div>
           <div className="text-2xl font-bold text-slate-900 mb-1 break-words">{project.projectTitle}</div>
           {project.publicUrl && (
+            <div className="w-full mb-3">
+              <iframe
+                src={project.publicUrl.replace('/public/python-project/', '/python-project/') + '?preview=true'}
+                title={project.projectTitle}
+                className="w-full h-[350px] rounded border"
+                style={{ minHeight: '200px', maxHeight: '350px' }}
+                sandbox="allow-scripts allow-same-origin allow-popups"
+                scrolling="yes"
+              />
+            </div>
+          )}
+          {project.publicUrl && (
             <a
               href={project.publicUrl.replace('/public/python-project/', '/python-project/')}
               target="_blank"
