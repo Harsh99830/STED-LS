@@ -66,13 +66,13 @@ function DiscoverStudents() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6 max-h-140 overflow-y-auto"
     >
-      <div className="flex flex-col md:flex-row md:flex-wrap gap-6">
+      <div className="flex flex-col md:flex-row md:flex-wrap justify-center gap-13">
         {allStudents.map((student) => (
           <motion.div
             key={student.id}
-            initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow border border-slate-200 flex flex-col w-72 max-w-xs mx-auto cursor-pointer"
+            className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow border border-slate-200 flex flex-col w-72 max-w-xs cursor-pointer"
             onClick={() => student.id === '1' ? null : navigate(`/userprofile/${student.id}`)}
           >
             <div className="flex flex-col items-center w-full">

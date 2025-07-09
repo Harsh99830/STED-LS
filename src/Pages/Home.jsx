@@ -323,48 +323,7 @@ function Home() {
             )}
 
             {activeTab === 'feed' && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6 max-h-145 overflow-y-auto"
-              >
-                {learningActivities.map((activity) => (
-                  <motion.div
-                    key={activity.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start space-x-4">
-                      <div className="text-2xl">{activity.avatar}</div>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className="font-semibold text-slate-800">{activity.student}</span>
-                          <span className="text-slate-500">•</span>
-                          <span className="text-slate-500">{activity.time}</span>
-                        </div>
-                        <p className="text-slate-700 mb-2">
-                          <span className="font-medium">{activity.action}</span>
-                          {activity.project && (
-                            <span> the <span className="font-semibold text-purple-600">{activity.project}</span> project</span>
-                          )}
-                          {activity.concept && (
-                            <span> <span className="font-semibold text-purple-600">{activity.concept}</span> concept</span>
-                          )}
-                        </p>
-                        <div className="flex items-center space-x-4 text-sm">
-                          <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
-                            {activity.skill}
-                          </span>
-                          {activity.sp > 0 && (
-                            <span className="text-green-600 font-medium">+{activity.sp} SP</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
+              <Feed />
             )}
 
             {activeTab === 'discover' && (
