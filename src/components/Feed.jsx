@@ -60,7 +60,7 @@ function Feed() {
         <div key={project.projectId + project.userId} className="bg-white rounded-lg shadow p-8 flex flex-col gap-4 border border-slate-200 items-stretch relative">
           {/* Python badge at top right */}
           <div
-            className="absolute top-0 bg-purple-600 right-0 mt-4 mr-4 px-4 py-1 rounded-full text-sm font-bold shadow"
+            className="absolute top-0 right-18 mt-4 px-4 py-1 bg-purple-600 rounded-full text-sm font-bold shadow"
             style={{
               color: 'white',
               letterSpacing: 1,
@@ -71,6 +71,18 @@ function Feed() {
           >
             Python
           </div>
+          {/* Three-dot icon at top right, next to Python badge */}
+          <button
+            className="absolute top-0 right-4 mt-4 p-1 rounded-full hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-400"
+            aria-label="More options"
+            style={{ display: 'flex', alignItems: 'center', background: 'white', border: 'none', zIndex: 11 }}
+          >
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <circle cx="5" cy="12" r="1.5" fill="currentColor" />
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+              <circle cx="19" cy="12" r="1.5" fill="currentColor" />
+            </svg>
+          </button>
           {/* Name and date/time full width at top */}
           <div className="flex items-center gap-3 mb-2 w-full">
             {/* User avatar */}
@@ -129,16 +141,13 @@ function Feed() {
             {/* Right: Project preview and button */}
             {project.publicUrl && (
               <div className="flex flex-col items-end justify-between w-[480px] max-w-[50%] min-w-[320px] relative">
-                {/* Open button at top right */}
-                <a
-                  href={project.publicUrl.replace('/public/python-project/', '/python-project/')}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                {/* Fullscreen icon at top right */}
+                <button
                   className="absolute z-10 border"
-                  title="Open project in new tab"
+                  title="Open fullscreen preview"
                   style={{
-                    color: '#2563eb',
-                    backgroundColor: 'white',
+                    color: 'white',
+                    backgroundColor: 'black',
                     borderRadius: '50%',
                     padding: 8,
                     boxShadow: '0 2px 8px #0002',
@@ -147,12 +156,20 @@ function Feed() {
                     justifyContent: 'center',
                     top: 0,
                     right: 0,
-                    transform: 'translate(50%,-50%)', // half out from top right
+                    transform: 'translate(50%,-50%)',
+                  }}
+                  onClick={() => {
+                    const iframe = document.getElementById(`feed-iframe-${idx}`);
+                    if (iframe && iframe.requestFullscreen) iframe.requestFullscreen();
                   }}
                 >
-                  <FiExternalLink size={22} />
-                </a>
+                  {/* Fullscreen four-arrow icon SVG */}
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 9.75V6.75A2.25 2.25 0 0 1 6.75 4.5h3M19.5 9.75V6.75A2.25 2.25 0 0 0 17.25 4.5h-3M4.5 14.25v3a2.25 2.25 0 0 0 2.25 2.25h3m9-5.25v3a2.25 2.25 0 0 1-2.25 2.25h-3" />
+                  </svg>
+                </button>
                 <iframe
+                  id={`feed-iframe-${idx}`}
                   src={project.publicUrl.replace('/public/python-project/', '/python-project/') + '?preview=true'}
                   title={project.projectTitle}
                   className="w-full h-[350px] border rounded-3xl"
