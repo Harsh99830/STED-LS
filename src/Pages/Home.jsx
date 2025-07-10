@@ -323,7 +323,9 @@ function Home() {
             )}
 
             {activeTab === 'feed' && (
-              <Feed />
+              <div style={{ maxHeight: '75vh', overflowY: 'auto' }}>
+                <Feed />
+              </div>
             )}
 
             {activeTab === 'discover' && (
