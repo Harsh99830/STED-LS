@@ -593,7 +593,7 @@ function Project() {
 
       <div className="flex h-screen pt-12 p-3 bg-[#0F0F0F] w-screen">
           <div className="w-280 border border-white h-full text-white border-white">
-        <CodeEditor onCodeChange={setUserCode} onStuckClick={handleStuckClick} onOutputChange={setTerminalOutput} />
+        <CodeEditor onCodeChange={setUserCode} onOutputChange={setTerminalOutput} />
         </div>
       {/* Left side - Code Editor */}
      

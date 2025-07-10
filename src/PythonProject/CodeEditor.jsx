@@ -106,7 +106,8 @@ async def input_async(prompt=""):
 builtins.input = input_async
 `);
 
-      await pyodide.runPythonAsync(code);
+      // Always use the latest value prop for code execution
+      await pyodide.runPythonAsync(value !== undefined ? value : code);
       flushOutput();
     } catch (err) {
       flushOutput();
@@ -157,24 +158,26 @@ builtins.input = input_async
                 cursor: 'pointer',
                 borderRadius: '5px'
               }}
-              disabled={!!readOnly}
+              // Run button is always enabled
             >
               Run
             </button>
-            <button
-              onClick={() => onStuckClick && onStuckClick()}
-              style={{
-                background: '#222',
-                color: '#fff',
-                padding: '8px 16px',
-                cursor: readOnly ? 'not-allowed' : 'pointer',
-                borderRadius: '5px',
-                border: '2px solid #007acc'
-              }}
-              disabled={!!readOnly}
-            >
-              Stuck?
-            </button>
+            {onStuckClick && (
+              <button
+                onClick={onStuckClick}
+                style={{
+                  background: '#222',
+                  color: '#fff',
+                  padding: '8px 16px',
+                  cursor: readOnly ? 'not-allowed' : 'pointer',
+                  borderRadius: '5px',
+                  border: '2px solid #007acc'
+                }}
+                disabled={!!readOnly}
+              >
+                Stuck?
+              </button>
+            )}
           </div>
           <div className='text-left' style={{ background: 'black', color: '#dcdcdc', padding: '10px', height: '250px', overflowY: 'auto', borderTop: '1px solid #555' }}>
             <strong>Terminal:</strong>

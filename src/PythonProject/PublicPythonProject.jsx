@@ -4,7 +4,6 @@ import { get, ref } from 'firebase/database';
 import { db } from '../firebase';
 import CodeEditor from './CodeEditor';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
-import { runPythonCode } from './pythonRunner';
 
 const PublicPythonProject = () => {
   const { projectId, userId } = useParams();
@@ -12,16 +11,8 @@ const PublicPythonProject = () => {
   const isPreview = new URLSearchParams(location.search).get('preview') === 'true';
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [outputLines, setOutputLines] = useState([]);
-  const [running, setRunning] = useState(false);
   const [error, setError] = useState('');
-  const [showTerminal, setShowTerminal] = useState(false); // For preview mode toggle
   const [openPanel, setOpenPanel] = useState('code'); // 'code' or 'terminal'
-
-  useEffect(() => {
-    setShowTerminal(false); // Reset on project change
-    setOpenPanel('code'); // Reset to code on project change
-  }, [projectId, userId]);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -31,7 +22,6 @@ const PublicPythonProject = () => {
         const snap = await get(projectRef);
         if (snap.exists()) {
           setProject(snap.val());
-          setOutputLines(snap.val().terminalOutput || []);
         } else {
           setError('Project not found.');
         }
@@ -42,27 +32,6 @@ const PublicPythonProject = () => {
     };
     fetchProject();
   }, [projectId, userId]);
-
-  // Run code using Pyodide (same as CodeEditor, but read-only)
-  const handleRun = async (e) => {
-    if (e) e.stopPropagation();
-    if (!project) return;
-    setRunning(true);
-    setOutputLines([]);
-    setError('');
-    if (isPreview) setOpenPanel('terminal'); // Switch to terminal in preview mode
-    try {
-      await runPythonCode({
-        code: project.code,
-        onOutput: (lines) => setOutputLines(prev => [...prev, ...lines]),
-        isPreview: true
-      });
-      setRunning(false);
-    } catch (err) {
-      setOutputLines(prev => [...prev, '❌ Error: ' + err.message]);
-      setRunning(false);
-    }
-  };
 
   if (loading) return <div style={{ color: '#fff', background: '#1e1e1e', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
   if (error) return <div style={{ color: 'red', background: '#1e1e1e', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{error}</div>;
@@ -129,194 +98,103 @@ const PublicPythonProject = () => {
             </span>
           </div>
         )}
-        {/* Editor and terminal with dropdown in preview mode */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          {isPreview ? (
-            <>
-              {/* Code Editor with dropdown in header */}
-              <div style={{ height: openPanel === 'code' ? 'calc(100% - 60px)' : 60, minHeight: 0, transition: 'height 0.3s' }}>
-                <div style={{
-                  background: '#23272e',
-                  color: '#fff',
-                  padding: '6px 24px',
-                  fontWeight: 600,
-                  fontSize: 15,
-                  borderBottom: '1px solid #222',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  userSelect: 'none',
-                  cursor: 'pointer',
-                }}>
-                  <span style={{ display: 'flex', alignItems: 'center' }}>
-                    Code Editor
-                  </span>
-                  <span
-                    onClick={() => setOpenPanel(openPanel === 'code' ? 'terminal' : 'code')}
-                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: 18, marginLeft: 8 }}
-                    title={openPanel === 'code' ? 'Show Terminal' : 'Show Code Editor'}
-                  >
-                    {openPanel === 'code' ? <FaChevronDown /> : <FaChevronUp />}
-                  </span>
-                </div>
-                <div style={{ height: openPanel === 'code' ? 'calc(100% - 44px)' : 0, overflow: 'hidden', transition: 'height 0.3s' }}>
-                  <CodeEditor
-                    value={project.code || ''}
-                    language="python"
-                    readOnly={true}
-                    hideTerminal={true}
-                    height="100%"
-                  />
-                </div>
-              </div>
-              {/* Terminal with dropup in header */}
+        {/* Dropdown/Dropup toggle in preview mode */}
+        {isPreview ? (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            {/* Code Editor with dropdown in header */}
+            <div style={{ height: openPanel === 'code' ? 'calc(100% - 60px)' : 60, minHeight: 0, transition: 'height 0.3s' }}>
               <div style={{
-                background: '#18181b',
-                color: '#d4d4d4',
-                borderTop: '1.5px solid #222',
-                height: openPanel === 'terminal' ? 'calc(100% - 60px)' : 60,
-                minHeight: 60,
-                maxHeight: 'calc(100% - 60px)',
-                textAlign: "left",
+                background: '#23272e',
+                color: '#fff',
+                padding: '6px 24px',
+                fontWeight: 600,
                 fontSize: 15,
-                fontFamily: 'inherit',
-                padding: '0 0 0 0',
+                borderBottom: '1px solid #222',
                 display: 'flex',
-                flexDirection: 'column',
-                transition: 'height 0.3s',
-                overflow: 'hidden',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                userSelect: 'none',
+                cursor: 'pointer',
               }}>
-                <div style={{
-                  background: '#23272e',
-                  color: '#fff',
-                  padding: '6px 24px',
-                  fontWeight: 600,
-                  fontSize: 15,
-                  borderBottom: '1px solid #222',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  userSelect: 'none',
-                  cursor: 'pointer',
-                }}>
-                  <span style={{ display: 'flex', alignItems: 'center' }}>
-                    Terminal
-                  </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <button
-                      onClick={handleRun}
-                      disabled={running}
-                      style={{
-                        background: '#007acc',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 4,
-                        padding: '4px 18px',
-                        fontWeight: 600,
-                        fontSize: 15,
-                        cursor: running ? 'not-allowed' : 'pointer',
-                        opacity: running ? 0.7 : 1
-                      }}
-                    >
-                      {running ? 'Running...' : 'Run'}
-                    </button>
-                    <span
-                      onClick={() => setOpenPanel(openPanel === 'terminal' ? 'code' : 'terminal')}
-                      style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: 18, marginLeft: 8 }}
-                      title={openPanel === 'terminal' ? 'Show Code Editor' : 'Show Terminal'}
-                    >
-                      {openPanel === 'terminal' ? <FaChevronUp /> : <FaChevronDown />}
-                    </span>
-                  </div>
-                </div>
-                <div style={{
-                  height: openPanel === 'terminal' ? 'calc(100% - 44px)' : 0,
-                  overflowY: 'auto',
-                  overflowX: 'auto',
-                  padding: '12px 24px',
-                  fontFamily: 'inherit',
-                  background: '#18181b',
-                  transition: 'height 0.3s',
-                }}>
-                  <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-                    {outputLines.map((line, idx) => (
-                      <div key={idx}>{line}</div>
-                    ))}
-                  </pre>
-                </div>
+                <span style={{ display: 'flex', alignItems: 'center' }}>
+                  Code Editor
+                </span>
+                <span
+                  onClick={() => setOpenPanel(openPanel === 'code' ? 'terminal' : 'code')}
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: 18, marginLeft: 8 }}
+                  title={openPanel === 'code' ? 'Show Terminal' : 'Show Code Editor'}
+                >
+                  {openPanel === 'code' ? <FaChevronDown /> : <FaChevronUp />}
+                </span>
               </div>
-            </>
-          ) : (
-            // Normal mode: original layout
-            <>
-              <div style={{ flex: 1, minHeight: 0 }}>
+              <div style={{ height: openPanel === 'code' ? 'calc(100% - 44px)' : 0, overflow: 'hidden', transition: 'height 0.3s' }}>
                 <CodeEditor
                   value={project.code || ''}
-                  language="python"
                   readOnly={true}
                   hideTerminal={true}
-                  height="100%"
                 />
               </div>
+            </div>
+            {/* Terminal with dropup in header */}
+            <div style={{
+              background: '#18181b',
+              color: '#d4d4d4',
+              borderTop: '1.5px solid #222',
+              height: openPanel === 'terminal' ? 'calc(100% - 60px)' : 60,
+              minHeight: 60,
+              maxHeight: 'calc(100% - 60px)',
+              textAlign: "left",
+              fontSize: 15,
+              fontFamily: 'inherit',
+              padding: '0 0 0 0',
+              display: 'flex',
+              flexDirection: 'column',
+              transition: 'height 0.3s',
+              overflow: 'hidden',
+            }}>
               <div style={{
-                background: '#18181b',
-                color: '#d4d4d4',
-                borderTop: '1.5px solid #222',
-                height: 300,
-                textAlign: "left",
+                background: '#23272e',
+                color: '#fff',
+                padding: '6px 24px',
+                fontWeight: 600,
                 fontSize: 15,
-                fontFamily: 'inherit',
-                padding: '0 0 0 0',
+                borderBottom: '1px solid #222',
                 display: 'flex',
-                flexDirection: 'column'
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                userSelect: 'none',
+                cursor: 'pointer',
               }}>
-                <div style={{
-                  background: '#23272e',
-                  color: '#fff',
-                  padding: '6px 24px',
-                  fontWeight: 600,
-                  fontSize: 15,
-                  borderBottom: '1px solid #222',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
-                  <span>TERMINAL</span>
-                  <button
-                    onClick={handleRun}
-                    disabled={running}
-                    style={{
-                      background: '#007acc',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 4,
-                      padding: '4px 18px',
-                      fontWeight: 600,
-                      fontSize: 15,
-                      cursor: running ? 'not-allowed' : 'pointer',
-                      opacity: running ? 0.7 : 1
-                    }}
-                  >
-                    {running ? 'Running...' : 'Run'}
-                  </button>
-                </div>
-                <div style={{
-                  flex: 1,
-                  overflowY: 'auto',
-                  padding: '12px 24px',
-                  fontFamily: 'inherit',
-                  background: '#18181b'
-                }}>
-                  <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-                    {outputLines.map((line, idx) => (
-                      <div key={idx}>{line}</div>
-                    ))}
-                  </pre>
-                </div>
+                <span style={{ display: 'flex', alignItems: 'center' }}>
+                  Terminal
+                </span>
+                <span
+                  onClick={() => setOpenPanel(openPanel === 'terminal' ? 'code' : 'terminal')}
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: 18, marginLeft: 8 }}
+                  title={openPanel === 'terminal' ? 'Show Code Editor' : 'Show Terminal'}
+                >
+                  {openPanel === 'terminal' ? <FaChevronUp /> : <FaChevronDown />}
+                </span>
               </div>
-            </>
-          )}
-        </div>
+              <div style={{ height: openPanel === 'terminal' ? 'calc(100% - 44px)' : 0, overflow: 'hidden', transition: 'height 0.3s' }}>
+                <CodeEditor
+                  value={project.code || ''}
+                  readOnly={true}
+                  hideTerminal={false}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Normal mode: original layout
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <CodeEditor
+              value={project.code || ''}
+              readOnly={true}
+              hideTerminal={false}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
