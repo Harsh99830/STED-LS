@@ -13,6 +13,7 @@ const PublicPythonProject = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [openPanel, setOpenPanel] = useState('code'); // 'code' or 'terminal'
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -36,6 +37,56 @@ const PublicPythonProject = () => {
   if (loading) return <div style={{ color: '#fff', background: '#1e1e1e', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
   if (error) return <div style={{ color: 'red', background: '#1e1e1e', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{error}</div>;
   if (!project) return null;
+
+  // Show preview button overlay
+  if (isPreview && !showPreview) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        minWidth: '100vw',
+        background: '#18181b',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'JetBrains Mono', 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace",
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Blurred background overlay */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          zIndex: 1,
+        }} />
+        {/* Centered Show Preview button */}
+        <button
+          onClick={() => setShowPreview(true)}
+          style={{
+            
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 22,
+            border: '2.5px solid #fff',
+            borderRadius: 12,
+            padding: '24px 60px',
+            boxShadow: '0 4px 24px #0006',
+            cursor: 'pointer',
+            letterSpacing: 0.5,
+            transition: 'background 0.2s',
+            zIndex: 2,
+            backdropFilter: 'none',
+          }}
+        >
+          Show Preview
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{

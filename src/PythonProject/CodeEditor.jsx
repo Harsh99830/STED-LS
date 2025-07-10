@@ -143,6 +143,7 @@ builtins.input = input_async
             scrollBeyondLastLine: false,
             automaticLayout: true,
           }}
+          loading={<div style={{height:'100%',width:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:15,color:'white'}}>Loading...</div>}
         />
       </div>
       {!hideTerminal && (
