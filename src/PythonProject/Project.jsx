@@ -54,31 +54,29 @@ function Project() {
     return () => unsubscribe();
   }, [user]);
 
-  // Handle browser back button and page refresh
+  // Check if project is still started when component mounts
   useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = '';
+    const checkProjectStatus = async () => {
+      if (!user) return;
+      
+      try {
+        const userRef = ref(db, `users/${user.id}/python`);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          if (!userData.PythonProjectStarted) {
+            // Project was ended, redirect to Python page
+            navigate('/python');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking project status:', error);
+        navigate('/python');
+      }
     };
 
-    const handlePopState = (e) => {
-      e.preventDefault();
-      setShowEndProjectOverlay(true);
-      // Push a new state to prevent the back navigation
-      window.history.pushState(null, '', window.location.pathname);
-    };
-
-    // Push a state when component mounts to enable popstate detection
-    window.history.pushState(null, '', window.location.pathname);
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
+    checkProjectStatus();
+  }, [user, navigate]);
 
   const handleEndProjectClick = () => {
     setShowEndProjectOverlay(true);

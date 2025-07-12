@@ -711,21 +711,50 @@ function ConceptLearned({ completedProjects = [] }) {
               ×
             </button>
             <h3 className="text-2xl font-bold mb-4">Set Concept Status</h3>
-            <div className="space-y-4 max-h-[50vh] overflow-y-auto">
+            <div className="space-y-3 max-h-[50vh] overflow-y-auto">
               {selectedConcepts.map((item) => (
-                <div key={`${item.category}:${item.concept}`} className="flex flex-col md:flex-row md:items-center gap-2">
-                  <span className="font-medium text-slate-700 w-48">{item.concept} <span className="text-xs text-slate-400">({item.category})</span></span>
-                  <select
-                    className="border rounded px-2 py-1"
-                    value={conceptStatuses[`${item.category}:${item.concept}`] || ''}
-                    onChange={e => setConceptStatuses(s => ({ ...s, [`${item.category}:${item.concept}`]: e.target.value }))}
-                    disabled={adding}
-                  >
-                    <option value="">Select status</option>
-                    <option value="understood">Understood</option>
-                    <option value="partially understood">Partially Understood</option>
-                    <option value="still confused">Still Confused</option>
-                  </select>
+                <div key={`${item.category}:${item.concept}`} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-slate-700">{item.concept}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-white px-2 py-1 rounded transition-colors">
+                      <input
+                        type="radio"
+                        name={`status-${item.category}-${item.concept}`}
+                        value="understood"
+                        checked={conceptStatuses[`${item.category}:${item.concept}`] === 'understood'}
+                        onChange={(e) => setConceptStatuses(s => ({ ...s, [`${item.category}:${item.concept}`]: e.target.value }))}
+                        disabled={adding}
+                        className="w-3 h-3 text-green-600 bg-slate-100 border-slate-300 focus:ring-0"
+                      />
+                      <span className="text-xs text-slate-700">Understood</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-white px-2 py-1 rounded transition-colors">
+                      <input
+                        type="radio"
+                        name={`status-${item.category}-${item.concept}`}
+                        value="partially understood"
+                        checked={conceptStatuses[`${item.category}:${item.concept}`] === 'partially understood'}
+                        onChange={(e) => setConceptStatuses(s => ({ ...s, [`${item.category}:${item.concept}`]: e.target.value }))}
+                        disabled={adding}
+                        className="w-3 h-3 text-orange-600 bg-slate-100 border-slate-300 focus:ring-0"
+                      />
+                      <span className="text-xs text-slate-700">Partial</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-white px-2 py-1 rounded transition-colors">
+                      <input
+                        type="radio"
+                        name={`status-${item.category}-${item.concept}`}
+                        value="still confused"
+                        checked={conceptStatuses[`${item.category}:${item.concept}`] === 'still confused'}
+                        onChange={(e) => setConceptStatuses(s => ({ ...s, [`${item.category}:${item.concept}`]: e.target.value }))}
+                        disabled={adding}
+                        className="w-3 h-3 text-red-600 bg-slate-100 border-slate-300 focus:ring-0"
+                      />
+                      <span className="text-xs text-slate-700">Confused</span>
+                    </label>
+                  </div>
                 </div>
               ))}
             </div>

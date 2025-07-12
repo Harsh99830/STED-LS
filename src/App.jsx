@@ -11,6 +11,7 @@ import DataScience from './Pages/DataScience';
 import Python from './Pages/Python';
 import SurveyProtectedRoute from './components/SurveyProtectedRoute';
 import ProtectedRoute from './components/ProtectedRoute';
+import ProjectProtectedRoute from './components/ProjectProtectedRoute';
 import AllSkills from './Pages/AllSkills';
 import Project from './PythonProject/Project';
 import PowerBi from './Pages/PowerBi';
@@ -95,9 +96,9 @@ function App() {
        <Route
         path="/python/project"
         element={
-          <SurveyProtectedRoute>
+          <ProjectProtectedRoute>
             <Project />
-          </SurveyProtectedRoute>
+          </ProjectProtectedRoute>
         }
       />
        <Route

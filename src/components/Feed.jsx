@@ -159,8 +159,7 @@ function Feed() {
                     transform: 'translate(50%,-50%)',
                   }}
                   onClick={() => {
-                    const iframe = document.getElementById(`feed-iframe-${idx}`);
-                    if (iframe && iframe.requestFullscreen) iframe.requestFullscreen();
+                    window.open(project.publicUrl, '_blank', 'noopener,noreferrer');
                   }}
                 >
                   {/* Fullscreen four-arrow icon SVG */}
