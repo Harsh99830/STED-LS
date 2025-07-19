@@ -30,26 +30,26 @@ export default function UserProfile() {
       if (id === '1') {
         // Static Alex Chen
         setUserData({
-          id: 1,
-          name: 'Alex Chen',
-          avatar: '👨‍💻',
-          level: 'Intermediate',
+    id: 1,
+    name: 'Alex Chen',
+    avatar: '👨‍💻',
+    level: 'Intermediate',
           email: 'alex.chen@email.com',
-          skills: ['Python', 'Data Science'],
-          conceptsLearned: 15,
-          projectsCompleted: 3,
-          isOnline: true,
-          lastActive: '2 minutes ago',
-          observers: [2, 3],
-          observing: [3],
-          projectHistory: [
-            { name: 'Personal Finance Tracker', description: 'A finance app', completedDate: '2024-06-01', sp: 10, skill: 'python' },
-            { name: 'Data Dashboard', description: 'BI dashboard', completedDate: '2024-06-05', sp: 10, skill: 'powerbi' }
-          ],
-          python: { PythonSkill: 16 },
-          powerbi: { PowerBiSkill: 40 },
-          'data-science': { dataSkill: 20 },
-          'public-speaking': { speakingSkill: 0 },
+    skills: ['Python', 'Data Science'],
+    conceptsLearned: 15,
+    projectsCompleted: 3,
+    isOnline: true,
+    lastActive: '2 minutes ago',
+    observers: [2, 3],
+    observing: [3],
+    projectHistory: [
+      { name: 'Personal Finance Tracker', description: 'A finance app', completedDate: '2024-06-01', sp: 10, skill: 'python' },
+      { name: 'Data Dashboard', description: 'BI dashboard', completedDate: '2024-06-05', sp: 10, skill: 'powerbi' }
+    ],
+    python: { PythonSkill: 16 },
+    powerbi: { PowerBiSkill: 40 },
+    'data-science': { dataSkill: 20 },
+    'public-speaking': { speakingSkill: 0 },
         });
         setLoading(false);
       } else {
@@ -232,8 +232,8 @@ export default function UserProfile() {
               <div key={i} className="bg-slate-100 rounded p-3 flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
                   <div className="font-medium text-slate-800">{p.name || p.projectTitle || p._projectKey}</div>
-                  <div className="text-slate-600 text-sm">{p.description}</div>
-                  <div className="flex items-center text-xs text-slate-500 mt-1">
+                <div className="text-slate-600 text-sm">{p.description}</div>
+                <div className="flex items-center text-xs text-slate-500 mt-1">
                     <span>
                       {p.completedDate || p.completedAt ? (
                         <>
@@ -251,7 +251,7 @@ export default function UserProfile() {
                         </>
                       ) : null}
                     </span>
-                    <span className="mx-2">|</span>
+                  <span className="mx-2">|</span>
                     <span>+10 SP</span>
                   </div>
                 </div>
@@ -325,7 +325,7 @@ export default function UserProfile() {
                     </motion.ul>
                   )}
                 </AnimatePresence>
-              </div>
+          </div>
             );
           })}
           {learnedConcepts.length === 0 && <div className="text-slate-500">No concepts learned yet.</div>}
@@ -433,8 +433,8 @@ export default function UserProfile() {
             className={`bg-white rounded-lg shadow-md h-24 w-80 max-w-xs flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'projects' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
           >
             <div className="flex flex-col justify-center items-center w-full h-full">
-              <p className="text-sm text-slate-600">Projects Completed</p>
-              <h3 className="text-2xl font-bold text-slate-800 mt-1">{projects.length}</h3>
+                <p className="text-sm text-slate-600">Projects Completed</p>
+                <h3 className="text-2xl font-bold text-slate-800 mt-1">{projects.length}</h3>
             </div>
             <div className="absolute top-3 right-3 bg-purple-50 p-2 rounded-full"></div>
           </div>
@@ -444,7 +444,7 @@ export default function UserProfile() {
             className={`bg-white rounded-lg shadow-md h-24 w-80 max-w-xs flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'learned' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
           >
             <div className="flex flex-col justify-center items-center w-full h-full">
-              <p className="text-sm text-slate-600">Concepts Learned</p>
+                <p className="text-sm text-slate-600">Concepts Learned</p>
               <h3 className="text-2xl font-bold text-slate-800 mt-1">{learned}{total ? `/${total}` : ''}</h3>
             </div>
             <div className="absolute top-3 right-3 bg-purple-50 p-2 rounded-full"></div>
@@ -455,7 +455,7 @@ export default function UserProfile() {
             className={`bg-white rounded-lg shadow-md h-24 w-80 max-w-xs flex flex-col justify-center items-center cursor-pointer transition-all relative ${activeSkillDetailTab === 'applied' ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'}`}
           >
             <div className="flex flex-col justify-center items-center w-full h-full">
-              <p className="text-sm text-slate-600">Concepts Applied</p>
+                <p className="text-sm text-slate-600">Concepts Applied</p>
               <h3 className="text-2xl font-bold text-slate-800 mt-1">{applied}{learned ? `/${learned}` : ''}</h3>
             </div>
             <div className="absolute top-3 right-3 bg-yellow-50 p-2 rounded-full"></div>
@@ -596,38 +596,38 @@ export default function UserProfile() {
                                 className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow cursor-pointer"
                                 onClick={() => setSelectedSkill(key)}
                               >
-                                <div className="flex items-center mb-3">
+                  <div className="flex items-center mb-3">
                                   {skill.img ? <img src={skill.img} alt={skill.label} className="w-6 h-6 mr-2" /> : skill.icon}
                                   <h3 className="text-lg font-semibold text-slate-800">{skill.label}</h3>
-                                </div>
-                                <div className="space-y-2">
-                                  <div>
-                                    <div className="flex justify-between mb-1">
-                                      <span className="text-sm text-slate-600">Concepts learned</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm text-slate-600">Concepts learned</span>
                                       <span className="text-sm font-medium text-slate-800">{learned}/{total}</span>
-                                    </div>
+                      </div>
                                     <div className="w-full bg-slate-200 rounded-full h-1.5 min-w-0">
                                       <div
                                         className={`h-1.5 rounded-full ${key === 'python' ? 'bg-purple-600' : key === 'powerbi' ? 'bg-blue-600' : key === 'data-science' ? 'bg-green-600' : 'bg-yellow-500'}`}
                                         style={{ width: `${total > 0 ? (learned / total) * 100 : 0}%` }}
                                       ></div>
-                                    </div>
-                                  </div>
-                                  <div>
+                      </div>
+                    </div>
+                    <div>
                                     <div className="flex justify-between mt-5 mb-1">
-                                      <span className="text-sm text-slate-600">Concepts applied</span>
+                        <span className="text-sm text-slate-600">Concepts applied</span>
                                       <span className="text-sm font-medium text-slate-800">{applied}/{learned}</span>
-                                    </div>
+                      </div>
                                     <div className="w-full bg-slate-200 rounded-full h-1.5 min-w-0">
                                       <div
                                         className="bg-yellow-400 h-1.5 rounded-full max-w-full transition-all duration-300"
                                         style={{ width: `${learned > 0 ? (applied / learned) * 100 : 0}%` }}
                                       ></div>
-                                    </div>
-                                  </div>
+                      </div>
+                    </div>
                                   <p className="text-sm text-slate-600">SP Earned: <span className="">{getPythonSP()}</span></p>
-                                </div>
-                              </div>
+                      </div>
+                    </div>
                             </React.Fragment>
                           );
                         });
@@ -635,11 +635,11 @@ export default function UserProfile() {
                     </div>
                   );
                 })()}
-                {/* Project History */}
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-slate-800">Project History</h2>
-                    <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+              {/* Project History */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-slate-800">Project History</h2>
+                  <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
                       {/* Count merged projects */}
                       {(() => {
                         const pythonProjects = userData.python?.PythonCompletedProjects ? Object.values(userData.python.PythonCompletedProjects) : [];
@@ -663,21 +663,21 @@ export default function UserProfile() {
                         return (b.name || '').localeCompare(a.name || '');
                       });
                       return allProjects.map((project, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="flex items-start space-x-4 border-b border-slate-200 pb-4 last:border-0"
-                        >
-                          <div className="flex-shrink-0">
-                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                              {project.skill === 'python' && <img src={python} alt="Python" className="w-6 h-6" />}
-                              {project.skill === 'powerbi' && <img src={PowerBi} alt="Power BI" className="w-6 h-6" />}
-                              {project.skill === 'data-science' && <span className="text-xl">📊</span>}
-                              {project.skill === 'public-speaking' && <span className="text-xl">🎤</span>}
-                            </div>
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-start space-x-4 border-b border-slate-200 pb-4 last:border-0"
+                      >
+                        <div className="flex-shrink-0">
+                          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            {project.skill === 'python' && <img src={python} alt="Python" className="w-6 h-6" />}
+                            {project.skill === 'powerbi' && <img src={PowerBi} alt="Power BI" className="w-6 h-6" />}
+                            {project.skill === 'data-science' && <span className="text-xl">📊</span>}
+                            {project.skill === 'public-speaking' && <span className="text-xl">🎤</span>}
                           </div>
-                          <div className="flex-1">
+                        </div>
+                        <div className="flex-1">
                             <div className="flex items-center justify-between">
                               <h3 className="text-lg font-medium text-slate-800">
                                 {project.skill === 'python'
@@ -702,12 +702,12 @@ export default function UserProfile() {
                                 ) : null}
                               </span>
                             </div>
-                            <p className="text-slate-600 text-sm">{project.description}</p>
-                            <div className="flex items-center mt-2 space-x-4">
+                          <p className="text-slate-600 text-sm">{project.description}</p>
+                          <div className="flex items-center mt-2 space-x-4">
                               <span className="text-sm font-medium text-green-600">+10 SP</span>
-                              <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                            <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                 {project.skill && project.skill.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                              </span>
+                            </span>
                               {/* Share button for Python projects with publicUrl */}
                               {project.skill === 'python' && project.publicUrl && (
                                 <>
@@ -735,12 +735,12 @@ export default function UserProfile() {
                                 </>
                               )}
                             </div>
-                          </div>
-                        </motion.div>
+                        </div>
+                      </motion.div>
                       ));
                     })()}
-                  </div>
                 </div>
+              </div>
               </>
             )}
           </div>

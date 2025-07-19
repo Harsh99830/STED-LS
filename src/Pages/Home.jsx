@@ -297,7 +297,7 @@ function Home() {
                   <div className="flex flex-col gap-2">
                     <div>
                       <div className="flex justify-between text-xs pb-2 text-slate-600">
-                        <span>Concepts learned</span> 
+                        <span>Concepts Learned</span> 
                                 <span className="text-xs text-right font-medium text-slate-800">{learned}/{total}</span>
                       </div>
                       <div className="w-full bg-slate-200 rounded-full mb-3 h-1.5">
@@ -325,7 +325,7 @@ function Home() {
             {activeTab === 'feed' && (
               <div style={{ maxHeight: '75vh', overflowY: 'auto' }}>
                 <Feed />
-              </div>
+                    </div>
             )}
 
             {activeTab === 'discover' && (

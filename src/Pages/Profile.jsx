@@ -254,42 +254,42 @@ function Profile() {
                                 }
                                 return (
                                   <Link to={skill.route} key={key}>
-                                    <motion.div
-                                      initial={{ opacity: 0, y: 20 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
-                                    >
-                                      <div className="flex items-center mb-3">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
+                            >
+                                <div className="flex items-center mb-3">
                                         {skill.img ? <img src={skill.img} alt={skill.label} className="w-6 h-6 mr-2" /> : skill.icon}
                                         <h2 className="text-lg font-semibold text-slate-800">{skill.label}</h2>
-                                      </div>
-                                      <div className="space-y-2">
-                                        <div>
-                                          <div className="flex justify-between mb-1">
+                                </div>
+                                <div className="space-y-2">
+                                    <div>
+                                        <div className="flex justify-between mb-1">
                                             <span className="text-sm text-slate-600">Concepts learned</span>
                                             <span className="text-sm font-medium text-slate-800">{learned}/{total}</span>
-                                          </div>
-                                          <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div className={`h-1.5 rounded-full ${key === 'python' ? 'bg-purple-600' : key === 'powerbi' ? 'bg-blue-600' : key === 'data-science' ? 'bg-green-600' : 'bg-yellow-500'}`} style={{ width: `${total > 0 ? (learned / total) * 100 : 0}%` }}></div>
-                                          </div>
                                         </div>
-                                        {/* Concepts Applied */}
-                                        <div>
-                                          <div className="flex justify-between mb-1">
+                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                            <div className={`h-1.5 rounded-full ${key === 'python' ? 'bg-purple-600' : key === 'powerbi' ? 'bg-blue-600' : key === 'data-science' ? 'bg-green-600' : 'bg-yellow-500'}`} style={{ width: `${total > 0 ? (learned / total) * 100 : 0}%` }}></div>
+                                        </div>
+                                    </div>
+                                    {/* Concepts Applied */}
+                                    <div>
+                                        <div className="flex justify-between mb-1">
                                             <span className="text-sm mt-3 text-slate-600">Concepts applied</span>
                                             <span className="text-sm font-medium text-slate-800">{applied}/{learned}</span>
-                                          </div>
-                                          <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                        </div>
+                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
                                             <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: `${learned > 0 ? (applied / learned) * 100 : 0}%` }}></div>
                                           </div>
                                         </div>
                                         <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP(key)}</p>
-                                      </div>
-                                    </motion.div>
-                                  </Link>
+                                </div>
+                            </motion.div>
+                            </Link>
                                 );
                               })}
-                            </div>
+                                </div>
                           );
                         })()}
 

@@ -797,7 +797,7 @@ function ConceptLearned({ completedProjects = [] }) {
               <button
                 className="px-4 py-2 rounded bg-slate-200 hover:bg-slate-300 text-slate-700"
                 onClick={() => { setShowStatusOverlay(false); setAdding(false); }}
-                disabled={adding}
+                    disabled={adding}
               >
                 Cancel
               </button>
@@ -866,12 +866,12 @@ function ConceptLearned({ completedProjects = [] }) {
                         onChange={(e) => setNewStatus(e.target.value)}
                         className="border border-slate-300 rounded px-2 py-1 text-xs"
                         disabled={savingStatus}
-                      >
-                        <option value="">Select status</option>
-                        <option value="understood">Understood</option>
-                        <option value="partially understood">Partially Understood</option>
-                        <option value="still confused">Still Confused</option>
-                      </select>
+                  >
+                    <option value="">Select status</option>
+                    <option value="understood">Understood</option>
+                    <option value="partially understood">Partially Understood</option>
+                    <option value="still confused">Still Confused</option>
+                  </select>
                       <button
                         onClick={handleSaveStatus}
                         disabled={savingStatus || !newStatus}
@@ -959,9 +959,9 @@ function ConceptLearned({ completedProjects = [] }) {
                         </a>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                </div>
+              ))}
+            </div>
               
               {/* See Applied Details Link - Only for applied concepts */}
               {selectedConceptDetails.isApplied && (

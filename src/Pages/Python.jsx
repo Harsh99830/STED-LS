@@ -13,6 +13,8 @@ import Project from "../assets/project.png";
 import ProjectRecommender from '../components/ProjectRecommender';
 import SeeAnother from "../assets/SeeAnother.png";
 import { getProjectConfig } from '../PythonProject/projectConfig';
+import Assignment from '../components/Assignment';
+import AssignmentIcon from '../assets/assignment.png';
 
 function Python() {
   const navigate = useNavigate();
@@ -37,6 +39,7 @@ function Python() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentProjectTitle, setCurrentProjectTitle] = useState('');
   const [copiedProjectId, setCopiedProjectId] = useState(null);
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -49,11 +52,11 @@ function Python() {
     // Real-time listener for user data
     const userRef = ref(db, 'users/' + user.id);
     const unsubscribeUser = onValue(userRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setUserData(snapshot.val());
-      }
-      setIsLoading(false);
-    });
+          if (snapshot.exists()) {
+            setUserData(snapshot.val());
+          }
+          setIsLoading(false);
+        });
     // Real-time listener for completed projects
     const completedProjectsRef = ref(db, 'users/' + user.id + '/python/PythonCompletedProjects');
     const unsubscribeProjects = onValue(completedProjectsRef, (snapshot) => {
@@ -120,7 +123,7 @@ function Python() {
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
-    const learned = learnedConcepts.length;
+      const learned = learnedConcepts.length;
     
     // Analyze concepts used in completed projects
     const conceptsUsedInProjects = new Set();
@@ -187,8 +190,7 @@ function Python() {
   };
 
   const handleCustomProjectClick = () => {
-    // TODO: Implement custom project functionality
-    console.log("Custom project clicked");
+    setShowComingSoon(true);
   };
 
   const handleCloseProjectOverlay = () => {
@@ -296,25 +298,23 @@ function Python() {
 
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-            {/* Stats Cards */}
-            <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* SP (STED Points) Card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => {
-                  // Call the points history function from ConceptLearned component
-                  if (window.handlePointsClick) {
-                    window.handlePointsClick();
-                  }
-                }}
+              className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => {
+                if (window.handlePointsClick) {
+                  window.handlePointsClick();
+                }
+              }}
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-slate-600">SP(STED Points)</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                      {completedProjects.length * 10 + conceptStats.learned * 2 + conceptStats.applied * 5}
+                    {completedProjects.length * 10 + conceptStats.learned * 2 + conceptStats.applied * 5}
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
@@ -323,6 +323,7 @@ function Python() {
                 </div>
               </motion.div>
 
+            {/* Projects Completed Card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -333,7 +334,7 @@ function Python() {
                   <div>
                     <p className="text-sm text-slate-600">Projects Completed</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                      {completedProjects.length}
+                    {completedProjects.length}
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
@@ -342,6 +343,32 @@ function Python() {
                 </div>
               </motion.div>
 
+            {/* Concepts Applied Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => {
+                if (window.handleAppliedConceptsClick) {
+                  window.handleAppliedConceptsClick();
+                }
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600">Assignment Completed</p>
+                  <h3 className="text-2xl font-bold text-slate-800 mt-1">
+                    04
+                  </h3>
+                </div>
+                <div className="bg-yellow-50 p-3 rounded-full">
+                  <span className="text-2xl"><img className="w-7" src={AssignmentIcon} alt="" /></span>
+                </div>
+              </div>
+            </motion.div>
+
+                        {/* Concepts Learned Card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -361,17 +388,19 @@ function Python() {
                 </div>
               </motion.div>
 
+
+
+            {/* Concepts Applied Card */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => {
-                  // Pass the function to ConceptLearned component
-                  if (window.handleAppliedConceptsClick) {
-                    window.handleAppliedConceptsClick();
-                  }
-                }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => {
+                if (window.handleAppliedConceptsClick) {
+                  window.handleAppliedConceptsClick();
+                }
+              }}
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -386,16 +415,49 @@ function Python() {
                 </div>
               </motion.div>
 
-              
-            </div>
-
-            {/* Concept Status Card - moved to right side */}
+            {/* Concepts Applied Card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="bg-white rounded-lg shadow-md p-6 h-full flex flex-col justify-between"
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => {
+                if (window.handleAppliedConceptsClick) {
+                  window.handleAppliedConceptsClick();
+                }
+              }}
             >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600">Concepts Applied</p>
+                  <h3 className="text-2xl font-bold text-slate-800 mt-1">
+                    {conceptStats.applied} / {conceptStats.learned}
+                  </h3>
+                </div>
+                <div className="bg-yellow-50 p-3 rounded-full">
+                  <span className="text-2xl"><img className="w-7" src={Applied} alt="" /></span>
+                </div>
+              </div>
+            </motion.div>
+            </div>
+
+          {/* Assignment Section */}
+         
+
+          {/* Main Content Grid */}
+          <div className="flex flex-col lg:flex-row gap-6 mt-13 items-start">
+            {/* Learning Resources */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
+            >
+              <ConceptLearned completedProjects={completedProjects} />
+            </motion.div>
+
+            {/* Concept Status Box */}
+            <motion.div className="bg-white rounded-lg shadow-md p-6 w-150 h-76 flex flex-col justify-between">
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
@@ -434,22 +496,16 @@ function Python() {
             </motion.div>
           </div>
 
-          {/* Main Content Grid */}
-          <div className="flex flex-col lg:flex-row gap-6 mt-13 items-start">
-            {/* Learning Resources */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
-            >
-              <ConceptLearned completedProjects={completedProjects} />
-            </motion.div>
+          {/* --- Project/Assignment Grid --- */}
+          <h2 className="text-2xl text-left font-bold text-slate-800 mb-6 mt-10">Apply learning</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
-            {/* Project Card - Make sticky on large screens */}
-            <motion.div
-              className="bg-gradient-to-br from-[#C642F5] via-[#A633D9] to-[#8C1EB6] w-full lg:w-1/3 h-76 rounded-lg shadow-2xl p-6 lg:sticky lg:top-28"
-            >
+             {/* Assignment Box */}
+             <div className="w-full">
+              <Assignment learnedConcepts={userData.python?.learnedConcepts || []} />
+            </div>
+            {/* Project Box */}
+            <motion.div className="bg-gradient-to-br from-[#C642F5] via-[#A633D9] to-[#8C1EB6] w-full h-76 rounded-lg shadow-2xl p-6 lg:sticky lg:top-28">
               <h2 className="text-2xl font-bold text-white mb-6">
                 Project
               </h2>
@@ -499,6 +555,8 @@ function Python() {
                 <div className="text-white">No project assigned. Click "Start Learning" to begin your first project.</div>
               )}
             </motion.div>
+           
+          </div>
 
             {/* Project Details Overlay */}
             <AnimatePresence>
@@ -644,13 +702,14 @@ function Python() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+          
         </div>
       </div>
 
 
       {/* Project History Section */}
       <div className="w-full mx-auto lg:px-8 text-left mb-10">
+        
         <h2 className="text-2xl font-bold text-slate-800 mb-6">Project History</h2>
         <div className="bg-white hover:bg-[#f7f7f7] rounded-lg shadow-md p-6">
           {completedProjects.length === 0 ? (
@@ -696,8 +755,8 @@ function Python() {
                       </div>
                     )}
                     </div>
-                </li>
-              ))}
+                  </li>
+                ))}
               </ul>
           )}
         </div>
@@ -840,6 +899,44 @@ function Python() {
                   </div>
                 </div>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Coming Soon Overlay */}
+      <AnimatePresence>
+        {showComingSoon && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+            onClick={() => setShowComingSoon(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="bg-white rounded-2xl shadow-2xl px-10 py-8 max-w-sm w-full text-center relative"
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-3 right-4 text-slate-400 hover:text-slate-700 text-2xl font-bold"
+                onClick={() => setShowComingSoon(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+              <div className="text-4xl mb-4">🚧</div>
+              <h2 className="text-2xl font-bold mb-2 text-slate-800">Coming soon...</h2>
+              <p className="text-slate-600 mb-4">Custom projects are on the way! Stay tuned for updates.</p>
+              <button
+                className="mt-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold shadow"
+                onClick={() => setShowComingSoon(false)}
+              >
+                OK
+              </button>
             </motion.div>
           </motion.div>
         )}
