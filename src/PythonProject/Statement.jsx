@@ -9,23 +9,19 @@ import cross from '../assets/cross.png';
 import applied from '../assets/applied.png';
 import tick from '../assets/applied.png';
 
-function Statement({ userCode, projectConfig }) {
+function Statement({ userCode, projectConfig, taskCheckStatus, setTaskCheckStatus, subtaskCheckResults, setSubtaskCheckResults, expandedTask, setExpandedTask }) {
   const { isLoaded, isSignedIn, user } = useUser();
   const [projectKey, setProjectKey] = useState(null);
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [checked, setChecked] = useState({});
-  const [taskCheckStatus, setTaskCheckStatus] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [modalSubtasks, setModalSubtasks] = useState([]);
   const [modalTaskTitle, setModalTaskTitle] = useState('');
   const [loadingTaskKey, setLoadingTaskKey] = useState(null);
   const [modalReasons, setModalReasons] = useState({});
-  const [subtaskCheckResults, setSubtaskCheckResults] = useState({});
-  const [hoveredReason, setHoveredReason] = useState({ taskKey: null, subIdx: null });
   const hoverTimeout = useRef();
-  const [expandedTask, setExpandedTask] = useState(null);
   const [showProjectDesc, setShowProjectDesc] = useState(false);
   const projectDescIconRef = useRef();
 

@@ -26,22 +26,22 @@ export async function runPythonCode({ code, onOutput, onInput, isPreview }) {
 
   // Input handler
   if (isPreview) {
-    // Dummy input_async for preview mode
+    // Dummy input for preview mode
     await pyodide.runPythonAsync(`
 try:
-    input_async
+    input
 except NameError:
-    _input_async_count = 0
-    async def input_async(prompt=''):
-        global _input_async_count
-        _input_async_count += 1
-        if _input_async_count > 2:
+    _input_count = 0
+    async def input(prompt=''):
+        global _input_count
+        _input_count += 1
+        if _input_count > 2:
             return 'exit'
         from js import send_to_terminal
         send_to_terminal('⚠️ Input is not supported in preview mode. Returning empty string.\\n')
         return ''
     import builtins
-    builtins.input = input_async
+    builtins.input = input
 `);
   } else {
     // Interactive input for main project
@@ -52,10 +52,10 @@ except NameError:
     });
     await pyodide.runPythonAsync(`
 import builtins
-async def input_async(prompt=""):
+async def input(prompt=""):
     raw = await __new_input__(prompt)
     return raw.strip()
-builtins.input = input_async
+builtins.input = input
 `);
   }
 

@@ -15,6 +15,8 @@ function AI({ userCode, messages, setMessages, terminalOutput = [] }) {
   const [showModal, setShowModal] = useState(false);
   const [modalSubtasks, setModalSubtasks] = useState([]);
   const inputRef = useRef(null);
+  const prevMessagesLength = useRef(messages.length);
+  const isFirstRender = useRef(true);
 
   // Fetch project data when component mounts
   useEffect(() => {
@@ -56,7 +58,15 @@ function AI({ userCode, messages, setMessages, terminalOutput = [] }) {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isFirstRender.current) {
+      // On first render (tab switch), scroll instantly
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      isFirstRender.current = false;
+    } else if (messages.length > prevMessagesLength.current) {
+      // On new message, scroll smoothly
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    prevMessagesLength.current = messages.length;
   }, [messages]);
 
   // Initialize with welcome message only if no messages exist

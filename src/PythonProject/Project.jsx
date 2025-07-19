@@ -31,10 +31,9 @@ function Project() {
   const [projectConfig, setProjectConfig] = useState(null);
   const { user } = useUser();
   const navigate = useNavigate();
-  const [taskCheckResults, setTaskCheckResults] = useState([]);
-  const [checkingTaskIndex, setCheckingTaskIndex] = useState(-1);
-  const [expandedTasks, setExpandedTasks] = useState({});
+  const [taskCheckStatus, setTaskCheckStatus] = useState({});
   const [subtaskCheckResults, setSubtaskCheckResults] = useState({});
+  const [expandedTask, setExpandedTask] = useState(null);
 
   // Load project configuration
   useEffect(() => {
@@ -172,13 +171,11 @@ function Project() {
   const handleSubmit = async () => {
     if (!projectConfig) return;
     setShowSubmitOverlay(true);
-    setTaskCheckResults([]);
-    setCheckingTaskIndex(0);
-    setSubtaskCheckResults({});
+    setTaskCheckStatus({});
+    setExpandedTask(null);
     const tasks = Object.entries(projectConfig.tasks || {});
     let results = [];
     for (let i = 0; i < tasks.length; i++) {
-      setCheckingTaskIndex(i);
       const [taskKey, task] = tasks[i];
       const subtaskResults = [];
       for (let j = 0; j < (task.subtasks || []).length; j++) {
@@ -205,18 +202,12 @@ function Project() {
           // On error, treat as not complete
         }
         subtaskResults.push({ subtask, complete: isSubtaskComplete });
-        // Update subtasks UI as each result comes in
-        setSubtaskCheckResults(prev => ({
-          ...prev,
-          [taskKey]: [...subtaskResults]
-        }));
       }
       // Mark task as complete only if all subtasks are complete
       const isTaskComplete = subtaskResults.length > 0 && subtaskResults.every(r => r.complete);
       results.push({ taskTitle: task.title, complete: isTaskComplete });
-      setTaskCheckResults([...results]);
+      setTaskCheckStatus(prev => ({ ...prev, [taskKey]: isTaskComplete }));
     }
-    setCheckingTaskIndex(-1);
   };
 
   const handleStuckClick = () => {
@@ -235,7 +226,7 @@ function Project() {
   };
 
   const handleTaskClick = async (taskKey, task) => {
-    setExpandedTasks(prev => ({ ...prev, [taskKey]: !prev[taskKey] }));
+    setExpandedTask(taskKey);
     // Only check subtasks if not already checked
     if (!subtaskCheckResults[taskKey] && task.subtasks && task.subtasks.length > 0) {
       const results = [];
@@ -472,21 +463,17 @@ function Project() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontWeight: 600, color: '#f3f4f6', fontSize: 17 }}>{task.title}</span>
-                    {taskCheckResults[idx] ? (
-                      taskCheckResults[idx].complete ? (
+                    {taskCheckStatus[taskKey] ? (
+                      taskCheckStatus[taskKey] ? (
                         <img src={applied} alt="" style={{ width: '28px', height: '28px' }} />
                       ) : (
                         <img src={cross} alt="" style={{ width: '28px', height: '28px' }} />
                       )
                     ) : (
-                      idx === checkingTaskIndex ? (
-                        <span className="animate-spin" style={{ color: '#a78bfa', fontSize: 26 }}>⏳</span>
-                      ) : (
-                        <span style={{ color: '#444', fontSize: 28, fontWeight: 700 }}>?</span>
-                      )
+                      <span style={{ color: '#444', fontSize: 28, fontWeight: 700 }}>?</span>
                     )}
                   </div>
-                  {expandedTasks[taskKey] && task.subtasks && (
+                  {expandedTask === taskKey && task.subtasks && (
                     <ul className="mt-4 space-y-2">
                       {(subtaskCheckResults[taskKey] || task.subtasks.map(subtask => ({ subtask, complete: null }))).map((result, i) => (
                         <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#18181b', borderRadius: 6, padding: '8px 14px' }}>
@@ -508,8 +495,8 @@ function Project() {
             <div className="flex justify-end mt-8">
               {(() => {
                 // Check if all tasks are completed (have ticks)
-                const allTasksCompleted = Object.entries(projectConfig.tasks || {}).every(([taskKey, task], idx) => {
-                  return taskCheckResults[idx] && taskCheckResults[idx].complete;
+                const allTasksCompleted = Object.entries(projectConfig.tasks || {}).every(([taskKey, task]) => {
+                  return taskCheckStatus[taskKey];
                 });
                 
                 if (allTasksCompleted) {
@@ -629,7 +616,16 @@ function Project() {
         {/* Content Section */}
         <div className="mt-2">
           {rightPanel === 'statement' && (
-            <Statement userCode={userCode} projectConfig={projectConfig} />
+            <Statement
+              userCode={userCode}
+              projectConfig={projectConfig}
+              taskCheckStatus={taskCheckStatus}
+              setTaskCheckStatus={setTaskCheckStatus}
+              subtaskCheckResults={subtaskCheckResults}
+              setSubtaskCheckResults={setSubtaskCheckResults}
+              expandedTask={expandedTask}
+              setExpandedTask={setExpandedTask}
+            />
           )}
 
           {rightPanel === 'ai' && (
