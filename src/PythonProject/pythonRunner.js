@@ -59,6 +59,20 @@ builtins.input = input_async
 `);
   }
 
+  // Add this function to auto-await input calls
+  function autoAwaitInputs(code) {
+    // Add 'await ' before input_async( or input( if not already present and not inside a def
+    return code.replace(/(^|\n)([ \t]*)(?!.*await)([^#\n]*)(input_async\s*\(|input\s*\()/g, (match, p1, p2, p3, p4) => {
+      if (p3.includes('def ') || p3.includes('async def ')) return match;
+      return `${p1}${p2}await ${p3}${p4}`;
+    });
+  }
+
+  // Before running the code, auto-await input calls, then wrap it
+  const processedCode = autoAwaitInputs(code);
+  const indentCode = (code) => code.split('\n').map(line => '    ' + line).join('\n');
+  const wrappedCode = `async def __main__():\n${indentCode(processedCode)}\n\nawait __main__()`;
+
   // Run the code
   try {
     await pyodide.runPythonAsync(`
@@ -69,7 +83,7 @@ class StdoutCatcher:
 sys.stdout = StdoutCatcher()
 sys.stderr = StdoutCatcher()
 `);
-    await pyodide.runPythonAsync(code);
+    await pyodide.runPythonAsync(wrappedCode);
   } catch (err) {
     appendOutput('❌ Error: ' + err.message);
   }

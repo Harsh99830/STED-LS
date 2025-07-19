@@ -40,6 +40,11 @@ function Python() {
   const [currentProjectTitle, setCurrentProjectTitle] = useState('');
   const [copiedProjectId, setCopiedProjectId] = useState(null);
   const [showComingSoon, setShowComingSoon] = useState(false);
+  const [showCustomProjectOverlay, setShowCustomProjectOverlay] = useState(false);
+  const [selectedCustomConcepts, setSelectedCustomConcepts] = useState([]);
+  const [customProjectTheme, setCustomProjectTheme] = useState("");
+  const [showConceptPicker, setShowConceptPicker] = useState(false);
+  const [conceptPickerChecked, setConceptPickerChecked] = useState({});
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -190,7 +195,7 @@ function Python() {
   };
 
   const handleCustomProjectClick = () => {
-    setShowComingSoon(true);
+    setShowCustomProjectOverlay(true);
   };
 
   const handleCloseProjectOverlay = () => {
@@ -357,7 +362,7 @@ function Python() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Assignment Completed</p>
+                  <p className="text-sm text-slate-600">Tasks Completed</p>
                   <h3 className="text-2xl font-bold text-slate-800 mt-1">
                     04
                   </h3>
@@ -937,6 +942,161 @@ function Python() {
               >
                 OK
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Custom Project Overlay */}
+      <AnimatePresence>
+        {showCustomProjectOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-[2px] drop-shadow-2xl"
+            onClick={() => setShowCustomProjectOverlay(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="bg-white border-2 border-purple-200 rounded-3xl shadow-2xl px-16 py-12 max-w-3xl w-full h-[38rem] text-left relative flex flex-col justify-between"
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-5 right-7 text-purple-400 hover:text-purple-700 text-3xl font-extrabold bg-white/70 rounded-full w-12 h-12 flex items-center justify-center shadow-lg border border-purple-100 transition-colors"
+                onClick={() => setShowCustomProjectOverlay(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+              <h2 className="text-3xl font-extrabold mb-8 text-purple-800 tracking-tight drop-shadow">Create Custom Project</h2>
+              <div className="mb-8">
+                <label className="block text-lg font-semibold text-purple-700 mb-3">Concepts Used</label>
+                <div className="flex flex-wrap gap-3 min-h-[3.5rem] max-h-40 overflow-y-auto bg-purple-50/60 rounded-xl p-3 mb-3 border border-purple-200">
+                  {selectedCustomConcepts.length === 0 && (
+                    <span className="text-purple-300 text-base">No concepts selected</span>
+                  )}
+                  {selectedCustomConcepts.map((c, i) => (
+                    <span key={i} className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-purple-400 to-blue-400 text-white border-2 border-purple-300 text-base font-semibold shadow-md">
+                      {c}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  className="mt-2 px-6 py-2 bg-purple-600 cursor-pointer hover:from-purple-700 hover:to-blue-700 text-white rounded-xl font-bold text-base shadow-lg transition-all"
+                  onClick={() => setShowConceptPicker(true)}
+                  type="button"
+                >
+                  + Add Concept
+                </button>
+              </div>
+              <div className="border-t border-purple-200 my-6"></div>
+              <div className="mb-8">
+                <label className="block text-lg font-semibold text-purple-700 mb-3">Project Theme (Optional)</label>
+                <input
+                  type="text"
+                  value={customProjectTheme}
+                  onChange={e => setCustomProjectTheme(e.target.value)}
+                  placeholder="e.g. Personal Finance Tracker"
+                  className="w-full px-5 py-3 border-2 border-purple-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-lg bg-white/80 shadow"
+                />
+              </div>
+              <div className="flex justify-end gap-4 mt-8">
+                <button
+                  className="px-6 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-base shadow"
+                  onClick={() => setShowCustomProjectOverlay(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold text-base shadow-lg"
+                  onClick={() => setShowCustomProjectOverlay(false)}
+                  disabled={selectedCustomConcepts.length === 0 || !customProjectTheme}
+                >
+                  Save
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Concept Picker Overlay */}
+      <AnimatePresence>
+        {showConceptPicker && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+            onClick={() => setShowConceptPicker(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="bg-white rounded-2xl shadow-2xl px-10 py-8 max-w-lg w-full text-left relative"
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-3 right-4 text-slate-400 hover:text-slate-700 text-2xl font-bold"
+                onClick={() => setShowConceptPicker(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+              <h2 className="text-xl font-bold mb-4 text-slate-800">Select Concepts</h2>
+              <div className="space-y-6 max-h-[60vh] overflow-y-auto">
+                {['basic', 'intermediate', 'advanced'].map(cat => {
+                  const allConcepts = userData.python?.learnedConcepts
+                    ? (Array.isArray(userData.python.learnedConcepts)
+                        ? userData.python.learnedConcepts
+                        : Object.values(userData.python.learnedConcepts))
+                    : [];
+                  const catConcepts = allConcepts.filter(c => c.category === cat);
+                  if (catConcepts.length === 0) return null;
+                  return (
+                    <div key={cat}>
+                      <div className="font-semibold text-lg mb-2 capitalize">{cat}</div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {catConcepts.map((c, i) => (
+                          <label key={c.concept} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={!!conceptPickerChecked[c.concept]}
+                              onChange={e => setConceptPickerChecked(prev => ({ ...prev, [c.concept]: e.target.checked }))}
+                            />
+                            <span>{c.concept}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  className="px-4 py-2 rounded bg-slate-200 hover:bg-slate-300 text-slate-700"
+                  onClick={() => setShowConceptPicker(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 rounded bg-purple-700 hover:bg-purple-800 text-white font-semibold"
+                  onClick={() => {
+                    const selected = Object.entries(conceptPickerChecked)
+                      .filter(([_, v]) => v)
+                      .map(([k]) => k);
+                    setSelectedCustomConcepts(prev => Array.from(new Set([...prev, ...selected])));
+                    setShowConceptPicker(false);
+                  }}
+                  disabled={Object.values(conceptPickerChecked).every(v => !v)}
+                >
+                  OK
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

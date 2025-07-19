@@ -633,7 +633,12 @@ function Project() {
           )}
 
           {rightPanel === 'ai' && (
-            <AI userCode={userCode} messages={chatMessages} setMessages={setChatMessages} />
+            <AI
+              userCode={userCode}
+              messages={chatMessages}
+              setMessages={setChatMessages}
+              terminalOutput={terminalOutput}
+            />
           )}
         </div>
       </div>

@@ -4,7 +4,7 @@ import { ref, get } from 'firebase/database';
 import { db } from '../firebase';
 import { getProjectConfig, getAIContext } from './projectConfig';
 
-function AI({ userCode, messages, setMessages }) {
+function AI({ userCode, messages, setMessages, terminalOutput = [] }) {
   const { user } = useUser();
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -121,7 +121,43 @@ function AI({ userCode, messages, setMessages }) {
           }
         ).join('\n');
       }
-      const prompt = `You are a helpful Python programming tutor. The user is working on a project called "${context.projectTitle}".\n\nProject Description: ${context.projectDescription}\n\nALL TASKS AND SUBTASKS:\n${allTasksText}\n\nUser's Current Code:\n\u0060\u0060\u0060python\n${context.userCode || 'No code written yet'}\n\u0060\u0060\u0060\n\nConversation so far:\n${history}\n\nUser's latest question: ${inputMessage}\n\nIMPORTANT INSTRUCTIONS:\n- Look at the user's code and guess which task and subtask the user is currently working on.\n- Respond ONLY to the user's latest question, and help them with their current task/subtask.\n- Do not provide extra information or answer unasked questions.\n- Give small, chat-like responses (2-3 sentences max)\n- Focus on actionable, specific feedback for the user's code and question\n- Avoid generic encouragements like "Great start" or "Good job" unless the user has completed all tasks\n- DO NOT provide complete code solutions\n- Give hints for the current task/subtask only\n- ONLY give hints about the tasks and subtasks defined in the project\n- If all tasks are complete, congratulate the user and offer to review or answer questions.`;
+      const prompt = `You are a helpful Python programming tutor. The user is working on a project called "${context.projectTitle}".
+
+Project Description: ${context.projectDescription}
+
+ALL TASKS AND SUBTASKS:
+${allTasksText}
+
+User's Current Code:
+\u0060\u0060\u0060python
+${context.userCode || 'No code written yet'}
+\u0060\u0060\u0060
+
+Latest Terminal Output (including errors, if any):
+\u0060\u0060\u0060
+${(terminalOutput && terminalOutput.length > 0) ? terminalOutput.join('\n') : 'No output yet.'}
+\u0060\u0060\u0060
+
+Conversation so far:
+${history}
+
+User's latest question: ${inputMessage}
+
+IMPORTANT INSTRUCTIONS:
+- Look at the user's code and the terminal output/errors and guess which task and subtask the user is currently working on.
+- Respond ONLY to the user's latest question, and help them with their current task/subtask.
+- Do not provide extra information or answer unasked questions.
+- Give small, chat-like responses (2-3 sentences max)
+- Focus on actionable, specific feedback for the user's code, output, and question
+- Avoid generic encouragements like "Great start" or "Good job" unless the user has completed all tasks
+- DO NOT provide complete code solutions
+- Give hints for the current task/subtask only
+- ONLY give hints about the tasks and subtasks defined in the project
+- If all tasks are complete, congratulate the user and offer to review or answer questions.
+- Do NOT suggest removing or modifying 'async def __main__():' or 'await __main__()' in the user's code. These are required for the code to run.
+- If the terminal output contains an error, always explain what the error message means and suggest how to fix it, even if it is not directly related to a task or subtask.
+- If the user's question is about an error or bug, prioritize helping them debug and fix the code, not just giving hints for tasks/subtasks.
+- Only answer what the user has asked. Do NOT suggest next steps, future tasks, or what to do next unless the user specifically asks.`;
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 
-const defaultCode = `async def __main__():
-    # Write code here
+// No default code
 
-await __main__()`;
+const defaultCode = '#write code here';
 
 function CodeEditor({ onCodeChange, onStuckClick, onOutputChange, value, readOnly, hideTerminal }) {
   const [code, setCode] = useState(defaultCode);

@@ -45,13 +45,13 @@ function Assignment({ learnedConcepts = [] }) {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-slate-200 max-200 h-76 mx-auto relative flex flex-col gap-2">
-      <h2 className="text-2xl font-bold text-slate-800 mb-4">Assignment</h2>
+      <h2 className="text-2xl font-bold text-slate-800 mb-4">Tasks</h2>
                     <div className="flex justify-center mt-10">
                     <div className="space-y-9 w-100">
                       <button
                         className="w-full inline-flex items-center cursor-pointer justify-center gap-2text-white font-semibold px-4 py-3 rounded-lg shadow-md transition-colors"
                       >
-                        🚀 Next Assignment
+                        🚀 Next Tasks
                         <svg
                           className="w-5 h-5"
                           fill="none"
@@ -71,7 +71,7 @@ function Assignment({ learnedConcepts = [] }) {
                        
                         className="w-full inline-flex items-center justify-center gap-2 cursor-pointer font-semibold px-4 py-3 rounded-lg shadow-md transition-colors border border-white border-opacity-30"
                       >
-                        ⚙️ Custom Assigment
+                        ⚙️ Custom Tasks
                         
                       </button>
                     </div>
