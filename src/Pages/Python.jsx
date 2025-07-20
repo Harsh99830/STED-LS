@@ -14,7 +14,7 @@ import ProjectRecommender from '../components/ProjectRecommender';
 import SeeAnother from "../assets/SeeAnother.png";
 import { getProjectConfig } from '../PythonProject/projectConfig';
 import Assignment from '../components/Assignment';
-import AssignmentIcon from '../assets/assignment.png';
+import AssignmentIcon from '../assets/Assignment.png';
 
 function Python() {
   const navigate = useNavigate();
