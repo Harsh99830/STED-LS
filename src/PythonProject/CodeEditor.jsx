@@ -42,7 +42,7 @@ function CodeEditor({ onCodeChange, onStuckClick, onOutputChange, value, readOnl
               stdinHandler.current = resolve;
               setWaitingInput(true);
             }),
-        });
+        });  
 
         setPyodide(py);
       } catch (err) {
