@@ -24,6 +24,7 @@ function Statement({ userCode, projectConfig, taskCheckStatus, setTaskCheckStatu
   const hoverTimeout = useRef();
   const [showProjectDesc, setShowProjectDesc] = useState(false);
   const projectDescIconRef = useRef();
+  const [hoveredReason, setHoveredReason] = useState({ taskKey: null, subIdx: null, left: false });
 
   useEffect(() => {
     async function fetchProjectKeyAndData() {

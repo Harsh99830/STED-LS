@@ -64,7 +64,7 @@ function AI({ userCode, messages, setMessages, terminalOutput = [] }) {
       isFirstRender.current = false;
     } else if (messages.length > prevMessagesLength.current) {
       // On new message, scroll smoothly
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
     prevMessagesLength.current = messages.length;
   }, [messages]);

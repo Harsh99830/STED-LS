@@ -216,6 +216,7 @@ function Home() {
               </button>
             ))}
           </div>
+          
         </div>
 
         {/* Tab Content */}
@@ -223,6 +224,12 @@ function Home() {
           {/* Main Content Area */}
           <div className="flex-1 max-w-300 w-full">
             {activeTab === 'my-learning' && (
+              <div className="space-y-6">
+                <div className="flex items-center mb-10">
+                  <Link to="/all-skills" className="text-indigo-600 hover:underline font-semibold text-base" style={{marginRight: 'auto'}}>
+                    + add skill
+                  </Link>
+                </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                 {/* Show only started skills, matching AllSkills logic */}
                 {(() => {
@@ -319,6 +326,7 @@ function Home() {
                     );
                   });
                 })()}
+              </div>
               </div>
             )}
 

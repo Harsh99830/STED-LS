@@ -734,7 +734,7 @@ export default function UserProfile() {
                                   </a>
                                 </>
                               )}
-                            </div>
+                          </div>
                         </div>
                       </motion.div>
                       ));

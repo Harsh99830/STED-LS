@@ -1011,11 +1011,11 @@ function Python() {
                   Cancel
                 </button>
                 <button
-                  className="px-6 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold text-base shadow-lg"
+                  className="px-6 py-2 rounded-xl bg-blue-700 text-white font-bold text-base shadow-lg"
                   onClick={() => setShowCustomProjectOverlay(false)}
                   disabled={selectedCustomConcepts.length === 0 || !customProjectTheme}
                 >
-                  Save
+                  Create
                 </button>
               </div>
             </motion.div>
