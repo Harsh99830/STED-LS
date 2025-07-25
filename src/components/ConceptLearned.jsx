@@ -5,9 +5,9 @@ import { useUser } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaChevronDown } from 'react-icons/fa';
 
-function ConceptLearned({ completedProjects = [] }) {
+function ConceptLearned({ completedProjects = [], skillName = 'python' }) {
   const [showOverlay, setShowOverlay] = useState(false);
-  const [allConcepts, setAllConcepts] = useState({ basic: [], intermediate: [], advanced: [] });
+  const [allConcepts, setAllConcepts] = useState({});
   const [learnedConcepts, setLearnedConcepts] = useState([]);
   const [checked, setChecked] = useState({});
   const [loading, setLoading] = useState(false);
@@ -34,6 +34,32 @@ function ConceptLearned({ completedProjects = [] }) {
   const [pointsHistoryLoading, setPointsHistoryLoading] = useState(false);
   const { user } = useUser();
 
+  // Skill configuration mapping
+  const skillConfig = {
+    python: {
+      conceptsPath: 'PythonProject/AllConcepts/category',
+      userPath: 'python',
+      displayName: 'Python'
+    },
+    powerbi: {
+      conceptsPath: 'PowerBiProject/AllConcepts/category',
+      userPath: 'powerbi',
+      displayName: 'Power BI'
+    },
+    'data-science': {
+      conceptsPath: 'DataScienceProject/AllConcepts/category',
+      userPath: 'data-science',
+      displayName: 'Data Science'
+    },
+    'public-speaking': {
+      conceptsPath: 'PublicSpeakingProject/AllConcepts/category',
+      userPath: 'public-speaking',
+      displayName: 'Public Speaking'
+    }
+  };
+
+  const currentSkillConfig = skillConfig[skillName] || skillConfig.python;
+
   // Fetch all concepts and user's learned concepts
   useEffect(() => {
     if (!user) return;
@@ -42,19 +68,20 @@ function ConceptLearned({ completedProjects = [] }) {
       setLoading(true);
       try {
         // Fetch all concepts
-        const allConceptsRef = ref(db, 'PythonProject/AllConcepts/category');
+        const allConceptsRef = ref(db, currentSkillConfig.conceptsPath);
         const allConceptsSnap = await get(allConceptsRef);
         if (allConceptsSnap.exists()) {
           const data = allConceptsSnap.val();
-          setAllConcepts({
-            basic: Object.values(data.basic || {}),
-            intermediate: Object.values(data.intermediate || {}),
-            advanced: Object.values(data.advanced || {}),
+          // Dynamically set categories based on what exists in Firebase
+          const categories = {};
+          Object.keys(data).forEach(category => {
+            categories[category] = Object.values(data[category] || {});
           });
+          setAllConcepts(categories);
         }
 
         // Fetch user's learned concepts
-        const userConceptsRef = ref(db, `users/${user.id}/python/learnedConcepts`);
+        const userConceptsRef = ref(db, `users/${user.id}/${currentSkillConfig.userPath}/learnedConcepts`);
         const userConceptsSnap = await get(userConceptsRef);
         if (userConceptsSnap.exists()) {
           const val = userConceptsSnap.val() || {};
@@ -158,7 +185,7 @@ function ConceptLearned({ completedProjects = [] }) {
       learnedConceptsObj[`${c.category}:${c.concept}`] = c;
     });
     try {
-      await update(ref(db, `users/${user.id}/python`), {
+      await update(ref(db, `users/${user.id}/${currentSkillConfig.userPath}`), {
         learnedConcepts: learnedConceptsObj,
       });
       setLearnedConcepts(Object.values(learnedConceptsObj));
@@ -177,19 +204,22 @@ function ConceptLearned({ completedProjects = [] }) {
     setOpenCategory(openCategory === category ? null : category);
   };
 
+  // Get available categories dynamically
+  const availableCategories = Object.keys(allConcepts);
+
   // Calculate progress
   const getCounts = (category) => {
-    const total = allConcepts[category].length;
+    const total = allConcepts[category] ? allConcepts[category].length : 0;
     const learned = learnedConcepts.filter((c) => c.category === category).length;
     return { total, learned };
   };
 
-  const basicCounts = getCounts('basic');
-  const intermediateCounts = getCounts('intermediate');
-  const advancedCounts = getCounts('advanced');
-
-  const totalLearned = basicCounts.learned + intermediateCounts.learned + advancedCounts.learned;
-  const totalConcepts = basicCounts.total + intermediateCounts.total + advancedCounts.total;
+  const totalLearned = availableCategories.reduce((sum, category) => {
+    return sum + getCounts(category).learned;
+  }, 0);
+  const totalConcepts = availableCategories.reduce((sum, category) => {
+    return sum + getCounts(category).total;
+  }, 0);
   const progressPercentage = totalConcepts > 0 ? (totalLearned / totalConcepts) * 100 : 0;
   
   const isLearned = (category, concept) => {
@@ -287,7 +317,7 @@ function ConceptLearned({ completedProjects = [] }) {
   const handleConceptClick = async (concept, category) => {
     try {
       // Fetch the learnedConcepts object to get sources for this concept
-      const learnedConceptsRef = ref(db, `users/${user.id}/python/learnedConcepts`);
+      const learnedConceptsRef = ref(db, `users/${user.id}/${currentSkillConfig.userPath}/learnedConcepts`);
       const learnedConceptsSnap = await get(learnedConceptsRef);
       
       let sources = [];
@@ -352,7 +382,7 @@ function ConceptLearned({ completedProjects = [] }) {
     setSavingStatus(true);
     try {
       // Get the existing learnedConcepts object
-      const learnedConceptsRef = ref(db, `users/${user.id}/python/learnedConcepts`);
+      const learnedConceptsRef = ref(db, `users/${user.id}/${currentSkillConfig.userPath}/learnedConcepts`);
       const learnedConceptsSnap = await get(learnedConceptsRef);
       
       let learnedConceptsData = {};
@@ -370,7 +400,7 @@ function ConceptLearned({ completedProjects = [] }) {
       };
       
       // Update the learnedConcepts object
-      await update(ref(db, `users/${user.id}/python/learnedConcepts`), {
+      await update(ref(db, `users/${user.id}/${currentSkillConfig.userPath}/learnedConcepts`), {
         [conceptKey]: updatedConceptData
       });
       
@@ -406,7 +436,7 @@ function ConceptLearned({ completedProjects = [] }) {
       };
       
       // Get the existing learnedConcepts object
-      const learnedConceptsRef = ref(db, `users/${user.id}/python/learnedConcepts`);
+      const learnedConceptsRef = ref(db, `users/${user.id}/${currentSkillConfig.userPath}/learnedConcepts`);
       const learnedConceptsSnap = await get(learnedConceptsRef);
       
       let learnedConceptsData = {};
@@ -435,7 +465,7 @@ function ConceptLearned({ completedProjects = [] }) {
       };
       
       // Update the learnedConcepts object
-      await update(ref(db, `users/${user.id}/python/learnedConcepts`), {
+      await update(ref(db, `users/${user.id}/${currentSkillConfig.userPath}/learnedConcepts`), {
         [conceptKey]: updatedConceptData
       });
       
@@ -553,7 +583,7 @@ function ConceptLearned({ completedProjects = [] }) {
       </div>
 
       <div className='pt-3 flex flex-col space-y-2'>
-        {['basic', 'intermediate', 'advanced'].map((category) => {
+        {availableCategories.map((category) => {
           const counts = getCounts(category);
           const categoryLearnedConcepts = learnedConcepts.filter((c) => c.category === category);
           const isOpen = openCategory === category;
@@ -659,11 +689,11 @@ function ConceptLearned({ completedProjects = [] }) {
               <div className="text-center py-8">Loading concepts...</div>
             ) : (
               <div className="space-y-6 max-h-[60vh] overflow-y-auto">
-                {['basic', 'intermediate', 'advanced'].map((cat) => (
+                {availableCategories.map((cat) => (
                   <div key={cat}>
                     <div className="font-semibold text-lg mb-2 capitalize">{cat}</div>
                     <div className="grid grid-cols-2 gap-3">
-                      {allConcepts[cat].map((concept) => (
+                      {(allConcepts[cat] || []).map((concept) => (
                         <label key={concept} className={`flex items-center gap-2 ${isLearned(cat, concept) ? 'cursor-not-allowed text-slate-400' : 'cursor-pointer'}`}>
                           <input
                             type="checkbox"
@@ -1105,7 +1135,7 @@ function ConceptLearned({ completedProjects = [] }) {
             </div>
 
             <div className='pt-3 flex flex-col space-y-2'>
-              {['basic', 'intermediate', 'advanced'].map((category) => {
+              {availableCategories.map((category) => {
                 const categoryConcepts = appliedConceptsData.filter(concept => concept.category === category);
                 const learnedConceptsInCategory = learnedConcepts.filter(concept => concept.category === category).length;
                 const appliedCount = categoryConcepts.length;

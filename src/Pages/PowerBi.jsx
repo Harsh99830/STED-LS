@@ -444,7 +444,7 @@ function PowerBi() {
               transition={{ duration: 0.5 }}
               className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
-              <ConceptLearned completedProjects={completedProjects} />
+              <ConceptLearned skillName="powerbi" completedProjects={completedProjects} />
             </motion.div>
 
             {/* Concept Status Box */}
