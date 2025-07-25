@@ -8,6 +8,8 @@ import { getDatabase, ref, get, update, onValue } from 'firebase/database';
 import { db } from '../firebase';
 import python from "../assets/python.png";
 import PowerBi from "../assets/PowerBi.png";
+// No image for pandas, use emoji
+const pandasIcon = <span className="text-2xl mr-2">🐼</span>;
 import { Link } from 'react-router-dom';
 import { useCallback } from 'react';
 
@@ -19,6 +21,7 @@ function Profile() {
         xp: 0,
         tasksCompleted: 0,
         python: {},
+        pandas: {},
         'data-science': {},
         'public-speaking': {},
         powerbi: {},
@@ -30,6 +33,7 @@ function Profile() {
     const [isObserving, setIsObserving] = useState(false);
     const [copiedProjectId, setCopiedProjectId] = useState(null);
     const [powerbiStats, setPowerbiStats] = useState({ learned: 0, applied: 0, total: 0 });
+    const [pandasStats, setPandasStats] = useState({ learned: 0, applied: 0, total: 0 });
 
     useEffect(() => {
         if (isLoaded && !isSignedIn) {
@@ -87,13 +91,11 @@ function Profile() {
             });
             // Fetch PowerBI stats (learned, applied, total)
             const fetchPowerbiStats = async () => {
-                // Get learned concepts
                 let learnedConcepts = (userData.powerbi?.learnedConcepts) || [];
                 if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                     learnedConcepts = Object.values(learnedConcepts);
                 }
                 const learned = learnedConcepts.length;
-                // Applied: count learned concepts that are used in any completed project
                 const conceptsUsed = new Set();
                 (Object.values(userData.powerbi?.PowerBiCompletedProjects || {})).forEach(project => {
                     if (project.conceptUsed) {
@@ -101,7 +103,6 @@ function Profile() {
                     }
                 });
                 const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
-                // Fetch total concepts from PowerBiProject/AllConcepts/category
                 let total = 0;
                 try {
                     const allConceptsSnap = await get(ref(db, 'PowerBiProject/AllConcepts/category'));
@@ -112,7 +113,32 @@ function Profile() {
                 } catch (e) {}
                 setPowerbiStats({ learned, applied, total });
             };
+            // Fetch Pandas stats (learned, applied, total)
+            const fetchPandasStats = async () => {
+                let learnedConcepts = (userData.pandas?.learnedConcepts) || [];
+                if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+                    learnedConcepts = Object.values(learnedConcepts);
+                }
+                const learned = learnedConcepts.length;
+                const conceptsUsed = new Set();
+                (Object.values(userData.pandas?.PandasCompletedProjects || {})).forEach(project => {
+                    if (project.conceptUsed) {
+                        project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+                    }
+                });
+                const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
+                let total = 0;
+                try {
+                    const allConceptsSnap = await get(ref(db, 'PandasProject/AllConcepts/category'));
+                    if (allConceptsSnap.exists()) {
+                        const data = allConceptsSnap.val();
+                        total = Object.values(data).reduce((acc, arr) => acc + Object.values(arr || {}).length, 0);
+                    }
+                } catch (e) {}
+                setPandasStats({ learned, applied, total });
+            };
             fetchPowerbiStats();
+            fetchPandasStats();
             return () => unsubscribe();
         }
     }, [isLoaded, isSignedIn, user, userData.powerbi]);
@@ -249,6 +275,7 @@ function Profile() {
                             'data-science': { node: 'data-science', currentProjectField: 'DataScienceCurrentProject', img: null, label: 'Data Science', icon: <span className="text-xl mr-2">📊</span>, route: '/data-science' },
                             'public-speaking': { node: 'public-speaking', currentProjectField: 'PublicSpeakingCurrentProject', img: null, label: 'Public Speaking', icon: <span className="text-xl mr-2">🎤</span>, route: '/public-speaking' },
                             'powerbi': { node: 'powerbi', currentProjectField: 'PowerBiCurrentProject', img: PowerBi, label: 'Power BI', route: '/powerbi' },
+                            'pandas': { node: 'pandas', currentProjectField: 'PandasCurrentProject', img: null, label: 'Pandas', icon: pandasIcon, route: '/pandas' },
                           };
                           const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
                             userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
@@ -261,13 +288,11 @@ function Profile() {
                                 // Calculate learned/applied and total for Python
                                 let learned = 0, applied = 0, total = 0;
                                 if (key === 'python') {
-                                  // Get learned concepts
                                   let learnedConcepts = userData.python?.learnedConcepts || [];
                                   if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                                     learnedConcepts = Object.values(learnedConcepts);
                                   }
                                   learned = learnedConcepts.length;
-                                  // Applied: count learned concepts that are used in any completed project
                                   const conceptsUsed = new Set();
                                   (Object.values(userData.python?.PythonCompletedProjects || {})).forEach(project => {
                                     if (project.conceptUsed) {
@@ -275,13 +300,16 @@ function Profile() {
                                     }
                                   });
                                   applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
-                                  total = 15 + 20 + 15; // basic + intermediate + advanced
+                                  total = 15 + 20 + 15;
                                 } else if (key === 'powerbi') {
                                   learned = powerbiStats.learned;
                                   applied = powerbiStats.applied;
                                   total = powerbiStats.total;
+                                } else if (key === 'pandas') {
+                                  learned = pandasStats.learned;
+                                  applied = pandasStats.applied;
+                                  total = pandasStats.total;
                                 } else {
-                                  // Placeholder for other skills
                                   learned = 8;
                                   applied = 2;
                                   total = 50;
@@ -348,6 +376,7 @@ function Profile() {
                                                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                                                     {project.skill === 'python' && <img src={python} alt="Python" className="w-6 h-6" />}
                                                     {project.skill === 'powerbi' && <img src={PowerBi} alt="Power BI" className="w-6 h-6" />}
+                                                    {project.skill === 'pandas' && <span className="text-2xl">🐼</span>}
                                                     {project.skill === 'data-science' && <span className="text-xl">📊</span>}
                                                     {project.skill === 'public-speaking' && <span className="text-xl">🎤</span>}
                                                 </div>

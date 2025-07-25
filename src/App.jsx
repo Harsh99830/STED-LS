@@ -15,6 +15,7 @@ import ProjectProtectedRoute from './components/ProjectProtectedRoute';
 import AllSkills from './Pages/AllSkills';
 import Project from './PythonProject/Project';
 import PowerBi from './Pages/PowerBi';
+import Pandas from './Pages/Pandas';
 import Profile from './Pages/Profile';
 import UserProfile from './Pages/UserProfile';
 import PublicPythonProject from './PythonProject/PublicPythonProject';
@@ -90,6 +91,15 @@ function App() {
         element={
           <SurveyProtectedRoute>
             <PowerBi />
+          </SurveyProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/pandas"
+        element={
+          <SurveyProtectedRoute>
+            <Pandas />
           </SurveyProtectedRoute>
         }
       />

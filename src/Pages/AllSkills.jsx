@@ -10,6 +10,8 @@ import { getDatabase, ref, get, update } from 'firebase/database';
 import { db } from '../firebase'; // make sure this path is correct
 import python from "../assets/python.png"
 import PowerBi from "../assets/PowerBi.png"
+// Placeholder icon for Pandas
+const pandasIcon = <span className="text-2xl">🐼</span>;
 
 
 function AllSkills() {
@@ -94,6 +96,12 @@ function AllSkills() {
             value: 'Project1',
             node: 'powerbi',
             currentProjectField: 'PowerBiCurrentProject',
+        },
+        'pandas': {
+            route: '/pandas',
+            value: 'Project1',
+            node: 'pandas',
+            currentProjectField: 'PandasCurrentProject',
         },
     };
 
@@ -241,6 +249,7 @@ function AllSkills() {
                                                                 {skill.key === 'powerbi' && <img style={{ width: "25px" }} src={PowerBi} alt="" />}
                                                                 {skill.key === 'public-speaking' && <span className="text-2xl">🎤</span>}
                                                                 {skill.key === 'data-science' && <span className="text-2xl">📊</span>}
+                                                                {skill.key === 'pandas' && pandasIcon}
                                                             </div>
                                                             <h3 className="text-xl font-semibold text-slate-800 ml-4">
                                                                 {skill.key.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
@@ -302,6 +311,7 @@ function AllSkills() {
                                                             {skill.key === 'powerbi' && <img style={{ width: "25px" }} src={PowerBi} alt="" />}
                                                             {skill.key === 'public-speaking' && <span className="text-2xl">🎤</span>}
                                                             {skill.key === 'data-science' && <span className="text-2xl">📊</span>}
+                                                            {skill.key === 'pandas' && pandasIcon}
                                                         </div>
                                                         <h3 className="text-xl font-semibold text-slate-800 ml-4">
                                                             {skill.key.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
@@ -313,6 +323,7 @@ function AllSkills() {
                                                         {skill.key === 'powerbi' && "Master Power BI for data visualization and business intelligence. Create stunning dashboards and reports."}
                                                         {skill.key === 'public-speaking' && "Master the art of public speaking with our comprehensive curriculum. Build confidence and communication skills."}
                                                         {skill.key === 'data-science' && "Learn data analysis, visualization, and machine learning. Transform raw data into meaningful insights."}
+                                                        {skill.key === 'pandas' && "Master data manipulation and analysis with Pandas. Learn to work with DataFrames, clean data, and perform powerful data operations in Python."}
                                                     </p>
 
                                                     <div className="flex items-center justify-between">

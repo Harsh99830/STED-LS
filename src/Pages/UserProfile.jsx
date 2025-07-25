@@ -5,6 +5,8 @@ import Navbar from '../components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import python from "../assets/python.png";
 import PowerBi from "../assets/PowerBi.png";
+// No image for pandas, use emoji
+const pandasIcon = <span className="text-2xl mr-2">🐼</span>;
 import learned from "../assets/learned.png";
 import applied from "../assets/applied.png";
 import { db } from '../firebase';
@@ -25,6 +27,7 @@ export default function UserProfile() {
   const [openAppliedCategory, setOpenAppliedCategory] = useState(null);
   const [copiedProjectId, setCopiedProjectId] = useState(null);
   const [powerbiStats, setPowerbiStats] = useState({ learned: 0, applied: 0, total: 0 });
+  const [pandasStats, setPandasStats] = useState({ learned: 0, applied: 0, total: 0 });
 
   useEffect(() => {
     async function fetchUser() {
@@ -60,7 +63,7 @@ export default function UserProfile() {
         if (snap.exists()) {
           const data = snap.val();
           // Map Firebase data to the same structure as Alex Chen
-          const skills = ['python', 'powerbi', 'data-science', 'public-speaking'].filter(k => data[k]);
+          const skills = ['python', 'powerbi', 'pandas', 'data-science', 'public-speaking'].filter(k => data[k]);
           const projectHistory = data.projectHistory || [];
           setUserData({
             id,
@@ -78,9 +81,11 @@ export default function UserProfile() {
             projectHistory,
             python: data.python || {},
             powerbi: data.powerbi || {},
+            pandas: data.pandas || {},
             'data-science': data['data-science'] || {},
             'public-speaking': data['public-speaking'] || {},
           });
+// (Removed misplaced useEffect from inside fetchUser)
         } else {
           setUserData(null);
         }
@@ -118,7 +123,32 @@ export default function UserProfile() {
       } catch (e) {}
       setPowerbiStats({ learned, applied, total });
     }
+    async function fetchPandasStats() {
+      if (!userData || !userData.pandas) return;
+      let learnedConcepts = userData.pandas?.learnedConcepts || [];
+      if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+        learnedConcepts = Object.values(learnedConcepts);
+      }
+      const learned = learnedConcepts.length;
+      const conceptsUsed = new Set();
+      (Object.values(userData.pandas?.PandasCompletedProjects || {})).forEach(project => {
+        if (project.conceptUsed) {
+          project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+        }
+      });
+      const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
+      let total = 0;
+      try {
+        const allConceptsSnap = await get(ref(db, 'PandasProject/AllConcepts/category'));
+        if (allConceptsSnap.exists()) {
+          const data = allConceptsSnap.val();
+          total = Object.values(data).reduce((acc, arr) => acc + Object.values(arr || {}).length, 0);
+        }
+      } catch (e) {}
+      setPandasStats({ learned, applied, total });
+    }
     fetchPowerbiStats();
+    fetchPandasStats();
   }, [userData]);
 
   useEffect(() => {
@@ -549,10 +579,11 @@ export default function UserProfile() {
               <>
                 {(() => {
                   const skillMap = {
-                    'python': { node: 'python', currentProjectField: 'PythonCurrentProject' },
-                    'data-science': { node: 'data-science', currentProjectField: 'DataScienceCurrentProject' },
-                    'public-speaking': { node: 'public-speaking', currentProjectField: 'PublicSpeakingCurrentProject' },
-                    'powerbi': { node: 'powerbi', currentProjectField: 'PowerBiCurrentProject' },
+                    'python': { node: 'python', currentProjectField: 'PythonCurrentProject', img: python, label: 'Python', route: '/python' },
+                    'data-science': { node: 'data-science', currentProjectField: 'DataScienceCurrentProject', img: null, label: 'Data Science', icon: <span className="text-xl mr-2">📊</span>, route: '/data-science' },
+                    'public-speaking': { node: 'public-speaking', currentProjectField: 'PublicSpeakingCurrentProject', img: null, label: 'Public Speaking', icon: <span className="text-xl mr-2">🎤</span>, route: '/public-speaking' },
+                    'powerbi': { node: 'powerbi', currentProjectField: 'PowerBiCurrentProject', img: PowerBi, label: 'Power BI', route: '/powerbi' },
+                    'pandas': { node: 'pandas', currentProjectField: 'PandasCurrentProject', img: null, label: 'Pandas', icon: pandasIcon, route: '/pandas' },
                   };
                   const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
                     userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
@@ -570,6 +601,21 @@ export default function UserProfile() {
                             label: 'Python',
                             route: '/python',
                           },
+                          'powerbi': {
+                            node: 'powerbi',
+                            currentProjectField: 'PowerBiCurrentProject',
+                            img: PowerBi,
+                            label: 'Power BI',
+                            route: '/powerbi',
+                          },
+                          'pandas': {
+                            node: 'pandas',
+                            currentProjectField: 'PandasCurrentProject',
+                            img: null,
+                            label: 'Pandas',
+                            icon: <span className="text-2xl mr-2">🐼</span>,
+                            route: '/pandas',
+                          },
                           'data-science': {
                             node: 'data-science',
                             currentProjectField: 'DataScienceCurrentProject',
@@ -586,13 +632,6 @@ export default function UserProfile() {
                             icon: <span className="text-xl mr-2">🎤</span>,
                             route: '/public-speaking',
                           },
-                          'powerbi': {
-                            node: 'powerbi',
-                            currentProjectField: 'PowerBiCurrentProject',
-                            img: PowerBi,
-                            label: 'Power BI',
-                            route: '/powerbi',
-                          },
                         };
                         const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
                           userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
@@ -607,7 +646,6 @@ export default function UserProfile() {
                               learnedConcepts = Object.values(learnedConcepts);
                             }
                             learned = learnedConcepts.length;
-                            // Applied: count learned concepts that are used in any completed project
                             const conceptsUsed = new Set();
                             (Object.values(userData.python?.PythonCompletedProjects || {})).forEach(project => {
                               if (project.conceptUsed) {
@@ -615,13 +653,16 @@ export default function UserProfile() {
                               }
                             });
                             applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
-                            total = 15 + 20 + 15; // basic + intermediate + advanced
+                            total = 15 + 20 + 15;
                           } else if (key === 'powerbi') {
                             learned = powerbiStats.learned;
                             applied = powerbiStats.applied;
                             total = powerbiStats.total;
+                          } else if (key === 'pandas') {
+                            learned = pandasStats.learned;
+                            applied = pandasStats.applied;
+                            total = pandasStats.total;
                           } else {
-                            // Placeholder for other skills
                             learned = 8;
                             applied = 2;
                             total = 50;

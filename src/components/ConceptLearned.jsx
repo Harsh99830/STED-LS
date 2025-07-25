@@ -46,6 +46,11 @@ function ConceptLearned({ completedProjects = [], skillName = 'python' }) {
       userPath: 'powerbi',
       displayName: 'Power BI'
     },
+    pandas: {
+      conceptsPath: 'PandasProject/AllConcepts/category',
+      userPath: 'pandas',
+      displayName: 'Pandas'
+    },
     'data-science': {
       conceptsPath: 'DataScienceProject/AllConcepts/category',
       userPath: 'data-science',

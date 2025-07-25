@@ -24,6 +24,51 @@ function Home() {
   const [pythonProjects, setPythonProjects] = useState([]);
   const [powerbiStats, setPowerbiStats] = useState({ learned: 0, applied: 0, total: 0 });
   const [powerbiProjects, setPowerbiProjects] = useState([]);
+  const [pandasStats, setPandasStats] = useState({ learned: 0, applied: 0, total: 0 });
+  const [pandasProjects, setPandasProjects] = useState([]);
+  useEffect(() => {
+    if (isLoaded && isSignedIn && user?.id) {
+      // Fetch Pandas completed projects
+      const completedPandasProjectsRef = ref(db, 'users/' + user.id + '/pandas/PandasCompletedProjects');
+      get(completedPandasProjectsRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const projects = Object.values(snapshot.val() || {});
+          setPandasProjects(projects);
+        } else {
+          setPandasProjects([]);
+        }
+      });
+      // Fetch Pandas learned/applied concepts and total concepts
+      get(ref(db, 'users/' + user.id)).then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          let learnedConcepts = data.pandas?.learnedConcepts || [];
+          if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+            learnedConcepts = Object.values(learnedConcepts);
+          }
+          const learned = learnedConcepts.length;
+          // Applied: count learned concepts that are used in any completed project
+          const conceptsUsed = new Set();
+          (Object.values(data.pandas?.PandasCompletedProjects || {})).forEach(project => {
+            if (project.conceptUsed) {
+              project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+            }
+          });
+          const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
+          // Fetch total concepts from PandasProject/AllConcepts/category
+          get(ref(db, 'PandasProject/AllConcepts/category')).then((allConceptsSnap) => {
+            let total = 0;
+            if (allConceptsSnap.exists()) {
+              const data = allConceptsSnap.val();
+              total = Object.values(data).reduce((acc, arr) => acc + Object.values(arr || {}).length, 0);
+            }
+            setPandasStats({ learned, applied, total });
+          });
+        }
+      });
+    }
+  }, [isLoaded, isSignedIn, user]);
+  const pandasIcon = <span className="text-2xl mr-2">🐼</span>;
 
   // Add calculateSkillSP at the top level inside Home
   const calculateSkillSP = (skillKey) => {
@@ -283,7 +328,7 @@ function Home() {
                     + add skill
                   </Link>
                 </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6" style={{maxHeight: '66vh', overflowY: 'auto'}}>
                 {/* Show only started skills, matching AllSkills logic */}
                 {(() => {
                   const skillMap = {
@@ -292,14 +337,14 @@ function Home() {
                       node: 'python',
                       currentProjectField: 'PythonCurrentProject',
                       img: python,
-                      label: 'Python Learning',
+                      label: 'Python',
                     },
                     'data-science': {
                       route: '/data-science',
                       node: 'data-science',
                       currentProjectField: 'DataScienceCurrentProject',
                       img: null,
-                      label: 'Data Science Learning',
+                      label: 'Data Science',
                       icon: <span className="text-xl mr-2">📊</span>,
                     },
                     'public-speaking': {
@@ -315,7 +360,15 @@ function Home() {
                       node: 'powerbi',
                       currentProjectField: 'PowerBiCurrentProject',
                       img: PowerBi,
-                      label: 'Power BI Learning',
+                      label: 'Power BI',
+                    },
+                    'pandas': {
+                      route: '/pandas',
+                      node: 'pandas',
+                      currentProjectField: 'PandasCurrentProject',
+                      img: null,
+                      label: 'Pandas',
+                      icon: pandasIcon,
                     },
                   };
                   const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
@@ -344,6 +397,10 @@ function Home() {
                       learned = powerbiStats.learned;
                       applied = powerbiStats.applied;
                       total = powerbiStats.total;
+                    } else if (key === 'pandas') {
+                      learned = pandasStats.learned;
+                      applied = pandasStats.applied;
+                      total = pandasStats.total;
                     }
                     return (
                       <Link to={skill.route} key={key}>
@@ -439,6 +496,10 @@ function Home() {
                         node: 'powerbi',
                         currentProjectField: 'PowerBiCurrentProject',
                       },
+                      'pandas': {
+                        node: 'pandas',
+                        currentProjectField: 'PandasCurrentProject',
+                      },
                     };
                     const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
                       userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
@@ -485,6 +546,11 @@ function Home() {
                         node: 'powerbi',
                         currentProjectField: 'PowerBiCurrentProject',
                         label: 'Power BI',
+                      },
+                      'pandas': {
+                        node: 'pandas',
+                        currentProjectField: 'PandasCurrentProject',
+                        label: 'Pandas',
                       },
                     };
                     const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
