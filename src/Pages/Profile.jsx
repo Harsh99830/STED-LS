@@ -9,6 +9,7 @@ import { db } from '../firebase';
 import python from "../assets/python.png";
 import PowerBi from "../assets/PowerBi.png";
 import { Link } from 'react-router-dom';
+import { useCallback } from 'react';
 
 function Profile() {
     const navigate = useNavigate();
@@ -28,6 +29,7 @@ function Profile() {
     const [isLoading, setIsLoading] = useState(true);
     const [isObserving, setIsObserving] = useState(false);
     const [copiedProjectId, setCopiedProjectId] = useState(null);
+    const [powerbiStats, setPowerbiStats] = useState({ learned: 0, applied: 0, total: 0 });
 
     useEffect(() => {
         if (isLoaded && !isSignedIn) {
@@ -83,9 +85,37 @@ function Profile() {
                 }
                 setIsLoading(false);
             });
+            // Fetch PowerBI stats (learned, applied, total)
+            const fetchPowerbiStats = async () => {
+                // Get learned concepts
+                let learnedConcepts = (userData.powerbi?.learnedConcepts) || [];
+                if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+                    learnedConcepts = Object.values(learnedConcepts);
+                }
+                const learned = learnedConcepts.length;
+                // Applied: count learned concepts that are used in any completed project
+                const conceptsUsed = new Set();
+                (Object.values(userData.powerbi?.PowerBiCompletedProjects || {})).forEach(project => {
+                    if (project.conceptUsed) {
+                        project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+                    }
+                });
+                const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
+                // Fetch total concepts from PowerBiProject/AllConcepts/category
+                let total = 0;
+                try {
+                    const allConceptsSnap = await get(ref(db, 'PowerBiProject/AllConcepts/category'));
+                    if (allConceptsSnap.exists()) {
+                        const data = allConceptsSnap.val();
+                        total = Object.values(data).reduce((acc, arr) => acc + Object.values(arr || {}).length, 0);
+                    }
+                } catch (e) {}
+                setPowerbiStats({ learned, applied, total });
+            };
+            fetchPowerbiStats();
             return () => unsubscribe();
         }
-    }, [isLoaded, isSignedIn, user]);
+    }, [isLoaded, isSignedIn, user, userData.powerbi]);
 
     const handleObserve = async () => {
         if (!user || !isSignedIn) return;
@@ -246,6 +276,10 @@ function Profile() {
                                   });
                                   applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
                                   total = 15 + 20 + 15; // basic + intermediate + advanced
+                                } else if (key === 'powerbi') {
+                                  learned = powerbiStats.learned;
+                                  applied = powerbiStats.applied;
+                                  total = powerbiStats.total;
                                 } else {
                                   // Placeholder for other skills
                                   learned = 8;

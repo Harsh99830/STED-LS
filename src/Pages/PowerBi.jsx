@@ -115,11 +115,8 @@ function PowerBi() {
       let totalConcepts = 0;
       if (allConceptsSnap.exists()) {
         const data = allConceptsSnap.val();
-        totalConcepts = [
-          ...Object.values(data.basic || {}),
-          ...Object.values(data.intermediate || {}),
-          ...Object.values(data.advanced || {}),
-        ].length;
+        // Sum all concepts in all categories (dynamic, not just basic/intermediate/advanced)
+        totalConcepts = Object.values(data).reduce((acc, arr) => acc + Object.values(arr || {}).length, 0);
       }
     
       // Get learned concepts

@@ -24,6 +24,7 @@ export default function UserProfile() {
   const [openLearnedCategory, setOpenLearnedCategory] = useState(null);
   const [openAppliedCategory, setOpenAppliedCategory] = useState(null);
   const [copiedProjectId, setCopiedProjectId] = useState(null);
+  const [powerbiStats, setPowerbiStats] = useState({ learned: 0, applied: 0, total: 0 });
 
   useEffect(() => {
     async function fetchUser() {
@@ -88,6 +89,37 @@ export default function UserProfile() {
     }
     fetchUser();
   }, [id]);
+
+  useEffect(() => {
+    async function fetchPowerbiStats() {
+      if (!userData || !userData.powerbi) return;
+      // Get learned concepts
+      let learnedConcepts = userData.powerbi?.learnedConcepts || [];
+      if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+        learnedConcepts = Object.values(learnedConcepts);
+      }
+      const learned = learnedConcepts.length;
+      // Applied: count learned concepts that are used in any completed project
+      const conceptsUsed = new Set();
+      (Object.values(userData.powerbi?.PowerBiCompletedProjects || {})).forEach(project => {
+        if (project.conceptUsed) {
+          project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+        }
+      });
+      const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
+      // Fetch total concepts from PowerBiProject/AllConcepts/category
+      let total = 0;
+      try {
+        const allConceptsSnap = await get(ref(db, 'PowerBiProject/AllConcepts/category'));
+        if (allConceptsSnap.exists()) {
+          const data = allConceptsSnap.val();
+          total = Object.values(data).reduce((acc, arr) => acc + Object.values(arr || {}).length, 0);
+        }
+      } catch (e) {}
+      setPowerbiStats({ learned, applied, total });
+    }
+    fetchPowerbiStats();
+  }, [userData]);
 
   useEffect(() => {
     if (selectedSkill) {
@@ -584,6 +616,10 @@ export default function UserProfile() {
                             });
                             applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
                             total = 15 + 20 + 15; // basic + intermediate + advanced
+                          } else if (key === 'powerbi') {
+                            learned = powerbiStats.learned;
+                            applied = powerbiStats.applied;
+                            total = powerbiStats.total;
                           } else {
                             // Placeholder for other skills
                             learned = 8;
