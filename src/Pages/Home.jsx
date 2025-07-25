@@ -20,8 +20,10 @@ function Home() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const navigate = useNavigate();
   const [pythonSP, setPythonSP] = useState(0);
-  const [pythonStats, setPythonStats] = useState({ learned: 0, applied: 0 });
+  const [pythonStats, setPythonStats] = useState({ learned: 0, applied: 0, total: 0 });
   const [pythonProjects, setPythonProjects] = useState([]);
+  const [powerbiStats, setPowerbiStats] = useState({ learned: 0, applied: 0, total: 0 });
+  const [powerbiProjects, setPowerbiProjects] = useState([]);
 
   // Add calculateSkillSP at the top level inside Home
   const calculateSkillSP = (skillKey) => {
@@ -154,7 +156,7 @@ function Home() {
         }
       });
 
-      // Fetch Python learned/applied concepts
+      // Fetch Python learned/applied concepts and total concepts
       get(userRef).then((snapshot) => {
         if (snapshot.exists()) {
           const data = snapshot.val();
@@ -171,7 +173,58 @@ function Home() {
             }
           });
           const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
-          setPythonStats({ learned, applied });
+          // Fetch total concepts from PythonProject/AllConcepts/category
+          get(ref(db, 'PythonProject/AllConcepts/category')).then((allConceptsSnap) => {
+            let total = 0;
+            if (allConceptsSnap.exists()) {
+              const data = allConceptsSnap.val();
+              total = [
+                ...Object.values(data.basic || {}),
+                ...Object.values(data.intermediate || {}),
+                ...Object.values(data.advanced || {}),
+              ].length;
+            }
+            setPythonStats({ learned, applied, total });
+          });
+        }
+      });
+
+      // Fetch PowerBI completed projects
+      const completedPowerbiProjectsRef = ref(db, 'users/' + user.id + '/powerbi/PowerBiCompletedProjects');
+      get(completedPowerbiProjectsRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const projects = Object.values(snapshot.val() || {});
+          setPowerbiProjects(projects);
+        } else {
+          setPowerbiProjects([]);
+        }
+      });
+      // Fetch PowerBI learned/applied concepts and total concepts
+      get(ref(db, 'users/' + user.id)).then((snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          let learnedConcepts = data.powerbi?.learnedConcepts || [];
+          if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+            learnedConcepts = Object.values(learnedConcepts);
+          }
+          const learned = learnedConcepts.length;
+          // Applied: count learned concepts that are used in any completed project
+          const conceptsUsed = new Set();
+          (Object.values(data.powerbi?.PowerBiCompletedProjects || {})).forEach(project => {
+            if (project.conceptUsed) {
+              project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+            }
+          });
+          const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
+          // Fetch total concepts from PowerBiProject/AllConcepts/category
+          get(ref(db, 'PowerBiProject/AllConcepts/category')).then((allConceptsSnap) => {
+            let total = 0;
+            if (allConceptsSnap.exists()) {
+              const data = allConceptsSnap.val();
+              total = Object.values(data).reduce((acc, arr) => acc + Object.values(arr || {}).length, 0);
+            }
+            setPowerbiStats({ learned, applied, total });
+          });
         }
       });
     }
@@ -281,18 +334,16 @@ function Home() {
                     );
                   }
                   return startedSkills.map(([key, skill]) => {
-                    // Calculate learned/applied and total for Python
+                    // Calculate learned/applied and total for Python and PowerBI
                     let learned = 0, applied = 0, total = 0;
                     if (key === 'python') {
                       learned = pythonStats.learned;
                       applied = pythonStats.applied;
-                      // Total concepts for Python from Concepts.json
-                      total = 15 + 20 + 15; // basic + intermediate + advanced
-                    } else {
-                      // Placeholder for other skills
-                      learned = 8;
-                      applied = 2;
-                      total = 50;
+                      total = pythonStats.total;
+                    } else if (key === 'powerbi') {
+                      learned = powerbiStats.learned;
+                      applied = powerbiStats.applied;
+                      total = powerbiStats.total;
                     }
                     return (
                       <Link to={skill.route} key={key}>
