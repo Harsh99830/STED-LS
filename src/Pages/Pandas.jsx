@@ -280,7 +280,7 @@ function Pandas() {
           {/* Header Section */}
            
               <div className="text-left mt-6">
-                <h1 className="text-3xl font-bold text-slate-800">Power BI</h1>
+                <h1 className="text-3xl font-bold text-slate-800">Pandas</h1>
             </div>
           
 
