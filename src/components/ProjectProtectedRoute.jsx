@@ -1,39 +1,47 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { ref, get } from 'firebase/database';
 import { db } from '../firebase';
 
 const ProjectProtectedRoute = ({ children }) => {
   const { isLoaded, isSignedIn, user } = useUser();
+  const location = useLocation();
   const [projectStarted, setProjectStarted] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkProjectStatus = async () => {
-      if (isLoaded && isSignedIn && user) {
-        try {
-          const userRef = ref(db, `users/${user.id}/python`);
-          const snapshot = await get(userRef);
-          if (snapshot.exists()) {
-            const userData = snapshot.val();
-            setProjectStarted(userData.PythonProjectStarted === true);
-          } else {
+      // Only check Python project status for /python/project
+      if (location.pathname === '/python/project') {
+        if (isLoaded && isSignedIn && user) {
+          try {
+            const userRef = ref(db, `users/${user.id}/python`);
+            const snapshot = await get(userRef);
+            if (snapshot.exists()) {
+              const userData = snapshot.val();
+              setProjectStarted(userData.PythonProjectStarted === true);
+            } else {
+              setProjectStarted(false);
+            }
+          } catch (error) {
+            console.error('Error checking project status:', error);
             setProjectStarted(false);
           }
-        } catch (error) {
-          console.error('Error checking project status:', error);
+          setLoading(false);
+        } else if (isLoaded && !isSignedIn) {
           setProjectStarted(false);
+          setLoading(false);
         }
-        setLoading(false);
-      } else if (isLoaded && !isSignedIn) {
-        setProjectStarted(false);
+      } else {
+        // For other routes (e.g., /pandas/project), always allow
+        setProjectStarted(true);
         setLoading(false);
       }
     };
 
     checkProjectStatus();
-  }, [isLoaded, isSignedIn, user]);
+  }, [isLoaded, isSignedIn, user, location.pathname]);
 
   if (!isLoaded || loading) {
     return (

@@ -16,6 +16,7 @@ import AllSkills from './Pages/AllSkills';
 import Project from './PythonProject/Project';
 import PowerBi from './Pages/PowerBi';
 import Pandas from './Pages/Pandas';
+import PandasProject from './PandasProject/Project';
 import Profile from './Pages/Profile';
 import UserProfile from './Pages/UserProfile';
 import PublicPythonProject from './PythonProject/PublicPythonProject';
@@ -108,6 +109,14 @@ function App() {
         element={
           <ProjectProtectedRoute>
             <Project />
+          </ProjectProtectedRoute>
+        }
+      />
+      <Route
+        path="/pandas/project"
+        element={
+          <ProjectProtectedRoute>
+            <PandasProject />
           </ProjectProtectedRoute>
         }
       />
