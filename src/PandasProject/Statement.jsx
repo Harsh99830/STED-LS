@@ -22,43 +22,27 @@ function Statement({ userCode, taskCheckStatus, setTaskCheckStatus, subtaskCheck
   const [hoveredReason, setHoveredReason] = useState({ taskKey: null, subIdx: null, left: false });
 
   useEffect(() => {
-    async function fetchProjectKeyAndData() {
-      if (!isLoaded || !isSignedIn || !user) return;
+    async function fetchProjectData() {
       setLoading(true);
       setError('');
       try {
-        // Get user's pandas.PandasCurrentProject
-        const userRef = ref(db, 'users/' + user.id + '/pandas');
-        const userSnap = await get(userRef);
-        if (!userSnap.exists()) {
-          setError('No Pandas project started.');
+        // Fetch PandasProject/Project1 from Firebase
+        const projectRef = ref(db, 'PandasProject/Project1');
+        const projectSnap = await get(projectRef);
+        if (!projectSnap.exists()) {
+          setError('Pandas project not found.');
           setLoading(false);
           return;
         }
-        const userData = userSnap.val();
-        const startedKey = userData.PandasCurrentProject;
-        setProjectKey(startedKey);
-        if (!startedKey) {
-          setError('No Pandas project started.');
-          setLoading(false);
-          return;
-        }
-        // Get project data using utility
-        const projectData = await getProjectConfig(startedKey, 'pandas');
-        if (!projectData) {
-          setError('Project not found.');
-          setLoading(false);
-          return;
-        }
-        setProject(projectData);
+        setProject(projectSnap.val());
         setLoading(false);
       } catch (err) {
         setError('Failed to load project: ' + err.message);
         setLoading(false);
       }
     }
-    fetchProjectKeyAndData();
-  }, [isLoaded, isSignedIn, user]);
+    fetchProjectData();
+  }, []);
 
   // Close overlay on outside click
   useEffect(() => {
