@@ -6,7 +6,7 @@ import Colab from './Colab';
 function Project() {
   const [rightPanel, setRightPanel] = useState('statement');
   const [chatMessages, setChatMessages] = useState([]);
-  const [userCode] = useState(''); // No code editor, so keep empty
+  const [userCode, setUserCode] = useState(''); // Will be populated from Colab
   const [taskCheckStatus, setTaskCheckStatus] = useState({});
   const [subtaskCheckResults, setSubtaskCheckResults] = useState({});
   const [expandedTask, setExpandedTask] = useState(null);
@@ -15,7 +15,7 @@ function Project() {
     <div className="flex h-screen pt-12 p-3 bg-[#0F0F0F] w-screen">
       {/* Left side - Colab Panel */}
       <div className="w-280 border border-white h-full text-white border-white">
-        <Colab/>
+        <Colab setUserCode={setUserCode}/>
         </div>
       {/* Right side - Statement / AI Panel */}
       <div

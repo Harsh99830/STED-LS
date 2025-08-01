@@ -1,3 +1,14 @@
+import { getPandasProjectConfig, checkTasksAndSubtasksGemini } from './projectConfig';
+import tick from '../assets/applied.png';
+import cross from '../assets/cross.png';
+// Helper to flatten all code cells into a single string
+function getAllCodeFromCells(cells) {
+  if (!Array.isArray(cells)) return '';
+  return cells.filter(cell => cell.cell_type === 'code').map(cell => cell.source.join('')).join('\n');
+}
+// State for subtask check results
+// We'll use a map: { [taskKey_subIdx]: { isComplete, reason } }
+// and a map for loading: { [taskKey_subIdx]: boolean }
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { ref, update, get } from 'firebase/database';
@@ -92,15 +103,74 @@ function renderNotebookCells(cells) {
   });
 }
 
-function Colab() {
+function Colab({ setUserCode }) {
   const { user } = useUser();
   const [colabLink, setColabLink] = useState('');
   const [savedLink, setSavedLink] = useState('');
   const [showSaved, setShowSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [notebookCells, setNotebookCells] = useState(null);
+  const [notebookCells, setNotebookCells] = useState(() => {
+    // Try to restore notebookCells from localStorage
+    try {
+      const saved = localStorage.getItem('notebookCells');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [lastNotebookCells, setLastNotebookCells] = useState(() => {
+    // Store the previous notebook cells for change detection
+    try {
+      const saved = localStorage.getItem('notebookCells');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [numChanges, setNumChanges] = useState(0);
   const [loadingNotebook, setLoadingNotebook] = useState(false);
+
+  // Subtask check state
+  const [checkResults, setCheckResults] = useState({});
+  const [checking, setChecking] = useState({});
+  const [checkError, setCheckError] = useState({});
+  const [projectConfig, setProjectConfig] = useState(null);
+
+  // Fetch project config on mount
+  useEffect(() => {
+    async function fetchConfig() {
+      const config = await getPandasProjectConfig('Project1');
+      setProjectConfig(config);
+    }
+    fetchConfig();
+  }, []);
+
+  // Handler for checking a subtask using Gemini
+  const handleGeminiCheck = async (taskKey, subIdx, subDesc) => {
+    if (!notebookCells) return;
+    setChecking(prev => ({ ...prev, [`${taskKey}_${subIdx}`]: true }));
+    setCheckError(prev => ({ ...prev, [`${taskKey}_${subIdx}`]: '' }));
+    try {
+      const userCode = getAllCodeFromCells(notebookCells);
+      const result = await checkTasksAndSubtasksGemini(userCode, projectConfig);
+      const isComplete = result[taskKey]?.completed?.includes(subDesc);
+      const reason = result[taskKey]?.reasons?.[subDesc] || '';
+      setCheckResults(prev => ({ ...prev, [`${taskKey}_${subIdx}`]: { isComplete, reason } }));
+    } catch (e) {
+      setCheckError(prev => ({ ...prev, [`${taskKey}_${subIdx}`]: 'Check failed. Try again.' }));
+    } finally {
+      setChecking(prev => ({ ...prev, [`${taskKey}_${subIdx}`]: false }));
+    }
+  };
+
+  // Update parent's userCode whenever notebookCells change
+  useEffect(() => {
+    if (notebookCells && setUserCode) {
+      const code = getAllCodeFromCells(notebookCells);
+      setUserCode(code);
+    }
+  }, [notebookCells, setUserCode]);
 
   // Fetch saved link on mount
   useEffect(() => {
@@ -162,14 +232,33 @@ function Colab() {
     setError('');
     setNotebookCells(null);
     setLoadingNotebook(true);
-    // Add a delay to allow Google Drive to sync changes
-    await new Promise(resolve => setTimeout(resolve, 3000)); // 3 seconds
+    // No delay, fetch immediately
     try {
       const driveId = extractDriveIdFromColabUrl(savedLink);
       if (!driveId) throw new Error('Invalid Colab link.');
       const notebook = await fetchColabNotebookJson(driveId);
       if (!notebook.cells) throw new Error('No code cells found in notebook.');
+      // Compare with previous notebookCells to count changes
+      let changes = 0;
+      if (notebookCells && Array.isArray(notebook.cells) && Array.isArray(notebookCells)) {
+        // Count changed cells by comparing source
+        changes = notebook.cells.reduce((acc, cell, idx) => {
+          if (!notebookCells[idx]) return acc + 1;
+          if (cell.source && notebookCells[idx].source && cell.source.join('') !== notebookCells[idx].source.join('')) return acc + 1;
+          return acc;
+        }, 0);
+        // Also count new cells added
+        if (notebook.cells.length > notebookCells.length) {
+          changes += notebook.cells.length - notebookCells.length;
+        }
+      } else if (notebookCells === null && notebook.cells) {
+        changes = notebook.cells.length;
+      }
+      setNumChanges(changes);
+      setLastNotebookCells(notebookCells);
       setNotebookCells(notebook.cells);
+      // Save to localStorage for persistence
+      localStorage.setItem('notebookCells', JSON.stringify(notebook.cells));
     } catch (err) {
       setError('Could not fetch notebook: ' + err.message);
     } finally {
@@ -179,8 +268,7 @@ function Colab() {
 
   return (
     <div
-      className="h-full border border-white text-white flex flex-col p-4 bg-[#18181b]"
-      style={{ width: '350px', minWidth: '350px', maxWidth: '350px', borderRadius: 0, flexShrink: 0 }}
+      className="h-full p-20 border border-white text-white flex flex-col p-4 bg-[#18181b]"
     >
       <h2 className="text-xl font-bold mb-4 text-purple-300">Colab</h2>
       <div className="mb-4">
@@ -215,12 +303,77 @@ function Colab() {
             Saved! <a href={savedLink} target="_blank" rel="noopener noreferrer" className="underline text-purple-300">Open Colab</a>
           </div>
         )}
+        {numChanges > 0 && (
+          <div className="mt-2 text-green-400 text-sm font-bold">{numChanges} change{numChanges > 1 ? 's' : ''} made in Colab</div>
+        )}
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 text-left overflow-y-auto">
         {notebookCells ? (
           <div>
             <h3 className="text-lg font-semibold mb-2 text-purple-200">Notebook Preview</h3>
             {renderNotebookCells(notebookCells)}
+            {/* Subtask check UI */}
+            {projectConfig && projectConfig.tasks && (
+              <div className="mt-8">
+                <h4 className="text-base font-bold mb-2 text-purple-300">Subtask Checker</h4>
+                {Object.entries(projectConfig.tasks).map(([taskKey, task]) => {
+                  const isChecking = checking[taskKey];
+                  const taskResult = checkResults[taskKey];
+                  const errorMsg = checkError[taskKey];
+                  // Determine if all subtasks are done
+                  const allDone = taskResult && task.subtasks && task.subtasks.every(sub => taskResult.completed?.includes(sub));
+                  return (
+                    <div key={taskKey} className="mb-4 p-4 rounded bg-[#23232a] border border-gray-700">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-semibold text-white text-lg">{task.title || taskKey}</div>
+                        <button
+                          className={`px-4 py-1 rounded text-sm font-semibold ${taskResult ? (allDone ? 'bg-green-700 text-white' : 'bg-red-700 text-white') : 'bg-purple-700 text-white'} ${isChecking ? 'opacity-60' : ''}`}
+                          style={{ minWidth: 80 }}
+                          disabled={isChecking}
+                          onClick={async () => {
+                            if (!notebookCells) return;
+                            setChecking(prev => ({ ...prev, [taskKey]: true }));
+                            setCheckError(prev => ({ ...prev, [taskKey]: '' }));
+                            try {
+                              const userCode = getAllCodeFromCells(notebookCells);
+                              const result = await checkTasksAndSubtasksGemini(userCode, projectConfig);
+                              setCheckResults(prev => ({ ...prev, [taskKey]: result[taskKey] }));
+                            } catch (e) {
+                              setCheckError(prev => ({ ...prev, [taskKey]: 'Check failed. Try again.' }));
+                            } finally {
+                              setChecking(prev => ({ ...prev, [taskKey]: false }));
+                            }
+                          }}
+                        >
+                          {isChecking ? 'Checking...' : taskResult ? (allDone ? '✓ All Done' : '✗ Not Done') : 'Check'}
+                        </button>
+                        {taskResult && (
+                          <img src={allDone ? tick : cross} alt={allDone ? 'Done' : 'Not Done'} style={{ width: 24, height: 24, marginLeft: 12 }} />
+                        )}
+                      </div>
+                      <ul className="space-y-2 mt-2">
+                        {task.subtasks && task.subtasks.map((subDesc, subIdx) => {
+                          const isComplete = taskResult?.completed?.includes(subDesc);
+                          const reason = taskResult?.reasons?.[subDesc] || '';
+                          return (
+                            <li key={subIdx} className="flex items-center gap-3">
+                              <span className={`text-sm ${isComplete ? 'text-green-400' : 'text-red-400'}`}>{isComplete ? '✓' : '✗'}</span>
+                              <span className="text-white text-sm">{subDesc}</span>
+                              {reason && (
+                                <span className="ml-2 text-xs text-gray-300 max-w-xs" style={{ whiteSpace: 'pre-line' }}>{reason}</span>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      {errorMsg && (
+                        <div className="mt-2 text-xs text-red-400">{errorMsg}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-gray-400 text-base">This is your Colab area. Add notes, links, or anything you want here!</div>
