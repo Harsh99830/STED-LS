@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { useUser } from '@clerk/clerk-react';
 
 // Accepts a render prop for full control of UI
-function ProjectRecommender({ learnedConcepts, completedProjects = [], children }) {
+function ProjectRecommender({ learnedConcepts, completedProjects = [], projectType = 'python', children }) {
   const [recommendedProject, setRecommendedProject] = useState(null);
   const [allMatchingProjects, setAllMatchingProjects] = useState([]);
   const [currentProjectIndex, setCurrentProjectIndex] = useState(0);
@@ -29,42 +29,101 @@ function ProjectRecommender({ learnedConcepts, completedProjects = [], children 
       setCurrentProjectIndex(0);
       
       try {
-        // Fetch all projects from Firebase
-        const projectsRef = ref(db, 'PythonProject');
+        // Fetch all projects from Firebase based on project type
+        const projectPath = projectType === 'pandas' ? 'PandasProject' : 'PythonProject';
+        const projectsRef = ref(db, projectPath);
         const snapshot = await get(projectsRef);
+        
         if (!snapshot.exists()) {
           setError('No projects found.');
           setLoading(false);
           return;
         }
+        
         const projects = snapshot.val();
+        console.log(`Found ${projectType} projects:`, projects);
         
         // Prepare learned concepts as a Set for fast lookup
         let learnedSet = new Set();
+        console.log('Raw learnedConcepts:', learnedConcepts);
+        
         if (Array.isArray(learnedConcepts)) {
           learnedSet = new Set(
-            learnedConcepts.map(c => c.concept.toLowerCase().trim())
+            learnedConcepts.map(c => {
+              const concept = c.concept || c;
+              return typeof concept === 'string' ? concept.toLowerCase().trim() : '';
+            }).filter(Boolean)
           );
         } else if (typeof learnedConcepts === 'object' && learnedConcepts !== null) {
           learnedSet = new Set(
-            Object.values(learnedConcepts).map(c => c.concept.toLowerCase().trim())
+            Object.values(learnedConcepts).map(c => {
+              const concept = c.concept || c;
+              return typeof concept === 'string' ? concept.toLowerCase().trim() : '';
+            }).filter(Boolean)
           );
         }
         
-        // Find all projects where all required concepts are learned
+        console.log('Learned concepts:', Array.from(learnedSet));
+        console.log('Total learned concepts:', learnedSet.size);
+        
+        // Find all projects where all required concepts are learned - make it more flexible
         const matchingProjects = [];
         Object.values(projects).forEach(project => {
-          if (!project.Concept) return;
+          if (!project.Concept) {
+            console.log('Project has no Concept field:', project.title || project.id);
+            return;
+          }
+          
           // Split concepts by comma and trim
           const required = project.Concept.split(',').map(s => s.toLowerCase().trim());
-          const allLearned = required.every(concept => learnedSet.has(concept));
-          if (allLearned) {
+          console.log('Required concepts for project:', project.title || project.id, required);
+          
+          // Check if all required concepts are learned - make it more flexible
+          let learnedCount = 0;
+          const totalRequired = required.length;
+          
+          required.forEach(concept => {
+            if (learnedSet.has(concept)) {
+              learnedCount++;
+              console.log(`✓ Concept "${concept}" is learned for project "${project.title || project.id}"`);
+            } else {
+              console.log(`✗ Concept "${concept}" not learned for project "${project.title || project.id}"`);
+            }
+          });
+          
+          // For now, let's show projects if at least one concept is learned (more lenient)
+          if (learnedCount > 0) {
+            console.log(`Project "${project.title || project.id}" matches - ${learnedCount}/${totalRequired} concepts learned`);
             matchingProjects.push(project);
+          } else {
+            console.log(`Project "${project.title || project.id}" skipped - no concepts learned (0/${totalRequired})`);
           }
         });
         
+        console.log('Matching projects found:', matchingProjects.length);
+        
+        // If no projects match by concepts, let's show all projects for debugging
+        if (matchingProjects.length === 0 && learnedSet.size > 0) {
+          console.log('No projects match by concepts, showing all projects for debugging');
+          Object.values(projects).forEach(project => {
+            if (project.Concept) {
+              matchingProjects.push(project);
+            }
+          });
+        }
+        
+        // If still no projects and no learned concepts, show all projects
+        if (matchingProjects.length === 0 && learnedSet.size === 0) {
+          console.log('No concepts learned yet, showing all projects');
+          Object.values(projects).forEach(project => {
+            if (project.Concept) {
+            matchingProjects.push(project);
+          }
+        });
+        }
+        
         // Filter out completed projects
-        const completedProjectKeys = new Set(completedProjects.map(p => p.projectKey));
+        const completedProjectKeys = new Set(completedProjects.map(p => p.projectKey || p.key || p.title));
         
         const availableProjects = matchingProjects.filter(project => {
           // Check if this project has been completed - try multiple possible key formats
@@ -87,8 +146,14 @@ function ProjectRecommender({ learnedConcepts, completedProjects = [], children 
           
           const isCompleted = possibleKeys.some(key => completedProjectKeys.has(key));
           
+          if (isCompleted) {
+            console.log(`Project "${project.title}" already completed`);
+          }
+          
           return !isCompleted;
         });
+        
+        console.log('Available projects:', availableProjects.length);
         
         if (availableProjects.length > 0) {
           setAllMatchingProjects(availableProjects);
@@ -98,14 +163,16 @@ function ProjectRecommender({ learnedConcepts, completedProjects = [], children 
           setRecommendedProject(null);
         }
       } catch (err) {
+        console.error('Error fetching projects:', err);
         setError('Failed to fetch projects.');
       }
       setLoading(false);
     }
-    if (learnedConcepts && user) {
+    
+    if (user) {
       fetchAndRecommend();
     }
-  }, [learnedConcepts, user, completedProjects]);
+  }, [learnedConcepts, user, completedProjects, projectType]);
 
   // Render prop for full UI control
   if (typeof children === 'function') {

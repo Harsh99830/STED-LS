@@ -57,7 +57,27 @@ function Pandas() {
     const userRef = ref(db, 'users/' + user.id);
     const unsubscribeUser = onValue(userRef, (snapshot) => {
           if (snapshot.exists()) {
-            setUserData(snapshot.val());
+            const userDataFromDb = snapshot.val();
+            // Initialize pandas object if it doesn't exist
+            if (!userDataFromDb.pandas) {
+              userDataFromDb.pandas = {};
+            }
+            // Initialize PandasProjectStarted to false if it doesn't exist
+            if (userDataFromDb.pandas.PandasProjectStarted === undefined) {
+              // Initialize to false
+              update(ref(db, 'users/' + user.id + '/pandas'), { PandasProjectStarted: false });
+              userDataFromDb.pandas.PandasProjectStarted = false;
+            }
+            setUserData(userDataFromDb);
+          } else {
+            // If user data doesn't exist, initialize it with pandas object
+            const initialUserData = {
+              pandas: {
+                PandasProjectStarted: false
+              }
+            };
+            update(ref(db, 'users/' + user.id), initialUserData);
+            setUserData(initialUserData);
           }
           setIsLoading(false);
         });
@@ -212,12 +232,15 @@ function Pandas() {
   const handleEndProject = async () => {
     if (!user) return;
     const userRef = ref(db, 'users/' + user.id);
-    await update(userRef, { 'pandas/PandasProjectStarted': false });
+    const updates = {
+      'pandas/PandasProjectStarted': false,
+    };
+    await update(userRef, updates);
     setUserData(prev => ({
       ...prev,
       pandas: {
         ...prev.pandas,
-        PandasProjectStarted: false
+        PandasProjectStarted: false,
       }
     }));
   };
@@ -548,27 +571,25 @@ function Pandas() {
         </div>
       </div>
 
-
       {/* Project History Section */}
       <div className="w-full mx-auto lg:px-8 text-left mb-10">
-        
         <h2 className="text-2xl font-bold text-slate-800 mb-6">Project History</h2>
         <div className="bg-white hover:bg-[#f7f7f7] rounded-lg shadow-md p-6">
           {completedProjects.length === 0 ? (
             <div className="text-slate-500 italic">No completed projects yet.</div>
           ) : (
-              <ul className="divide-y divide-slate-200">
+            <ul className="divide-y divide-slate-200">
               {completedProjects.map((project, idx) => (
                 <li 
                   key={project.key} 
                   className="flex flex-col md:flex-row gap-2 md:gap-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
                   onClick={() => handleProjectClick(project)}
                 >
-                    <div className="flex-1">
+                  <div className="flex-1">
                     <div className="text-2xl font-semibold text-slate-800">{project.projectTitle || project.key}</div>
                     <div className="text-slate-500 text-sm mt-2">Completed: {new Date(project.completedAt).toLocaleDateString()}</div>
-                    </div>
-                    <div className="flex-none flex flex-col items-end gap-2 md:gap-3">
+                  </div>
+                  <div className="flex-none flex flex-col items-end gap-2 md:gap-3">
                     <span className="inline-block text-slate-700 px-3 py-1 text-lg">Click to view details</span>
                     {project.publicUrl && (
                       <div className="flex gap-2 mt-2">
@@ -596,13 +617,206 @@ function Pandas() {
                         </a>
                       </div>
                     )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>
+
+      {/* Project Details Overlay */}
+      <AnimatePresence>
+        {showProjectOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+            onClick={handleCloseProjectOverlay}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-purple-600 to-purple-800 p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Recommended Project</h2>
+                  <button
+                    onClick={handleCloseProjectOverlay}
+                    className="text-white hover:text-gray-200 transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                <ProjectRecommender
+                  learnedConcepts={userData.pandas?.learnedConcepts || []}
+                  completedProjects={completedProjects}
+                  projectType="pandas"
+                >
+                  {({ recommendedProject, loading, error, getNextProject, hasMultipleProjects, currentProjectIndex, totalProjects }) => {
+                    if (loading) {
+                      return (
+                        <div className="flex items-center justify-center py-12">
+                          <div className="flex flex-col items-center space-y-4">
+                            <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="text-slate-600">Finding the perfect project for you...</div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    if (error) {
+                      return (
+                        <div className="text-center py-12">
+                          <div className="text-red-500 text-lg font-semibold mb-2">{error}</div>
+                          <div className="text-slate-600">Unable to load project recommendations.</div>
+                        </div>
+                      );
+                    }
+
+                    if (!recommendedProject) {
+                      return (
+                        <div className="text-center py-12">
+                          <div className="text-2xl font-bold text-slate-800 mb-4">No Projects Available</div>
+                          <div className="text-slate-600 mb-6">
+                            You need to learn more concepts before we can recommend projects.
+                          </div>
+                          <button
+                            onClick={handleCloseProjectOverlay}
+                            className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md transition-colors"
+                          >
+                            Continue Learning
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-6">
+                        {/* Project Information */}
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div>
+                              <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                                {recommendedProject.title}
+                              </h3>
+                              <p className="text-slate-600 text-lg leading-relaxed">
+                                {recommendedProject.description}
+                              </p>
+                            </div>
+                            {hasMultipleProjects && (
+                              <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 shadow-sm">
+                                <span className="text-sm font-semibold text-slate-600">
+                                  {currentProjectIndex + 1} of {totalProjects}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Required Concepts */}
+                          {recommendedProject.Concept && (
+                            <div className="bg-white rounded-xl p-4">
+                              <h4 className="font-semibold text-slate-800 mb-3">Required Concepts</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {recommendedProject.Concept.split(',').map((concept, index) => (
+                                  <span
+                                    key={index}
+                                    className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium"
+                                  >
+                                    {concept.trim()}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Difficulty and Duration */}
+                          <div className="grid grid-cols-2 gap-4 mt-4">
+                            {recommendedProject.difficulty && (
+                              <div className="bg-white rounded-xl p-4">
+                                <h4 className="font-semibold text-slate-800 mb-1">Difficulty</h4>
+                                <p className="text-slate-600">{recommendedProject.difficulty}</p>
+                              </div>
+                            )}
+                            {recommendedProject.duration && (
+                              <div className="bg-white rounded-xl p-4">
+                                <h4 className="font-semibold text-slate-800 mb-1">Duration</h4>
+                                <p className="text-slate-600">{recommendedProject.duration}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-4">
+                          <button
+                            onClick={async () => {
+                              if (recommendedProject.id) {
+                                try {
+                                  // Update the PandasProjectStarted status to true
+                                  const userRef = ref(db, 'users/' + user.id);
+                                  const updates = {
+                                    'pandas/PandasProjectStarted': true,
+                                    'pandas/PandasCurrentProject': recommendedProject.id
+                                  };
+                                  await update(userRef, updates);
+
+                                  // Update local state
+                                  setUserData(prev => ({
+                                    ...prev,
+                                    pandas: {
+                                      ...prev.pandas,
+                                      PandasProjectStarted: true,
+                                      PandasCurrentProject: recommendedProject.id
+                                    }
+                                  }));
+
+                                  // Close overlay and navigate to project
+                                  handleCloseProjectOverlay();
+                                  navigate(`/pandas/project`);
+                                } catch (err) {
+                                  console.error('Failed to start project:', err);
+                                  // Still navigate even if update fails
+                                  handleCloseProjectOverlay();
+                                  navigate(`/pandas/project`);
+                                }
+                              }
+                            }}
+                            className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition-all transform hover:scale-105"
+                          >
+                            🚀 Start Project
+                          </button>
+                          
+                          {hasMultipleProjects && (
+                            <button
+                              onClick={getNextProject}
+                              className="flex-1 bg-white border-2 border-purple-600 text-purple-600 hover:bg-purple-50 font-semibold py-3 px-6 rounded-xl shadow-lg transition-all transform hover:scale-105"
+                            >
+                              🔄 See Another Project
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }}
+                </ProjectRecommender>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
