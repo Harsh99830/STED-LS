@@ -85,7 +85,7 @@ function Profile() {
                         setIsObserving(true);
                     }
                 } else {
-                    console.log('No data available');
+                    // console.log('No data available');
                 }
                 setIsLoading(false);
             });

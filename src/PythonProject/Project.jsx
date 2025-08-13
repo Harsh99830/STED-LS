@@ -90,7 +90,7 @@ function Project() {
         };
         await update(userRef, updates);
       }
-      console.log('Project ended');
+      // console.log('Project ended');
       setShowEndProjectOverlay(false);
       navigate('/python');
     } catch (err) {
@@ -147,7 +147,7 @@ function Project() {
         }
         await update(userRef, updates);
       }
-      console.log('Project submitted successfully');
+      // console.log('Project submitted successfully');
       setShowCongratulationsOverlay(false);
       setShowSubmitOverlay(false);
       setShowFinalCongratulationsOverlay(true);

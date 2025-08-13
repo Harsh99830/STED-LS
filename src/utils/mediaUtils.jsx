@@ -39,7 +39,7 @@ export const stopAndUpload = async (mediaRecorderRef, audioChunksRef, navigate, 
       try {
         // Upload audio to Firebase Storage
         await uploadBytes(audioStorageRef, audioBlob);
-        console.log("Audio uploaded to Firebase Storage");
+        // console.log("Audio uploaded to Firebase Storage");
 
         // Get the download URL of the uploaded audio
         const downloadURL = await getDownloadURL(audioStorageRef);
@@ -51,7 +51,7 @@ export const stopAndUpload = async (mediaRecorderRef, audioChunksRef, navigate, 
           completedAt: new Date().toISOString(),
         });
 
-        console.log("Audio URL and completion timestamp saved to Realtime Database");
+        // console.log("Audio URL and completion timestamp saved to Realtime Database");
         
         // Clean up
         mediaRecorderRef.current = null;

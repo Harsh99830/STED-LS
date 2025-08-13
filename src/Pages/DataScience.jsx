@@ -35,7 +35,7 @@ function DataScience() {
                 if (snapshot.exists()) {
                     setUserData(snapshot.val());
                 } else {
-                    console.log('No data available');
+                    // console.log('No data available');
                 }
             }).catch((error) => {
                 console.error(error);

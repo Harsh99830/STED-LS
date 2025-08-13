@@ -11,7 +11,7 @@ function Navbar() {
   const handleSearch = (e) => {
     e.preventDefault();
     // TODO: Implement search functionality
-    console.log('Searching for:', searchQuery);
+    // console.log('Searching for:', searchQuery);
   };
 
   return (

@@ -239,7 +239,7 @@ export const analyzeTerminalOutput = (output, config) => {
   }
   
   const outputText = output.join('\n');
-  console.log('Terminal output being analyzed:', outputText);
+  // console.log('Terminal output being analyzed:', outputText);
   
   const analysis = {
     hasErrors: false,
@@ -297,7 +297,7 @@ export const analyzeTerminalOutput = (output, config) => {
     analysis.feedback.push("⚠️ Program needs more work - not all functionality tested");
   }
 
-  console.log('Analysis result:', analysis);
+  // console.log('Analysis result:', analysis);
   return analysis;
 };
 

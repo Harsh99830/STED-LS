@@ -41,11 +41,11 @@ function ProjectRecommender({ learnedConcepts, completedProjects = [], projectTy
         }
         
         const projects = snapshot.val();
-        console.log(`Found ${projectType} projects:`, projects);
+        // console.log(`Found ${projectType} projects:`, projects);
         
         // Prepare learned concepts as a Set for fast lookup
         let learnedSet = new Set();
-        console.log('Raw learnedConcepts:', learnedConcepts);
+        // console.log('Raw learnedConcepts:', learnedConcepts);
         
         if (Array.isArray(learnedConcepts)) {
           learnedSet = new Set(
@@ -63,20 +63,20 @@ function ProjectRecommender({ learnedConcepts, completedProjects = [], projectTy
           );
         }
         
-        console.log('Learned concepts:', Array.from(learnedSet));
-        console.log('Total learned concepts:', learnedSet.size);
+        // console.log('Learned concepts:', Array.from(learnedSet));
+        // console.log('Total learned concepts:', learnedSet.size);
         
         // Find all projects where all required concepts are learned - make it more flexible
         const matchingProjects = [];
         Object.values(projects).forEach(project => {
           if (!project.Concept) {
-            console.log('Project has no Concept field:', project.title || project.id);
+            // console.log('Project has no Concept field:', project.title || project.id);
             return;
           }
           
           // Split concepts by comma and trim
           const required = project.Concept.split(',').map(s => s.toLowerCase().trim());
-          console.log('Required concepts for project:', project.title || project.id, required);
+          // console.log('Required concepts for project:', project.title || project.id, required);
           
           // Check if all required concepts are learned - make it more flexible
           let learnedCount = 0;
@@ -85,26 +85,26 @@ function ProjectRecommender({ learnedConcepts, completedProjects = [], projectTy
           required.forEach(concept => {
             if (learnedSet.has(concept)) {
               learnedCount++;
-              console.log(`✓ Concept "${concept}" is learned for project "${project.title || project.id}"`);
+              // console.log(`✓ Concept "${concept}" is learned for project "${project.title || project.id}"`);
             } else {
-              console.log(`✗ Concept "${concept}" not learned for project "${project.title || project.id}"`);
+              // console.log(`✗ Concept "${concept}" not learned for project "${project.title || project.id}"`);
             }
           });
           
           // For now, let's show projects if at least one concept is learned (more lenient)
           if (learnedCount > 0) {
-            console.log(`Project "${project.title || project.id}" matches - ${learnedCount}/${totalRequired} concepts learned`);
+            // console.log(`Project "${project.title || project.id}" matches - ${learnedCount}/${totalRequired} concepts learned`);
             matchingProjects.push(project);
           } else {
-            console.log(`Project "${project.title || project.id}" skipped - no concepts learned (0/${totalRequired})`);
+            // console.log(`Project "${project.title || project.id}" skipped - no concepts learned (0/${totalRequired})`);
           }
         });
         
-        console.log('Matching projects found:', matchingProjects.length);
+        // console.log('Matching projects found:', matchingProjects.length);
         
         // If no projects match by concepts, let's show all projects for debugging
         if (matchingProjects.length === 0 && learnedSet.size > 0) {
-          console.log('No projects match by concepts, showing all projects for debugging');
+          // console.log('No projects match by concepts, showing all projects for debugging');
           Object.values(projects).forEach(project => {
             if (project.Concept) {
               matchingProjects.push(project);
@@ -114,7 +114,7 @@ function ProjectRecommender({ learnedConcepts, completedProjects = [], projectTy
         
         // If still no projects and no learned concepts, show all projects
         if (matchingProjects.length === 0 && learnedSet.size === 0) {
-          console.log('No concepts learned yet, showing all projects');
+          // console.log('No concepts learned yet, showing all projects');
           Object.values(projects).forEach(project => {
             if (project.Concept) {
             matchingProjects.push(project);
@@ -147,13 +147,13 @@ function ProjectRecommender({ learnedConcepts, completedProjects = [], projectTy
           const isCompleted = possibleKeys.some(key => completedProjectKeys.has(key));
           
           if (isCompleted) {
-            console.log(`Project "${project.title}" already completed`);
+            // console.log(`Project "${project.title}" already completed`);
           }
           
           return !isCompleted;
         });
         
-        console.log('Available projects:', availableProjects.length);
+        // console.log('Available projects:', availableProjects.length);
         
         if (availableProjects.length > 0) {
           setAllMatchingProjects(availableProjects);
