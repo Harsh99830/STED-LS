@@ -36,7 +36,7 @@ function Start() {
             className="inline-block bg-blue-50 rounded-lg px-6 py-3 mb-6"
           >
             <span className="text-blue-700 font-semibold text-lg">
-              Practice &gt; Theory
+              Apply &gt; Memorize
             </span>
           </motion.div>
 
@@ -46,7 +46,7 @@ function Start() {
           </h1>
 
           <p className="text-lg text-slate-600 mb-12 max-w-xl leading-relaxed">
-            Pick a task → build it → level up. Real projects, instant feedback.
+            Learn a concept → apply it in a task → master it with projects.
           </p>
 
           <div className="mt-2">
