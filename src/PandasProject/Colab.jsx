@@ -31,7 +31,7 @@ function extractDriveIdFromColabUrl(url) {
 
 async function fetchColabNotebookJson(driveId) {
   // Call your FastAPI backend running locally
-  const url = `http://localhost:8000/api/fetch_colab?file_id=${driveId}`;
+  const url = `https://sted-backend.onrender.com/api/fetch_colab?file_id=${driveId}`;
   const response = await fetch(url);
   const data = await response.json();
   if (!data.success) throw new Error(data.error || 'Could not fetch notebook.');
