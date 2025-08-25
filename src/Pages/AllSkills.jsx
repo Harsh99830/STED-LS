@@ -78,30 +78,112 @@ function AllSkills() {
             value: 'Project1',
             node: 'python',
             currentProjectField: 'PythonCurrentProject',
+            icon: <img src={python} alt="Python" className="w-6 h-6" />,
+            description: 'Learn Python programming with hands-on projects. Master variables, functions, loops, and more.'
         },
         'data-science': {
             route: '/data-science',
             value: 'Project1',
             node: 'data-science',
             currentProjectField: 'DataScienceCurrentProject',
-        },
-        'public-speaking': {
-            route: '/public-speaking',
-            value: 'Project1',
-            node: 'public-speaking',
-            currentProjectField: 'PublicSpeakingCurrentProject',
+            icon: <span className="text-2xl">📊</span>,
+            description: 'Learn data analysis, visualization, and machine learning. Transform raw data into meaningful insights.'
         },
         'powerbi': {
             route: '/powerbi',
             value: 'Project1',
             node: 'powerbi',
             currentProjectField: 'PowerBiCurrentProject',
+            icon: <img src={PowerBi} alt="Power BI" className="w-6 h-6" />,
+            description: 'Master Power BI for data visualization and business intelligence. Create stunning dashboards and reports.'
         },
         'pandas': {
             route: '/pandas',
             value: 'Project1',
             node: 'pandas',
             currentProjectField: 'PandasCurrentProject',
+            icon: <span className="text-2xl">🐼</span>,
+            description: 'Master data manipulation and analysis with Pandas. Work with DataFrames, clean data, and perform powerful operations.'
+        },
+        'javascript': {
+            route: '/javascript',
+            value: 'Project1',
+            node: 'javascript',
+            currentProjectField: 'JavascriptCurrentProject',
+            icon: <span className="text-2xl">JS</span>,
+            description: 'Master JavaScript, the language of the web. Learn ES6+ features, async programming, and modern frameworks.'
+        },
+        'reactjs': {
+            route: '/reactjs',
+            value: 'Project1',
+            node: 'reactjs',
+            currentProjectField: 'ReactJSCurrentProject',
+            icon: <span className="text-2xl">⚛️</span>,
+            description: 'Build modern web applications with React. Learn about components, hooks, and state management.'
+        },
+        'nodejs': {
+            route: '/nodejs',
+            value: 'Project1',
+            node: 'nodejs',
+            currentProjectField: 'NodeJSCurrentProject',
+            icon: <span className="text-2xl">⬢</span>,
+            description: 'Build scalable server-side applications using Node.js. Learn about modules, file systems, and RESTful APIs.'
+        },
+        'sql': {
+            route: '/sql',
+            value: 'Project1',
+            node: 'sql',
+            currentProjectField: 'SQLCurrentProject',
+            icon: <span className="text-2xl">🗃️</span>,
+            description: 'Master SQL for database management. Learn to write complex queries, optimize performance, and design schemas.'
+        },
+        'java': {
+            route: '/java',
+            value: 'Project1',
+            node: 'java',
+            currentProjectField: 'JavaCurrentProject',
+            icon: <span className="text-2xl">☕</span>,
+            description: 'Learn Java programming, from basics to advanced concepts including multithreading and Spring framework.'
+        },
+        'c': {
+            route: '/c',
+            value: 'Project1',
+            node: 'c',
+            currentProjectField: 'CCurrentProject',
+            icon: <span className="text-2xl">C</span>,
+            description: 'Master the fundamentals of C programming. Learn about pointers, memory management, and system programming.'
+        },
+        'cplus': {
+            route: '/cplus',
+            value: 'Project1',
+            node: 'cplus',
+            currentProjectField: 'CPlusCurrentProject',
+            icon: <span className="text-2xl">C++</span>,
+            description: 'Learn C++ programming with object-oriented concepts, templates, and the Standard Template Library.'
+        },
+        'dsa': {
+            route: '/dsa',
+            value: 'Project1',
+            node: 'dsa',
+            currentProjectField: 'DsaCurrentProject',
+            icon: <span className="text-2xl">📊</span>,
+            description: 'Master Data Structures and Algorithms. Learn to solve complex problems efficiently.'
+        },
+        'numpy': {
+            route: '/numpy',
+            value: 'Project1',
+            node: 'numpy',
+            currentProjectField: 'NumpyCurrentProject',
+            icon: <span className="text-2xl">#️⃣</span>,
+            description: 'Master numerical computing with NumPy. Learn array operations, linear algebra, and random number generation.'
+        },
+        'devops': {
+            route: '/devops',
+            value: 'Project1',
+            node: 'devops',
+            currentProjectField: 'DevOpsCurrentProject',
+            icon: <span className="text-2xl">🔄</span>,
+            description: 'Master DevOps practices including CI/CD, containerization, and cloud infrastructure.'
         },
     };
 
@@ -245,11 +327,9 @@ function AllSkills() {
 
                                                         <div className="flex items-center mb-4">
                                                             <div className="bg-green-100 rounded-full p-3">
-                                                                {skill.key === 'python' && <img style={{ width: "25px" }} src={python} alt="" />}
-                                                                {skill.key === 'powerbi' && <img style={{ width: "25px" }} src={PowerBi} alt="" />}
-                                                                {skill.key === 'public-speaking' && <span className="text-2xl">🎤</span>}
-                                                                {skill.key === 'data-science' && <span className="text-2xl">📊</span>}
-                                                                {skill.key === 'pandas' && pandasIcon}
+                                                                {skill.icon || (
+                                                                    <span className="text-2xl">📚</span>
+                                                                )}
                                                             </div>
                                                             <h3 className="text-xl font-semibold text-slate-800 ml-4">
                                                                 {skill.key.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
@@ -307,11 +387,9 @@ function AllSkills() {
                                                 >
                                                     <div className="flex items-center mb-4">
                                                         <div className="bg-blue-50 rounded-full p-3">
-                                                            {skill.key === 'python' && <img style={{ width: "25px" }} src={python} alt="" />}
-                                                            {skill.key === 'powerbi' && <img style={{ width: "25px" }} src={PowerBi} alt="" />}
-                                                            {skill.key === 'public-speaking' && <span className="text-2xl">🎤</span>}
-                                                            {skill.key === 'data-science' && <span className="text-2xl">📊</span>}
-                                                            {skill.key === 'pandas' && pandasIcon}
+                                                            {skill.icon || (
+                                                                <span className="text-2xl">📚</span>
+                                                            )}
                                                         </div>
                                                         <h3 className="text-xl font-semibold text-slate-800 ml-4">
                                                             {skill.key.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
@@ -319,11 +397,7 @@ function AllSkills() {
                                                     </div>
 
                                                     <p className="text-slate-600 mb-4">
-                                                        {skill.key === 'python' && "Learn Python programming with hands-on projects. Master variables, functions, loops, and more."}
-                                                        {skill.key === 'powerbi' && "Master Power BI for data visualization and business intelligence. Create stunning dashboards and reports."}
-                                                        {skill.key === 'public-speaking' && "Master the art of public speaking with our comprehensive curriculum. Build confidence and communication skills."}
-                                                        {skill.key === 'data-science' && "Learn data analysis, visualization, and machine learning. Transform raw data into meaningful insights."}
-                                                        {skill.key === 'pandas' && "Master data manipulation and analysis with Pandas. Learn to work with DataFrames, clean data, and perform powerful data operations in Python."}
+                                                        {skill.description || 'Start your learning journey with this comprehensive course.'}
                                                     </p>
 
                                                     <div className="flex items-center justify-between">

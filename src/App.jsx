@@ -9,7 +9,6 @@ import Survey from './components/Survey';
 import PublicSpeaking from './Pages/PublicSpeaking';
 import DataScience from './Pages/DataScience';
 import Python from './Pages/Python';
-import SurveyProtectedRoute from './components/SurveyProtectedRoute';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProjectProtectedRoute from './components/ProjectProtectedRoute';
 import AllSkills from './Pages/AllSkills';
@@ -20,6 +19,16 @@ import PandasProject from './PandasProject/Project';
 import Profile from './Pages/Profile';
 import UserProfile from './Pages/UserProfile';
 import PublicPythonProject from './PythonProject/PublicPythonProject';
+import C from './Pages/C';
+import Cplus from './Pages/Cplus';
+import DSA from './Pages/DSA';
+import Devops from './Pages/Devops';
+import Java from './Pages/Java';
+import Javascript from './Pages/Javascript';
+import NodeJS from './Pages/NodeJS';
+import ReactJS from './Pages/ReactJS';
+import SQL from './Pages/SQL';
+import Numpy from './Pages/Numpy';
 
 function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -55,56 +64,13 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
+      <Route path="/home" element={<Home />} />
+      <Route path="/public-speaking" element={<PublicSpeaking />} />
+      <Route path="/data-science" element={<DataScience />} />
+      <Route path="/python" element={<Python />} />
+      <Route path="/powerbi" element={<PowerBi />} />
+      <Route path="/pandas" element={<Pandas />} />
       <Route
-        path="/home"
-        element={
-          <SurveyProtectedRoute>
-            <Home />
-          </SurveyProtectedRoute>
-        }
-      />
-      <Route
-        path="/public-speaking"
-        element={
-          <SurveyProtectedRoute>
-            <PublicSpeaking />
-          </SurveyProtectedRoute>
-        }
-      />
-      <Route
-        path="/data-science"
-        element={
-          <SurveyProtectedRoute>
-            <DataScience />
-          </SurveyProtectedRoute>
-        }
-      />
-      <Route
-        path="/python"
-        element={
-          <SurveyProtectedRoute>
-            <Python />
-          </SurveyProtectedRoute>
-        }
-      />
-      <Route
-        path="/powerbi"
-        element={
-          <SurveyProtectedRoute>
-            <PowerBi />
-          </SurveyProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/pandas"
-        element={
-          <SurveyProtectedRoute>
-            <Pandas />
-          </SurveyProtectedRoute>
-        }
-      />
-       <Route
         path="/python/project"
         element={
           <ProjectProtectedRoute>
@@ -120,22 +86,18 @@ function App() {
           </ProjectProtectedRoute>
         }
       />
-       <Route
-        path="/All-skills"
-        element={
-          <SurveyProtectedRoute>
-            <AllSkills />
-          </SurveyProtectedRoute>
-        }
-      />
-       <Route
-        path="/profile"
-        element={
-          <SurveyProtectedRoute>
-            <Profile />
-          </SurveyProtectedRoute>
-        }
-      />
+      <Route path="/All-skills" element={<AllSkills />} />
+      <Route path="/c" element={<C />} />
+      <Route path="/cplus" element={<Cplus />} />
+      <Route path="/dsa" element={<DSA />} />
+      <Route path="/devops" element={<Devops />} />
+      <Route path="/java" element={<Java />} />
+      <Route path="/javascript" element={<Javascript />} />
+      <Route path="/nodejs" element={<NodeJS />} />
+      <Route path="/numpy" element={<Numpy />} />
+      <Route path="/reactjs" element={<ReactJS />} />
+      <Route path="/sql" element={<SQL />} />
+      <Route path="/profile" element={<Profile />} />
       
       <Route
         path="/survey"

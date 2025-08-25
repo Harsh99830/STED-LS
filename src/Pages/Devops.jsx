@@ -10,14 +10,14 @@ import ConceptLearned from "../components/ConceptLearned";
 import Learned from "../assets/learned.png";
 import AssignmentIcon from '../assets/Assignment.png';
 
-function Python() {
+function Devops() {
   const navigate = useNavigate();
   const { isLoaded, isSignedIn, user } = useUser();
   const [userData, setUserData] = useState({
     level: "",
     xp: 0,
     tasksCompleted: 0,
-    pythonSkill: 0,
+    DevopsSkill: 0,
     sqlSkill: 0,
     mlSkill: 0,
   });
@@ -48,10 +48,10 @@ function Python() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.python) return;
+      if (!userData?.Devops) return;
     
       // Fetch all concepts
-      const allConceptsRef = ref(db, 'PythonProject/AllConcepts/category');
+      const allConceptsRef = ref(db, 'DevopsProject/AllConcepts/category');
       const allConceptsSnap = await get(allConceptsRef);
       let totalConcepts = 0;
       if (allConceptsSnap.exists()) {
@@ -64,7 +64,7 @@ function Python() {
       }
     
       // Get learned concepts
-    let learnedConcepts = userData.python?.learnedConcepts || [];
+    let learnedConcepts = userData.Devops?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
@@ -120,7 +120,7 @@ function Python() {
           {/* Header Section */}
            
               <div className="text-left mt-6">
-                <h1 className="text-3xl font-bold text-slate-800">Python</h1>
+                <h1 className="text-3xl font-bold text-slate-800">Devops</h1>
             </div>
           
 
@@ -212,7 +212,7 @@ function Python() {
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
-                  let learnedConcepts = userData.python?.learnedConcepts || [];
+                  let learnedConcepts = userData.Devops?.learnedConcepts || [];
                   if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                     learnedConcepts = Object.values(learnedConcepts);
                   }
@@ -252,4 +252,4 @@ function Python() {
   );
 }
 
-export default Python;
+export default Devops;
