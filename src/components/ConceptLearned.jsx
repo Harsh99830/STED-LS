@@ -269,8 +269,11 @@ function ConceptLearned({ completedProjects = [], skillName = 'python' }) {
     setOpenCategory(openCategory === category ? null : category);
   };
 
-  // Get available categories dynamically
-  const availableCategories = Object.keys(allConcepts);
+  // Get available categories dynamically and sort them in the desired order
+  const availableCategories = Object.keys(allConcepts).sort((a, b) => {
+    const order = { 'basic': 1, 'intermediate': 2, 'advanced': 3 };
+    return (order[a.toLowerCase()] || 99) - (order[b.toLowerCase()] || 99);
+  });
 
   // Calculate progress
   const getCounts = (category) => {
