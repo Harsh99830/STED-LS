@@ -328,6 +328,7 @@ function Home() {
                     + add skill
                   </Link>
                 </div>
+              <div className='h-10'>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6" style={{maxHeight: '66vh', overflowY: 'auto'}}>
                 {/* Show only started skills, matching AllSkills logic */}
                 {(() => {
@@ -366,7 +367,7 @@ function Home() {
                     'devops': {
                       route: '/devops',
                       node: 'devops',
-                      currentProjectField: 'DevopsCurrentProject',
+                      currentProjectField: 'DevOpsCurrentProject',
                       img: null,
                       label: 'DevOps',
                       icon: <span className="text-xl mr-2">🔄</span>,
@@ -452,7 +453,9 @@ function Home() {
                     },
                   };
                   const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
-                    userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
+                    userData && userData[skill.node] && 
+                    (userData[skill.node][skill.currentProjectField] !== undefined || 
+                     userData[skill.node].learnedConcepts !== undefined)
                   );
                   if (startedSkills.length === 0) {
                     return (
@@ -514,6 +517,7 @@ function Home() {
                     );
                   });
                 })()}
+              </div>
               </div>
               </div>
             )}

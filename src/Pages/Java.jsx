@@ -48,7 +48,7 @@ function Java() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.Java) return;
+      if (!userData?.java) return;
     
       // Fetch all concepts
       const allConceptsRef = ref(db, 'JavaProject/AllConcepts/category');
@@ -64,7 +64,7 @@ function Java() {
       }
     
       // Get learned concepts
-    let learnedConcepts = userData.Java?.learnedConcepts || [];
+    let learnedConcepts = userData.java?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
@@ -204,7 +204,7 @@ function Java() {
               transition={{ duration: 0.5 }}
               className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
-              <ConceptLearned />
+              <ConceptLearned skillName="java" />
             </motion.div>
 
             {/* Concept Status Box */}
@@ -212,7 +212,7 @@ function Java() {
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
-                  let learnedConcepts = userData.Java?.learnedConcepts || [];
+                  let learnedConcepts = userData.java?.learnedConcepts || [];
                   if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                     learnedConcepts = Object.values(learnedConcepts);
                   }

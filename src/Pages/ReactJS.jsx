@@ -48,7 +48,7 @@ function ReactJS() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.ReactJS) return;
+      if (!userData?.reactjs) return;
     
       // Fetch all concepts
       const allConceptsRef = ref(db, 'ReactJSProject/AllConcepts/category');
@@ -64,7 +64,7 @@ function ReactJS() {
       }
     
       // Get learned concepts
-    let learnedConcepts = userData.ReactJS?.learnedConcepts || [];
+    let learnedConcepts = userData.reactjs?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
@@ -204,7 +204,7 @@ function ReactJS() {
               transition={{ duration: 0.5 }}
               className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
-              <ConceptLearned />
+              <ConceptLearned skillName="reactjs" />
             </motion.div>
 
             {/* Concept Status Box */}
@@ -212,7 +212,7 @@ function ReactJS() {
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
-                  let learnedConcepts = userData.ReactJS?.learnedConcepts || [];
+                  let learnedConcepts = userData.reactjs?.learnedConcepts || [];
                   if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                     learnedConcepts = Object.values(learnedConcepts);
                   }

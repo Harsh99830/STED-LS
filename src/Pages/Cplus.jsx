@@ -48,30 +48,48 @@ function Cplus() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.Cplus) return;
-    
-      // Fetch all concepts
-      const allConceptsRef = ref(db, 'CplusProject/AllConcepts/category');
-      const allConceptsSnap = await get(allConceptsRef);
+      if (!userData?.cplus) {
+        console.log('No cplus data in userData');
+        return;
+      }
+      
+      console.log('Fetching C++ concepts...');
+      // Use the same path as in ConceptLearned component
+      const conceptPath = 'CplusProject/AllConcepts/category';
       let totalConcepts = 0;
-      if (allConceptsSnap.exists()) {
-        const data = allConceptsSnap.val();
-        totalConcepts = [
-          ...Object.values(data.basic || {}),
-          ...Object.values(data.intermediate || {}),
-          ...Object.values(data.advanced || {}),
-        ].length;
+      
+      try {
+        const allConceptsRef = ref(db, conceptPath);
+        const allConceptsSnap = await get(allConceptsRef);
+        
+        if (allConceptsSnap.exists()) {
+          console.log(`Found concepts at path: ${conceptPath}`);
+          const data = allConceptsSnap.val();
+          totalConcepts = [
+            ...Object.values(data.basic || {}),
+            ...Object.values(data.intermediate || {}),
+            ...Object.values(data.advanced || {}),
+          ].length;
+        } else {
+          console.log(`No concepts found at path: ${conceptPath}`);
+        }
+      } catch (error) {
+        console.error(`Error fetching concepts:`, error);
       }
     
       // Get learned concepts
-    let learnedConcepts = userData.Cplus?.learnedConcepts || [];
-    if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
-      learnedConcepts = Object.values(learnedConcepts);
-    }
+      let learnedConcepts = userData.cplus?.learnedConcepts || [];
+      console.log('Learned concepts:', learnedConcepts);
+      
+      if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+        learnedConcepts = Object.values(learnedConcepts);
+      }
+      
       const learned = learnedConcepts.length;
+      console.log(`Learned: ${learned} concepts`);
     
-    // For now, set applied to 0 since we're removing project functionality
-    const applied = 0;
+      // For now, set applied to 0 since we're removing project functionality
+      const applied = 0;
     
       setConceptStats({ learned, applied, total: totalConcepts });
   };
@@ -204,7 +222,7 @@ function Cplus() {
               transition={{ duration: 0.5 }}
               className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
-              <ConceptLearned />
+              <ConceptLearned skillName="cplus" />
             </motion.div>
 
             {/* Concept Status Box */}
@@ -212,7 +230,7 @@ function Cplus() {
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
-                  let learnedConcepts = userData.Cplus?.learnedConcepts || [];
+                  let learnedConcepts = userData.cplus?.learnedConcepts || [];
                   if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                     learnedConcepts = Object.values(learnedConcepts);
                   }

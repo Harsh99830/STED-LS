@@ -48,7 +48,7 @@ function NodeJS() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.NodeJS) return;
+      if (!userData?.nodejs) return;
     
       // Fetch all concepts
       const allConceptsRef = ref(db, 'NodeJSProject/AllConcepts/category');
@@ -64,7 +64,7 @@ function NodeJS() {
       }
     
       // Get learned concepts
-    let learnedConcepts = userData.NodeJS?.learnedConcepts || [];
+    let learnedConcepts = userData.nodejs?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
@@ -204,7 +204,7 @@ function NodeJS() {
               transition={{ duration: 0.5 }}
               className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
-              <ConceptLearned />
+              <ConceptLearned skillName="nodejs" />
             </motion.div>
 
             {/* Concept Status Box */}
@@ -212,7 +212,7 @@ function NodeJS() {
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
-                  let learnedConcepts = userData.NodeJS?.learnedConcepts || [];
+                  let learnedConcepts = userData.nodejs?.learnedConcepts || [];
                   if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                     learnedConcepts = Object.values(learnedConcepts);
                   }

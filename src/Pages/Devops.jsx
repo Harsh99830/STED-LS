@@ -17,7 +17,7 @@ function Devops() {
     level: "",
     xp: 0,
     tasksCompleted: 0,
-    DevopsSkill: 0,
+    devopsSkill: 0,
     sqlSkill: 0,
     mlSkill: 0,
   });
@@ -48,7 +48,7 @@ function Devops() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.Devops) return;
+      if (!userData?.devops) return;
     
       // Fetch all concepts
       const allConceptsRef = ref(db, 'DevopsProject/AllConcepts/category');
@@ -64,7 +64,7 @@ function Devops() {
       }
     
       // Get learned concepts
-    let learnedConcepts = userData.Devops?.learnedConcepts || [];
+    let learnedConcepts = userData.devops?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
@@ -204,7 +204,7 @@ function Devops() {
               transition={{ duration: 0.5 }}
               className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
-              <ConceptLearned />
+              <ConceptLearned skillName="devops" />
             </motion.div>
 
             {/* Concept Status Box */}
@@ -212,7 +212,7 @@ function Devops() {
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
-                  let learnedConcepts = userData.Devops?.learnedConcepts || [];
+                  let learnedConcepts = userData.devops?.learnedConcepts || [];
                   if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                     learnedConcepts = Object.values(learnedConcepts);
                   }

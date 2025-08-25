@@ -48,7 +48,7 @@ function SQL() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.SQL) return;
+      if (!userData?.sql) return;
     
       // Fetch all concepts
       const allConceptsRef = ref(db, 'SQLProject/AllConcepts/category');
@@ -64,7 +64,7 @@ function SQL() {
       }
     
       // Get learned concepts
-    let learnedConcepts = userData.SQL?.learnedConcepts || [];
+    let learnedConcepts = userData.sql?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
@@ -204,7 +204,7 @@ function SQL() {
               transition={{ duration: 0.5 }}
               className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
-              <ConceptLearned />
+              <ConceptLearned skillName="sql" />
             </motion.div>
 
             {/* Concept Status Box */}
@@ -212,7 +212,7 @@ function SQL() {
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
-                  let learnedConcepts = userData.SQL?.learnedConcepts || [];
+                  let learnedConcepts = userData.sql?.learnedConcepts || [];
                   if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                     learnedConcepts = Object.values(learnedConcepts);
                   }

@@ -48,7 +48,7 @@ function Numpy() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.Numpy) return;
+      if (!userData?.numpy) return;
     
       // Fetch all concepts
       const allConceptsRef = ref(db, 'NumpyProject/AllConcepts/category');
@@ -64,7 +64,7 @@ function Numpy() {
       }
     
       // Get learned concepts
-    let learnedConcepts = userData.Numpy?.learnedConcepts || [];
+    let learnedConcepts = userData.numpy?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
@@ -204,7 +204,7 @@ function Numpy() {
               transition={{ duration: 0.5 }}
               className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
-              <ConceptLearned />
+              <ConceptLearned skillName="numpy" />
             </motion.div>
 
             {/* Concept Status Box */}
@@ -212,7 +212,7 @@ function Numpy() {
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
-                  let learnedConcepts = userData.Numpy?.learnedConcepts || [];
+                  let learnedConcepts = userData.numpy?.learnedConcepts || [];
                   if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                     learnedConcepts = Object.values(learnedConcepts);
                   }

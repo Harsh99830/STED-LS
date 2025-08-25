@@ -48,7 +48,7 @@ function C() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.C) return;
+      if (!userData?.c) return;
     
       // Fetch all concepts
       const allConceptsRef = ref(db, 'CProject/AllConcepts/category');
@@ -64,7 +64,7 @@ function C() {
       }
     
       // Get learned concepts
-    let learnedConcepts = userData.C?.learnedConcepts || [];
+    let learnedConcepts = userData.c?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
@@ -204,7 +204,7 @@ function C() {
               transition={{ duration: 0.5 }}
               className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
-              <ConceptLearned />
+              <ConceptLearned skillName="c" />
             </motion.div>
 
             {/* Concept Status Box */}
@@ -212,7 +212,7 @@ function C() {
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
-                  let learnedConcepts = userData.C?.learnedConcepts || [];
+                  let learnedConcepts = userData.c?.learnedConcepts || [];
                   if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                     learnedConcepts = Object.values(learnedConcepts);
                   }

@@ -60,6 +60,56 @@ function ConceptLearned({ completedProjects = [], skillName = 'python' }) {
       conceptsPath: 'PublicSpeakingProject/AllConcepts/category',
       userPath: 'public-speaking',
       displayName: 'Public Speaking'
+    },
+    javascript: {
+      conceptsPath: 'JavascriptProject/AllConcepts/category',
+      userPath: 'javascript',
+      displayName: 'JavaScript'
+    },
+    reactjs: {
+      conceptsPath: 'ReactJSProject/AllConcepts/category',
+      userPath: 'reactjs',
+      displayName: 'ReactJS'
+    },
+    nodejs: {
+      conceptsPath: 'NodeJSProject/AllConcepts/category',
+      userPath: 'nodejs',
+      displayName: 'NodeJS'
+    },
+    sql: {
+      conceptsPath: 'SQLProject/AllConcepts/category',
+      userPath: 'sql',
+      displayName: 'SQL'
+    },
+    java: {
+      conceptsPath: 'JavaProject/AllConcepts/category',
+      userPath: 'java',
+      displayName: 'Java'
+    },
+    c: {
+      conceptsPath: 'CProject/AllConcepts/category',
+      userPath: 'c',
+      displayName: 'C'
+    },
+    cplus: {
+      conceptsPath: 'CplusProject/AllConcepts/category',
+      userPath: 'cplus',
+      displayName: 'C++'
+    },
+    dsa: {
+      conceptsPath: 'DSAProject/AllConcepts/category',
+      userPath: 'dsa',
+      displayName: 'Data Structures & Algorithms'
+    },
+    numpy: {
+      conceptsPath: 'NumpyProject/AllConcepts/category',
+      userPath: 'numpy',
+      displayName: 'NumPy'
+    },
+    devops: {
+      conceptsPath: 'DevopsProject/AllConcepts/category',
+      userPath: 'devops',
+      displayName: 'DevOps'
     }
   };
 
@@ -72,16 +122,26 @@ function ConceptLearned({ completedProjects = [], skillName = 'python' }) {
     const fetchData = async () => {
       setLoading(true);
       try {
+        console.log('Fetching concepts from path:', currentSkillConfig.conceptsPath);
         // Fetch all concepts
         const allConceptsRef = ref(db, currentSkillConfig.conceptsPath);
         const allConceptsSnap = await get(allConceptsRef);
+        console.log('Concepts snapshot:', allConceptsSnap.exists() ? allConceptsSnap.val() : 'No data');
+        
         if (allConceptsSnap.exists()) {
           const data = allConceptsSnap.val();
+          console.log('Raw concepts data:', data);
           // Dynamically set categories based on what exists in Firebase
           const categories = {};
           Object.keys(data).forEach(category => {
-            categories[category] = Object.values(data[category] || {});
+            console.log(`Processing category: ${category}`);
+            const categoryData = data[category];
+            if (categoryData && typeof categoryData === 'object') {
+              categories[category] = Object.values(categoryData);
+              console.log(`Added ${categories[category].length} concepts to category: ${category}`);
+            }
           });
+          console.log('Final categories:', categories);
           setAllConcepts(categories);
         }
 

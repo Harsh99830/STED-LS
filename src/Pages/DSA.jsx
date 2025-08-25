@@ -48,7 +48,7 @@ function DSA() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.DSA) return;
+      if (!userData?.dsa) return;
     
       // Fetch all concepts
       const allConceptsRef = ref(db, 'DSAProject/AllConcepts/category');
@@ -64,7 +64,7 @@ function DSA() {
       }
     
       // Get learned concepts
-    let learnedConcepts = userData.DSA?.learnedConcepts || [];
+    let learnedConcepts = userData.dsa?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
@@ -204,7 +204,7 @@ function DSA() {
               transition={{ duration: 0.5 }}
               className="bg-white w-full lg:w-2/3 rounded-lg shadow-md p-6"
             >
-              <ConceptLearned />
+              <ConceptLearned skillName="dsa" />
             </motion.div>
 
             {/* Concept Status Box */}
@@ -212,7 +212,7 @@ function DSA() {
               <div>
               <p className="text-sm text-slate-600">Concepts Status</p>
               {(() => {
-                  let learnedConcepts = userData.DSA?.learnedConcepts || [];
+                  let learnedConcepts = userData.dsa?.learnedConcepts || [];
                   if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
                     learnedConcepts = Object.values(learnedConcepts);
                   }
