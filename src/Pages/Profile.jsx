@@ -48,38 +48,34 @@ function Profile() {
             const unsubscribe = onValue(userRef, async (snapshot) => {
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    // Fetch Python completed projects in real-time as well
-                    let pythonProjects = [];
-                    try {
-                        const pythonProjectsRef = ref(db, 'users/' + user.id + '/python/PythonCompletedProjects');
-                        onValue(pythonProjectsRef, (pythonProjectsSnap) => {
-                            if (pythonProjectsSnap.exists()) {
-                                pythonProjects = Object.values(pythonProjectsSnap.val() || {}).map(p => ({
-                                    name: p.projectTitle || p.title || 'Python Project',
-                                    description: p.description || '',
-                                    completedDate: p.completedAt ? new Date(p.completedAt).toLocaleDateString() : '',
-                                    sp: p.sp || 10, // fallback if not present
-                                    skill: 'python',
-                                    conceptUsed: p.conceptUsed || '',
-                                    publicUrl: p.publicUrl || '',
-                                }));
-                            } else {
-                                pythonProjects = [];
-                            }
-                            // Merge with existing projectHistory, avoid duplicates by name+skill
-                            let mergedHistory = [...(data.projectHistory || [])];
-                            pythonProjects.forEach(pyProj => {
-                                if (!mergedHistory.some(ph => ph.name === pyProj.name && ph.skill === 'python')) {
-                                    mergedHistory.push(pyProj);
-                                }
-                            });
-                            setUserData({ ...data, projectHistory: mergedHistory });
-                        });
-                    } catch (e) { /* ignore */ }
-                    // If no python projects, still update userData
-                    if (!pythonProjects.length) {
-                        setUserData({ ...data });
+                    
+                    // Fetch projects from users/{userId}/projects
+                    const projectsRef = ref(db, `users/${user.id}/projects`);
+                    const projectsSnap = await get(projectsRef);
+                    let projects = [];
+                    
+                    if (projectsSnap.exists()) {
+                        projects = Object.entries(projectsSnap.val()).map(([id, project]) => ({
+                            id,
+                            name: project.title || 'Project',
+                            description: project.description || '',
+                            completedDate: project.completedAt ? new Date(project.completedAt).toLocaleDateString() : new Date().toLocaleDateString(),
+                            sp: project.sp || 10,
+                            skill: project.skills || 'general',
+                            publicUrl: project.link || '',
+                            timestamp: project.completedAt || Date.now()
+                        }));
+                        
+                        // Sort by timestamp (newest first)
+                        projects.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     }
+                    
+                    // Update state with projects
+                    setUserData({ 
+                        ...data, 
+                        projectHistory: projects,
+                        projects: projects
+                    });
                     // Check if current user is observing this profile
                     if (data.observers && data.observers.includes(user.id)) {
                         setIsObserving(true);
@@ -358,7 +354,7 @@ function Profile() {
                         {/* Project History */}
                         <div className="bg-white rounded-lg shadow-md p-6">
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-semibold text-slate-800">Project History</h2>
+                                <h2 className="text-xl font-semibold text-slate-800">My Projects</h2>
                                 <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
                                     {userData.projectHistory?.length || 0} Projects
                                 </div>
@@ -370,26 +366,31 @@ function Profile() {
                                             key={index}
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            className="flex items-start space-x-4 border-b border-slate-200 pb-4 last:border-0"
+                                            className="flex items-start text-left space-x-4 border-b border-slate-200 pb-4 last:border-0"
                                         >
-                                            <div className="flex-shrink-0">
-                                                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                    {project.skill === 'python' && <img src={python} alt="Python" className="w-6 h-6" />}
-                                                    {project.skill === 'powerbi' && <img src={PowerBi} alt="Power BI" className="w-6 h-6" />}
-                                                    {project.skill === 'pandas' && <span className="text-2xl">🐼</span>}
-                                                    {project.skill === 'data-science' && <span className="text-xl">📊</span>}
-                                                    {project.skill === 'public-speaking' && <span className="text-xl">🎤</span>}
-                                                </div>
-                                            </div>
                                             <div className="flex-1">
-                                                <h3 className="text-lg font-medium text-slate-800">{project.name}</h3>
-                                                <p className="text-slate-600 text-sm">{project.description}</p>
-                                                <div className="flex items-center mt-2 space-x-4">
-                                                    <span className="text-sm text-slate-500">{project.completedDate}</span>
-                                                    <span className="text-sm font-medium text-green-600">+{project.sp} SP</span>
-                                                    <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                                        {project.skill.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                                    </span>
+                                                <div className="flex justify-between items-center">
+                                                    <h3 className="text-xl font-medium text-slate-800">{project.name}</h3>
+                                                    <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">+{project.sp} SP</span>
+                                                </div>
+                                                <p className="text-slate-600 w-120 pt-2 text-sm">{project.description}</p>
+                                                <div className="flex flex-col mt-2">
+                                                    <div className="flex justify-between items-center">
+                                                        <div className="flex flex-wrap gap-2">
+                                                        {Array.isArray(project.skill) 
+                                                            ? project.skill.map((skill, idx) => (
+                                                                <span key={idx} className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full whitespace-nowrap">
+                                                                    {String(skill).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                                </span>
+                                                            ))
+                                                            : (
+                                                                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                                                    {(project.skill || 'General').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <span className="text-sm text-slate-500">{project.completedDate}</span>
+                                                    </div>
                                                 </div>
                                                 {project.skill === 'python' && project.publicUrl && (
                                                     <>

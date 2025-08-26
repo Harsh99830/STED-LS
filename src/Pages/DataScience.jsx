@@ -316,7 +316,6 @@ function DataScience() {
             </div>
 
             {/* Professional bottom accent line */}
-            <div className="absolute bottom-0 left-0 w-full h-1 bg-purple-600" />
         </div>
     );
 }

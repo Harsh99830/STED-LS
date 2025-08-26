@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useUser } from '@clerk/clerk-react'
-import { getDatabase, ref, get } from 'firebase/database'
+import { getDatabase, ref, get, set, push } from 'firebase/database'
 import { db } from '../firebase'
 import Navbar from '../components/Navbar'
 import Feed from '../components/Feed'
@@ -47,6 +47,17 @@ function Home() {
   const [sqlStats, setSqlStats] = useState({ learned: 0, applied: 0, total: 0 });
   const [sqlProjects, setSqlProjects] = useState([]);
   const [isLoadingSkills, setIsLoadingSkills] = useState(true);
+  
+  // Project form state
+  const [showProjectForm, setShowProjectForm] = useState(false);
+  const [projectTitle, setProjectTitle] = useState('');
+  const [projectDescription, setProjectDescription] = useState('');
+  const [projectLink, setProjectLink] = useState('');
+  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [availableSkills, setAvailableSkills] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const MAX_DESCRIPTION_LENGTH = 1000;
   
   // Define color schemes for each skill
   const skillColors = {
@@ -847,6 +858,98 @@ function Home() {
     }
   }, [isLoaded, isSignedIn, user]);
 
+  // Load user's skills for project form
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const fetchUserSkills = async () => {
+      try {
+        const userRef = ref(db, 'users/' + user.id);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          // Get all skills that have any data (learned concepts, projects, etc.)
+          const skills = [];
+          
+          if (userData.python) skills.push('Python');
+          if (userData.powerbi) skills.push('Power BI');
+          if (userData.pandas) skills.push('Pandas');
+          if (userData.c) skills.push('C');
+          if (userData.cplus) skills.push('C++');
+          if (userData.dsa) skills.push('DSA');
+          if (userData.devops) skills.push('DevOps');
+          if (userData.java) skills.push('Java');
+          if (userData.javascript) skills.push('JavaScript');
+          if (userData.nodejs) skills.push('Node.js');
+          if (userData.numpy) skills.push('NumPy');
+          if (userData.reactjs) skills.push('React.js');
+          if (userData.sql) skills.push('SQL');
+          
+          setAvailableSkills(skills);
+        }
+      } catch (err) {
+        console.error('Error fetching user skills:', err);
+      }
+    };
+    
+    fetchUserSkills();
+  }, [user]);
+
+  const handleCreateProject = async () => {
+    if (!projectTitle.trim() || !projectDescription.trim() || selectedSkills.length === 0) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    if (!user) {
+      setError('You must be logged in to create a project');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const projectData = {
+        title: projectTitle.trim(),
+        description: projectDescription.trim(),
+        link: projectLink.trim(),
+        skills: selectedSkills,
+        userId: user.id,
+        createdAt: new Date().toISOString(),
+        status: 'active'
+      };
+
+      // Save project to Firebase
+      const projectsRef = ref(db, 'users/' + user.id + '/projects');
+      const newProjectRef = push(projectsRef);
+      await set(newProjectRef, projectData);
+
+      // Reset form and close overlay
+      setProjectTitle('');
+      setProjectDescription('');
+      setProjectLink('');
+      setSelectedSkills([]);
+      setShowProjectForm(false);
+      
+      // Show success message or redirect
+      console.log('Project created successfully!');
+    } catch (err) {
+      console.error('Error creating project:', err);
+      setError('Failed to create project. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const toggleSkill = (skill) => {
+    setSelectedSkills(prev => 
+      prev.includes(skill)
+        ? prev.filter(s => s !== skill)
+        : [...prev, skill]
+    );
+  };
+
   // When tab changes, persist to localStorage
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
@@ -864,7 +967,7 @@ function Home() {
         <div className="flex justify-left w-130 mb-8">
           <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-sm">
             {[
-              { id: 'my-learning', label: 'My Learning' },
+              { id: 'my-learning', label: 'Learning Skills' },
               { id: 'feed', label: 'Learning Feed' },
               { id: 'discover', label: 'Discover Students' },
             ].map((tab) => (
@@ -891,10 +994,16 @@ function Home() {
             {activeTab === 'my-learning' && (
               <div className="space-y-6">
                 {!isLoadingSkills && (
-                  <div className="flex items-center mb-10">
-                    <Link to="/all-skills" className="text-indigo-600 hover:underline font-semibold text-base" style={{marginRight: 'auto'}}>
+                  <div className="flex items-center justify-between mb-10">
+                    <Link to="/all-skills" className="text-indigo-600 hover:underline font-semibold text-base">
                       + add skill
                     </Link>
+                    <button
+                      onClick={() => setShowProjectForm(true)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      + Add Project
+                    </button>
                   </div>
                 )}
                 {isLoadingSkills ? (
@@ -1330,6 +1439,131 @@ function Home() {
               </div>
             </motion.div>
           </div>
+
+          {/* Project Creation Overlay */}
+          {showProjectForm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-semibold text-slate-800">Create New Project</h3>
+                    <button
+                      onClick={() => setShowProjectForm(false)}
+                      className="text-slate-400 hover:text-slate-600 transition-colors"
+                      disabled={isSubmitting}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-md">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Project Title <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={projectTitle}
+                        onChange={(e) => setProjectTitle(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="Enter project title"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Skills <span className="text-red-500">*</span>
+                        <span className="text-xs text-slate-500 ml-2">Select all that apply</span>
+                      </label>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {availableSkills.map((skill) => (
+                          <button
+                            key={skill}
+                            type="button"
+                            onClick={() => toggleSkill(skill)}
+                            className={`px-3 py-1 text-sm rounded-full border ${
+                              selectedSkills.includes(skill)
+                                ? 'bg-purple-100 text-purple-800 border-purple-300'
+                                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                            }`}
+                            disabled={isSubmitting}
+                          >
+                            {skill}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Description <span className="text-red-500">*</span>
+                        <span className="text-xs text-slate-500 ml-2">
+                          {projectDescription.length}/{MAX_DESCRIPTION_LENGTH} characters
+                        </span>
+                      </label>
+                      <textarea
+                        value={projectDescription}
+                        onChange={(e) => {
+                          if (e.target.value.length <= MAX_DESCRIPTION_LENGTH) {
+                            setProjectDescription(e.target.value);
+                          }
+                        }}
+                        className="w-full h-32 px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                        placeholder="Describe your project..."
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Project Link (GitHub or other)
+                      </label>
+                      <input
+                        type="url"
+                        value={projectLink}
+                        onChange={(e) => setProjectLink(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="https://github.com/username/project"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowProjectForm(false)}
+                      className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreateProject}
+                      disabled={isSubmitting || !projectTitle.trim() || !projectDescription.trim() || selectedSkills.length === 0}
+                      className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-colors ${
+                        isSubmitting || !projectTitle.trim() || !projectDescription.trim() || selectedSkills.length === 0
+                          ? 'bg-purple-300 cursor-not-allowed'
+                          : 'bg-purple-600 hover:bg-purple-700'
+                      }`}
+                    >
+                      {isSubmitting ? 'Creating...' : 'Create Project'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
