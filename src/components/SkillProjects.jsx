@@ -81,7 +81,7 @@ export default function SkillProjects({ skill }) {
                 <div className="flex justify-between items-center">
                   <h3 className="text-xl font-medium text-slate-800">{project.name}</h3>
                   <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                    +{project.sp} SP
+                    +{Math.min(project.sp || 0, 10)} SP
                   </span>
                 </div>
                 <p className="text-slate-600 pt-2 text-sm">{project.description}</p>
