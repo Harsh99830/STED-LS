@@ -910,14 +910,19 @@ function Home() {
     setError('');
 
     try {
+      // Calculate SP based on number of skills (10 SP per skill)
+      const sp = selectedSkills.length * 10;
+      
       const projectData = {
         title: projectTitle.trim(),
         description: projectDescription.trim(),
         link: projectLink.trim(),
         skills: selectedSkills,
         userId: user.id,
+        sp: sp, // Save calculated SP
+        completedAt: new Date().toISOString(), // Add completion timestamp
         createdAt: new Date().toISOString(),
-        status: 'active'
+        status: 'completed' // Mark as completed since we're adding it directly
       };
 
       // Save project to Firebase

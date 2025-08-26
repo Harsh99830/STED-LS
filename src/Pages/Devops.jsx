@@ -9,6 +9,7 @@ import { db } from "../firebase";
 import ConceptLearned from "../components/ConceptLearned";
 import Learned from "../assets/learned.png";
 import AssignmentIcon from '../assets/Assignment.png';
+import SkillProjects from "../components/SkillProjects";
 
 function Devops() {
   const navigate = useNavigate();
@@ -247,14 +248,8 @@ function Devops() {
             </motion.div>
           </div>
 
-          <div className='w-full bg-white rounded-lg shadow-md mt-8 p-6'>
-            <h2 className='text-2xl text-left font-bold text-slate-800 mb-6'>Projects</h2>
-            
-            {/* Projects content will go here */}
-            <div className='min-h-[200px] flex items-center justify-center text-slate-400'>
-              No projects available.
-            </div>
-          </div>
+           {/* Projects Section */}
+            <SkillProjects skill="Devops" />
         </div>
       </div>
     </div>

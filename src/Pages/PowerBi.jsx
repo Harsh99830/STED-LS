@@ -4,11 +4,11 @@ import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import { useUser } from "@clerk/clerk-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getDatabase, ref, get, update, onValue } from "firebase/database";
+import { getDatabase, ref, get, onValue } from "firebase/database";
 import { db } from "../firebase";
 import ConceptLearned from "../components/ConceptLearned";
+import SkillProjects from "../components/SkillProjects";
 import Learned from "../assets/learned.png";
-import Applied from "../assets/applied.png";
 import Project from "../assets/project.png";
 import ProjectRecommender from '../components/ProjectRecommender';
 import SeeAnother from "../assets/SeeAnother.png";
@@ -549,59 +549,9 @@ function PowerBi() {
       </div>
 
 
-      {/* Project History Section */}
+      {/* Projects Section */}
       <div className="w-full mx-auto lg:px-8 text-left mb-10">
-        
-        <h2 className="text-2xl font-bold text-slate-800 mb-6">Project History</h2>
-        <div className="bg-white hover:bg-[#f7f7f7] rounded-lg shadow-md p-6">
-          {completedProjects.length === 0 ? (
-            <div className="text-slate-500 italic">No completed projects yet.</div>
-          ) : (
-              <ul className="divide-y divide-slate-200">
-              {completedProjects.map((project, idx) => (
-                <li 
-                  key={project.key} 
-                  className="flex flex-col md:flex-row gap-2 md:gap-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => handleProjectClick(project)}
-                >
-                    <div className="flex-1">
-                    <div className="text-2xl font-semibold text-slate-800">{project.projectTitle || project.key}</div>
-                    <div className="text-slate-500 text-sm mt-2">Completed: {new Date(project.completedAt).toLocaleDateString()}</div>
-                    </div>
-                    <div className="flex-none flex flex-col items-end gap-2 md:gap-3">
-                    <span className="inline-block text-slate-700 px-3 py-1 text-lg">Click to view details</span>
-                    {project.publicUrl && (
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          className="px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-xs font-semibold border border-purple-200 transition-colors"
-                          onClick={e => {
-                            e.stopPropagation();
-                            const url = project.publicUrl.replace('/public/powerbi-project/', '/powerbi-project/');
-                            navigator.clipboard.writeText(window.location.origin + url);
-                            setCopiedProjectId(project._projectKey);
-                            setTimeout(() => setCopiedProjectId(null), 1500);
-                          }}
-                        >
-                          {copiedProjectId === project._projectKey ? 'Copied!' : 'Share'}
-                        </button>
-                        <a
-                          href={project.publicUrl.replace('/public/powerbi-project/', '/powerbi-project/')}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-semibold border border-blue-200 transition-colors"
-                          style={{ fontWeight: 500 }}
-                          onClick={e => e.stopPropagation()}
-                        >
-                          Preview
-                        </a>
-                      </div>
-                    )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-          )}
-        </div>
+        <SkillProjects skill="PowerBi" />
       </div>
     </div>
   );

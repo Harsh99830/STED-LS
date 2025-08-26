@@ -4,8 +4,12 @@ import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import { useUser } from '@clerk/clerk-react';
 import { motion } from 'framer-motion';
-import { getDatabase, ref, get } from 'firebase/database';
-import { db } from '../firebase';
+import { getDatabase, ref, get, onValue } from "firebase/database";
+import { db } from "../firebase";
+import ConceptLearned from "../components/ConceptLearned";
+import SkillProjects from "../components/SkillProjects";
+import Learned from "../assets/learned.png";
+import AssignmentIcon from '../assets/Assignment.png';
 
 function PublicSpeaking() {
     const navigate = useNavigate();

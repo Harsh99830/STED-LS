@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { getDatabase, ref, get, onValue } from "firebase/database";
 import { db } from "../firebase";
 import ConceptLearned from "../components/ConceptLearned";
+import SkillProjects from "../components/SkillProjects";
 import Learned from "../assets/learned.png";
 import AssignmentIcon from '../assets/Assignment.png';
 
@@ -248,14 +249,7 @@ function Python() {
           </div>
 
           {/* Projects Section */}
-          <div className='w-full bg-white rounded-lg shadow-md mt-8 p-6'>
-            <h2 className='text-2xl text-left font-bold text-slate-800 mb-6'>Projects</h2>
-            
-            {/* Projects content will go here */}
-            <div className='min-h-[200px] flex items-center justify-center text-slate-400'>
-              No projects available.
-            </div>
-          </div>
+          <SkillProjects skill="Python" />
         </div>
       </div>
     </div>
