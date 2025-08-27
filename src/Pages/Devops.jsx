@@ -24,6 +24,7 @@ function Devops() {
   });
   const [showProgress, setShowProgress] = useState(false);
   const [conceptStats, setConceptStats] = useState({ learned: 0, applied: 0, total: 0 });
+  const [projectStats, setProjectStats] = useState({ totalSP: 0, count: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -49,37 +50,65 @@ function Devops() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.devops) return;
+    if (!userData?.devops) return;
     
-      // Fetch all concepts
-      const allConceptsRef = ref(db, 'DevopsProject/AllConcepts/category');
-      const allConceptsSnap = await get(allConceptsRef);
-      let totalConcepts = 0;
-      if (allConceptsSnap.exists()) {
-        const data = allConceptsSnap.val();
-        totalConcepts = [
-          ...Object.values(data.basic || {}),
-          ...Object.values(data.intermediate || {}),
-          ...Object.values(data.advanced || {}),
-        ].length;
-      }
+    // Fetch all concepts
+    const allConceptsRef = ref(db, 'DevopsProject/AllConcepts/category');
+    const allConceptsSnap = await get(allConceptsRef);
+    let totalConcepts = 0;
+    if (allConceptsSnap.exists()) {
+      const data = allConceptsSnap.val();
+      totalConcepts = [
+        ...Object.values(data.basic || {}),
+        ...Object.values(data.intermediate || {}),
+        ...Object.values(data.advanced || {}),
+      ].length;
+    }
     
-      // Get learned concepts
+    // Get learned concepts
     let learnedConcepts = userData.devops?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
-      const learned = learnedConcepts.length;
+    const learned = learnedConcepts.length;
     
     // For now, set applied to 0 since we're removing project functionality
     const applied = 0;
     
-      setConceptStats({ learned, applied, total: totalConcepts });
+    setConceptStats({ learned, applied, total: totalConcepts });
+  };
+
+  const fetchProjectStats = async () => {
+    if (!user) return;
+    
+    try {
+      const projectsRef = ref(db, `users/${user.id}/projects`);
+      const projectsSnap = await get(projectsRef);
+      
+      if (projectsSnap.exists()) {
+        const projectsData = Object.values(projectsSnap.val())
+          .filter(project => {
+            const skills = project.skills || project.skill || 'general';
+            return Array.isArray(skills) 
+              ? skills.some(s => s.toLowerCase() === 'devops')
+              : skills.toLowerCase() === 'devops';
+          });
+        
+        const totalSP = projectsData.length * 10; // 10 SP per DevOps project
+        setProjectStats({ totalSP, count: projectsData.length });
+      } else {
+        setProjectStats({ totalSP: 0, count: 0 });
+      }
+    } catch (error) {
+      console.error('Error fetching project stats:', error);
+      setProjectStats({ totalSP: 0, count: 0 });
+    }
   };
 
   useEffect(() => {
     fetchConceptStats();
-  }, [userData]);
+    fetchProjectStats();
+  }, [userData, user]);
 
   const toggleProgress = () => {
     setShowProgress(!showProgress);
@@ -143,7 +172,7 @@ function Devops() {
                   <div>
                     <p className="text-sm text-slate-600">SP(STED Points)</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                      {conceptStats.learned * 2}
+                      {(conceptStats.learned * 2) + projectStats.totalSP}
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
@@ -163,7 +192,7 @@ function Devops() {
                   <div>
                     <p className="text-sm text-slate-600">Projects Completed</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                      0
+                      {projectStats.count}
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">

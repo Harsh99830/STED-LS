@@ -24,6 +24,7 @@ function NodeJS() {
   });
   const [showProgress, setShowProgress] = useState(false);
   const [conceptStats, setConceptStats] = useState({ learned: 0, applied: 0, total: 0 });
+  const [projectStats, setProjectStats] = useState({ totalSP: 0, count: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -77,9 +78,37 @@ function NodeJS() {
       setConceptStats({ learned, applied, total: totalConcepts });
   };
 
+  const fetchProjectStats = async () => {
+    if (!user) return;
+    
+    try {
+      const projectsRef = ref(db, `users/${user.id}/projects`);
+      const projectsSnap = await get(projectsRef);
+      
+      if (projectsSnap.exists()) {
+        const projectsData = Object.values(projectsSnap.val())
+          .filter(project => {
+            const skills = project.skills || project.skill || 'general';
+            return Array.isArray(skills) 
+              ? skills.some(s => s.toLowerCase() === 'node.js')
+              : skills.toLowerCase() === 'node.js';
+          });
+        
+        const totalSP = projectsData.length * 10; // 10 SP per Node.js project
+        setProjectStats({ totalSP, count: projectsData.length });
+      } else {
+        setProjectStats({ totalSP: 0, count: 0 });
+      }
+    } catch (error) {
+      console.error('Error fetching project stats:', error);
+      setProjectStats({ totalSP: 0, count: 0 });
+    }
+  };
+
   useEffect(() => {
     fetchConceptStats();
-  }, [userData]);
+    fetchProjectStats();
+  }, [userData, user]);
 
   const toggleProgress = () => {
     setShowProgress(!showProgress);
@@ -143,7 +172,7 @@ function NodeJS() {
                   <div>
                     <p className="text-sm text-slate-600">SP(STED Points)</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                      {conceptStats.learned * 2}
+                      {(conceptStats.learned * 2) + projectStats.totalSP}
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">

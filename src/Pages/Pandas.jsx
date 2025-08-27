@@ -34,6 +34,7 @@ function Pandas() {
   const [projectData, setProjectData] = useState(null);
   const [showProgress, setShowProgress] = useState(false);
   const [conceptStats, setConceptStats] = useState({ learned: 0, applied: 0, total: 0 });
+  const [projectStats, setProjectStats] = useState({ totalSP: 0, count: 0 });
   const [showProjectOverlay, setShowProjectOverlay] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentProjectTitle, setCurrentProjectTitle] = useState('');
@@ -127,24 +128,24 @@ function Pandas() {
   }, [userData.pandas]);
 
   const fetchConceptStats = async () => {
-      if (!userData?.pandas) return;
+    if (!userData?.pandas) return;
     
-      // Fetch all concepts
-      const allConceptsRef = ref(db, 'PandasProject/AllConcepts/category');
-      const allConceptsSnap = await get(allConceptsRef);
-      let totalConcepts = 0;
-      if (allConceptsSnap.exists()) {
-        const data = allConceptsSnap.val();
-        // Sum all concepts in all categories (dynamic, not just basic/intermediate/advanced)
-        totalConcepts = Object.values(data).reduce((acc, arr) => acc + Object.values(arr || {}).length, 0);
-      }
+    // Fetch all concepts
+    const allConceptsRef = ref(db, 'PandasProject/AllConcepts/category');
+    const allConceptsSnap = await get(allConceptsRef);
+    let totalConcepts = 0;
+    if (allConceptsSnap.exists()) {
+      const data = allConceptsSnap.val();
+      // Sum all concepts in all categories (dynamic, not just basic/intermediate/advanced)
+      totalConcepts = Object.values(data).reduce((acc, arr) => acc + Object.values(arr || {}).length, 0);
+    }
     
-      // Get learned concepts
+    // Get learned concepts
     let learnedConcepts = userData.pandas?.learnedConcepts || [];
     if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
       learnedConcepts = Object.values(learnedConcepts);
     }
-      const learned = learnedConcepts.length;
+    const learned = learnedConcepts.length;
     
     // Analyze concepts used in completed projects
     const conceptsUsedInProjects = new Set();
@@ -167,12 +168,40 @@ function Pandas() {
       return conceptsUsedInProjects.has(concept.concept || concept);
     }).length;
     
-      setConceptStats({ learned, applied, total: totalConcepts });
+    setConceptStats({ learned, applied, total: totalConcepts });
+  };
+
+  const fetchProjectStats = async () => {
+    if (!user) return;
+    
+    try {
+      const projectsRef = ref(db, `users/${user.id}/projects`);
+      const projectsSnap = await get(projectsRef);
+      
+      if (projectsSnap.exists()) {
+        const projectsData = Object.values(projectsSnap.val())
+          .filter(project => {
+            const skills = project.skills || project.skill || 'general';
+            return Array.isArray(skills) 
+              ? skills.some(s => s.toLowerCase() === 'pandas')
+              : skills.toLowerCase() === 'pandas';
+          });
+        
+        const totalSP = projectsData.length * 10; // 10 SP per Pandas project
+        setProjectStats({ totalSP, count: projectsData.length });
+      } else {
+        setProjectStats({ totalSP: 0, count: 0 });
+      }
+    } catch (error) {
+      console.error('Error fetching project stats:', error);
+      setProjectStats({ totalSP: 0, count: 0 });
+    }
   };
 
   useEffect(() => {
     fetchConceptStats();
-  }, [userData, completedProjects]);
+    fetchProjectStats();
+  }, [userData, completedProjects, user]);
 
   const toggleProgress = () => {
     setShowProgress(!showProgress);
@@ -325,7 +354,7 @@ function Pandas() {
                   <div>
                     <p className="text-sm text-slate-600">SP(STED Points)</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                    {completedProjects.length * 10 + conceptStats.learned * 2 + conceptStats.applied * 5}
+                      {(conceptStats.learned * 2) + projectStats.totalSP}
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
@@ -345,33 +374,11 @@ function Pandas() {
                   <div>
                     <p className="text-sm text-slate-600">Projects Completed</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                    {completedProjects.length}
+                      {projectStats.count}
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
-                    <span className=""><img className="w-7" src={Project} alt="" /></span>
-                  </div>
-                </div>
-              </motion.div>
-
-           
-
-                        {/* Concepts Learned Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="bg-white rounded-lg shadow-md p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-600">Concepts Learned</p>
-                    <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                      {conceptStats.learned} / {conceptStats.total}
-                    </h3>
-                  </div>
-                  <div className="bg-purple-50 p-3 rounded-full">
-                    <span className="text-2xl"><img className="w-7" src={Learned} alt="" /></span>
+                    <span className="text-2xl">🏆</span>
                   </div>
                 </div>
               </motion.div>

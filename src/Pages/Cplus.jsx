@@ -24,6 +24,7 @@ function Cplus() {
   });
   const [showProgress, setShowProgress] = useState(false);
   const [conceptStats, setConceptStats] = useState({ learned: 0, applied: 0, total: 0 });
+  const [projectStats, setProjectStats] = useState({ totalSP: 0, count: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -49,55 +50,83 @@ function Cplus() {
 
 
   const fetchConceptStats = async () => {
-      if (!userData?.cplus) {
-        console.log('No cplus data in userData');
-        return;
+    if (!userData?.cplus) {
+      console.log('No cplus data in userData');
+      return;
+    }
+    
+    console.log('Fetching C++ concepts...');
+    // Use the same path as in ConceptLearned component
+    const conceptPath = 'CplusProject/AllConcepts/category';
+    let totalConcepts = 0;
+    
+    try {
+      const allConceptsRef = ref(db, conceptPath);
+      const allConceptsSnap = await get(allConceptsRef);
+      
+      if (allConceptsSnap.exists()) {
+        console.log(`Found concepts at path: ${conceptPath}`);
+        const data = allConceptsSnap.val();
+        totalConcepts = [
+          ...Object.values(data.basic || {}),
+          ...Object.values(data.intermediate || {}),
+          ...Object.values(data.advanced || {}),
+        ].length;
+      } else {
+        console.log(`No concepts found at path: ${conceptPath}`);
       }
+    } catch (error) {
+      console.error(`Error fetching concepts:`, error);
+    }
+  
+    // Get learned concepts
+    let learnedConcepts = userData.cplus?.learnedConcepts || [];
+    console.log('Learned concepts:', learnedConcepts);
+    
+    if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
+      learnedConcepts = Object.values(learnedConcepts);
+    }
+    
+    const learned = learnedConcepts.length;
+    console.log(`Learned: ${learned} concepts`);
+  
+    // For now, set applied to 0 since we're removing project functionality
+    const applied = 0;
+  
+    setConceptStats({ learned, applied, total: totalConcepts });
+  };
+
+  const fetchProjectStats = async () => {
+    if (!user) return;
+    
+    try {
+      const projectsRef = ref(db, `users/${user.id}/projects`);
+      const projectsSnap = await get(projectsRef);
       
-      console.log('Fetching C++ concepts...');
-      // Use the same path as in ConceptLearned component
-      const conceptPath = 'CplusProject/AllConcepts/category';
-      let totalConcepts = 0;
-      
-      try {
-        const allConceptsRef = ref(db, conceptPath);
-        const allConceptsSnap = await get(allConceptsRef);
+      if (projectsSnap.exists()) {
+        const projectsData = Object.values(projectsSnap.val())
+          .filter(project => {
+            const skills = project.skills || project.skill || 'general';
+            return Array.isArray(skills) 
+              ? skills.some(s => s.toLowerCase() === 'c++' || s.toLowerCase() === 'cpp')
+              : skills.toLowerCase() === 'c++' || skills.toLowerCase() === 'cpp';
+          });
         
-        if (allConceptsSnap.exists()) {
-          console.log(`Found concepts at path: ${conceptPath}`);
-          const data = allConceptsSnap.val();
-          totalConcepts = [
-            ...Object.values(data.basic || {}),
-            ...Object.values(data.intermediate || {}),
-            ...Object.values(data.advanced || {}),
-          ].length;
-        } else {
-          console.log(`No concepts found at path: ${conceptPath}`);
-        }
-      } catch (error) {
-        console.error(`Error fetching concepts:`, error);
+        const totalSP = projectsData.length * 10; // 10 SP per C++ project
+        setProjectStats({ totalSP, count: projectsData.length });
+      } else {
+        setProjectStats({ totalSP: 0, count: 0 });
       }
-    
-      // Get learned concepts
-      let learnedConcepts = userData.cplus?.learnedConcepts || [];
-      console.log('Learned concepts:', learnedConcepts);
-      
-      if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
-        learnedConcepts = Object.values(learnedConcepts);
-      }
-      
-      const learned = learnedConcepts.length;
-      console.log(`Learned: ${learned} concepts`);
-    
-      // For now, set applied to 0 since we're removing project functionality
-      const applied = 0;
-    
-      setConceptStats({ learned, applied, total: totalConcepts });
+    } catch (error) {
+      console.error('Error fetching project stats:', error);
+      setProjectStats({ totalSP: 0, count: 0 });
+    }
   };
 
   useEffect(() => {
     fetchConceptStats();
-  }, [userData]);
+    fetchProjectStats();
+  }, [userData, user]);
 
   const toggleProgress = () => {
     setShowProgress(!showProgress);
@@ -161,7 +190,7 @@ function Cplus() {
                   <div>
                     <p className="text-sm text-slate-600">SP(STED Points)</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                      {conceptStats.learned * 2}
+                      {(conceptStats.learned * 2) + projectStats.totalSP}
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
@@ -181,7 +210,7 @@ function Cplus() {
                   <div>
                     <p className="text-sm text-slate-600">Projects Completed</p>
                     <h3 className="text-2xl font-bold text-slate-800 mt-1">
-                      0
+                      {projectStats.count}
                     </h3>
                   </div>
                   <div className="bg-purple-50 p-3 rounded-full">
