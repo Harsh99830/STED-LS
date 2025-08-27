@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useUser } from '@clerk/clerk-react'
-import { getDatabase, ref, get, set, push } from 'firebase/database'
+import { getDatabase, ref, get, set, push, onValue } from 'firebase/database';
 import { db } from '../firebase'
 import Navbar from '../components/Navbar'
 import Feed from '../components/Feed'
@@ -17,6 +17,7 @@ function Home() {
   const [students, setStudents] = useState([])
   const [learningActivities, setLearningActivities] = useState([])
   const [userData, setUserData] = useState(null)
+  const [userProjects, setUserProjects] = useState([])
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const navigate = useNavigate();
   const [pythonSP, setPythonSP] = useState(0);
@@ -236,22 +237,39 @@ function Home() {
   useEffect(() => {
     if (isLoaded && isSignedIn && user?.id) {
       const userRef = ref(db, 'users/' + user.id);
-      get(userRef).then((snapshot) => {
+      const projectsRef = ref(db, 'users/' + user.id + '/projects');
+      
+      // Fetch user data
+      onValue(userRef, (snapshot) => {
         if (snapshot.exists()) {
           setUserData(snapshot.val());
-        }
-      }).finally(() => setIsLoadingProfile(false));
-
-      // Fetch Python completed projects
-      const completedProjectsRef = ref(db, 'users/' + user.id + '/python/PythonCompletedProjects');
-      get(completedProjectsRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          const projects = Object.values(snapshot.val() || {});
-          setPythonProjects(projects);
         } else {
-          setPythonProjects([]);
+          setUserData({});
+        }
+        setIsLoadingProfile(false);
+      }, (error) => {
+        console.error('Error fetching user data:', error);
+        setUserData({});
+        setIsLoadingProfile(false);
+      });
+      
+      // Fetch projects
+      onValue(projectsRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const projects = [];
+          snapshot.forEach((childSnapshot) => {
+            projects.push({
+              id: childSnapshot.key,
+              ...childSnapshot.val()
+            });
+          });
+          setUserProjects(projects);
+        } else {
+          setUserProjects([]);
         }
       });
+
+      // Projects are now handled by the userProjects state
 
       // Fetch Python learned/applied concepts and total concepts
       get(userRef).then((snapshot) => {
@@ -1251,13 +1269,29 @@ function Home() {
                                 <div className={`${skillColors[key]?.learned || 'bg-purple-600'} h-1.5 rounded-full transition-all duration-300`} style={{ width: `${total > 0 ? (learned / total) * 100 : 0}%` }}></div>
                               </div>
                             </div>
-                            <div>
-                              <div className="flex justify-between text-xs pb-2 text-slate-600">
-                                <span>Concepts Applied</span> 
-                                <span className="text-xs text-right font-medium text-slate-800">{applied}/{learned}</span>
+                            <div className="flex justify-between text-xs pt-1">
+                              <div className="flex items-center gap-1">
+                                <span className="text-slate-600">Projects:</span>
+                                <span className="font-medium text-slate-800">
+                                  {userProjects.filter(p => {
+                                    const skills = p.skills || p.skill || '';
+                                    return Array.isArray(skills) 
+                                      ? skills.some(s => s.toLowerCase() === skill.node.toLowerCase())
+                                      : skills.toLowerCase() === skill.node.toLowerCase();
+                                  }).length}
+                                </span>
                               </div>
-                              <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                <div className={`${skillColors[key]?.applied || 'bg-yellow-400'} h-1.5 rounded-full transition-all duration-300`} style={{ width: `${learned > 0 ? (applied / learned) * 100 : 0}%` }}></div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-slate-600">SP:</span>
+                                <span className="font-medium text-slate-800">
+                                  {(learned * 2) + (userProjects.filter(p => {
+                                    const skills = p.skills || p.skill || '';
+                                    const isSkillMatch = Array.isArray(skills)
+                                      ? skills.some(s => s.toLowerCase() === skill.node.toLowerCase())
+                                      : skills.toLowerCase() === skill.node.toLowerCase();
+                                    return isSkillMatch;
+                                  }).length * 10)}
+                                </span>
                               </div>
                             </div>
                           </div>
