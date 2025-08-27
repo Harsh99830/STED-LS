@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import { useUser } from '@clerk/clerk-react';
@@ -8,12 +8,12 @@ import { getDatabase, ref, get, update, onValue } from 'firebase/database';
 import { db } from '../firebase';
 import python from "../assets/python.png";
 import PowerBi from "../assets/PowerBi.png";
+
 // No image for pandas, use emoji
 const pandasIcon = <span className="text-2xl mr-2">🐼</span>;
-import { Link } from 'react-router-dom';
-import { useCallback } from 'react';
 
 function Profile() {
+    const [showAllSkills, setShowAllSkills] = useState(false);
     const navigate = useNavigate();
     const { isLoaded, isSignedIn, user } = useUser();
     const [userData, setUserData] = useState({
@@ -32,8 +32,23 @@ function Profile() {
     const [isLoading, setIsLoading] = useState(true);
     const [isObserving, setIsObserving] = useState(false);
     const [copiedProjectId, setCopiedProjectId] = useState(null);
-    const [powerbiStats, setPowerbiStats] = useState({ learned: 0, applied: 0, total: 0 });
-    const [pandasStats, setPandasStats] = useState({ learned: 0, applied: 0, total: 0 });
+    const [skillStats, setSkillStats] = useState({
+        python: { learned: 0, applied: 0, total: 0 },
+        powerbi: { learned: 0, applied: 0, total: 0 },
+        pandas: { learned: 0, applied: 0, total: 0 },
+        c: { learned: 0, applied: 0, total: 0 },
+        cplus: { learned: 0, applied: 0, total: 0 },
+        dsa: { learned: 0, applied: 0, total: 0 },
+        devops: { learned: 0, applied: 0, total: 0 },
+        java: { learned: 0, applied: 0, total: 0 },
+        javascript: { learned: 0, applied: 0, total: 0 },
+        nodejs: { learned: 0, applied: 0, total: 0 },
+        numpy: { learned: 0, applied: 0, total: 0 },
+        reactjs: { learned: 0, applied: 0, total: 0 },
+        sql: { learned: 0, applied: 0, total: 0 },
+        'data-science': { learned: 0, applied: 0, total: 0 },
+        'public-speaking': { learned: 0, applied: 0, total: 0 }
+    });
 
     useEffect(() => {
         if (isLoaded && !isSignedIn) {
@@ -81,63 +96,111 @@ function Profile() {
                         setIsObserving(true);
                     }
                 } else {
-                    // console.log('No data available');
+                    console.log('No data available');
                 }
                 setIsLoading(false);
             });
-            // Fetch PowerBI stats (learned, applied, total)
-            const fetchPowerbiStats = async () => {
-                let learnedConcepts = (userData.powerbi?.learnedConcepts) || [];
-                if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
-                    learnedConcepts = Object.values(learnedConcepts);
-                }
-                const learned = learnedConcepts.length;
-                const conceptsUsed = new Set();
-                (Object.values(userData.powerbi?.PowerBiCompletedProjects || {})).forEach(project => {
-                    if (project.conceptUsed) {
-                        project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
-                    }
-                });
-                const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
-                let total = 0;
+
+            // Fetch skill stats from database
+            const fetchSkillStats = async (skillKey, skillName) => {
                 try {
-                    const allConceptsSnap = await get(ref(db, 'PowerBiProject/AllConcepts/category'));
-                    if (allConceptsSnap.exists()) {
-                        const data = allConceptsSnap.val();
-                        total = Object.values(data).reduce((acc, arr) => acc + Object.values(arr || {}).length, 0);
+                    // Fetch learned concepts
+                    const learnedConceptsRef = ref(db, `users/${user.id}/${skillKey}/learnedConcepts`);
+                    const learnedConceptsSnap = await get(learnedConceptsRef);
+                    
+                    let learnedConcepts = [];
+                    if (learnedConceptsSnap.exists()) {
+                        const data = learnedConceptsSnap.val();
+                        learnedConcepts = Array.isArray(data) ? data : Object.values(data || {});
                     }
-                } catch (e) {}
-                setPowerbiStats({ learned, applied, total });
-            };
-            // Fetch Pandas stats (learned, applied, total)
-            const fetchPandasStats = async () => {
-                let learnedConcepts = (userData.pandas?.learnedConcepts) || [];
-                if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
-                    learnedConcepts = Object.values(learnedConcepts);
+                    
+                    // Fetch completed projects
+                    const completedProjectsRef = ref(db, `users/${user.id}/${skillKey}/${skillName}CompletedProjects`);
+                    const completedProjectsSnap = await get(completedProjectsRef);
+                    
+                    const conceptsUsed = new Set();
+                    if (completedProjectsSnap.exists()) {
+                        const projects = Object.values(completedProjectsSnap.val() || {});
+                        projects.forEach(project => {
+                            if (project.conceptUsed) {
+                                project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
+                            }
+                        });
+                    }
+                    
+                    // Calculate applied concepts
+                    const applied = learnedConcepts.filter(concept => {
+                        const conceptName = typeof concept === 'object' ? concept.concept : concept;
+                        return conceptsUsed.has(conceptName);
+                    }).length;
+                    
+                    // Get total concepts from the skill's concept directory
+                    // Special handling for C++ (cplus)
+                    const skillPath = skillKey === 'cplus' ? 'Cplus' : skillName;
+                    const totalConceptsRef = ref(db, `${skillPath}Project/AllConcepts/category`);
+                    const totalConceptsSnap = await get(totalConceptsRef);
+                    
+                    let total = 0;
+                    if (totalConceptsSnap.exists()) {
+                        const categories = totalConceptsSnap.val() || {};
+                        total = Object.values(categories).reduce((sum, category) => {
+                            return sum + (Array.isArray(category) ? category.length : Object.keys(category || {}).length);
+                        }, 0);
+                    }
+                    
+                    // Update stats
+                    setSkillStats(prev => ({
+                        ...prev,
+                        [skillKey]: {
+                            learned: learnedConcepts.length,
+                            applied,
+                            total: total || prev[skillKey]?.total || 30 // Fallback to previous total or 30
+                        }
+                    }));
+                    
+                } catch (error) {
+                    console.error(`Error fetching ${skillKey} stats:`, error);
                 }
-                const learned = learnedConcepts.length;
-                const conceptsUsed = new Set();
-                (Object.values(userData.pandas?.PandasCompletedProjects || {})).forEach(project => {
-                    if (project.conceptUsed) {
-                        project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
-                    }
-                });
-                const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
-                let total = 0;
-                try {
-                    const allConceptsSnap = await get(ref(db, 'PandasProject/AllConcepts/category'));
-                    if (allConceptsSnap.exists()) {
-                        const data = allConceptsSnap.val();
-                        total = Object.values(data).reduce((acc, arr) => acc + Object.values(arr || {}).length, 0);
-                    }
-                } catch (e) {}
-                setPandasStats({ learned, applied, total });
             };
-            fetchPowerbiStats();
-            fetchPandasStats();
+            
+            // Fetch all skills stats
+            const fetchAllSkillStats = async () => {
+                const skills = [
+                    { key: 'python', name: 'Python' },
+                    { key: 'powerbi', name: 'PowerBi' },
+                    { key: 'pandas', name: 'Pandas' },
+                    { key: 'c', name: 'C' },
+                    { key: 'cplus', name: 'CPlus' },
+                    { key: 'dsa', name: 'DSA' },
+                    { key: 'devops', name: 'Devops' },
+                    { key: 'java', name: 'Java' },
+                    { key: 'javascript', name: 'Javascript' },
+                    { key: 'nodejs', name: 'NodeJS' },
+                    { key: 'numpy', name: 'Numpy' },
+                    { key: 'reactjs', name: 'ReactJS' },
+                    { key: 'sql', name: 'SQL' },
+                    { key: 'data-science', name: 'DataScience' },
+                    { key: 'public-speaking', name: 'PublicSpeaking' }
+                ];
+                
+                // Fetch stats for all skills in parallel
+                await Promise.all(skills.map(skill => 
+                    fetchSkillStats(skill.key, skill.name)
+                ));
+            };
+            
+            // Initial fetch of all skill stats
+            fetchAllSkillStats();
+            
+            // Set up real-time listener for skill stats
+            const skillRef = ref(db, `users/${user.id}`);
+            onValue(skillRef, () => {
+                fetchAllSkillStats();
+            });
+
             return () => unsubscribe();
         }
-    }, [isLoaded, isSignedIn, user, userData.powerbi]);
+    }, [isLoaded, isSignedIn, user]); // Removed userData.powerbi from dependencies
 
     const handleObserve = async () => {
         if (!user || !isSignedIn) return;
@@ -236,119 +299,137 @@ function Profile() {
                     <div className="w-full max-w-4xl">
                         {/* Profile Header */}
                         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-                            
-                                <div className="flex items-center space-x-6">
-                                    <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
-                                        {user?.imageUrl ? (
-                                            <img src={user.imageUrl} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
-                                        ) : (
-                                            <span className="text-4xl">👤</span>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h1 className="text-2xl font-bold text-slate-800">{user?.fullName || 'Student'}</h1>
-                                        <p className="text-slate-600 text-left pt-2">Total SP: {calculateTotalSP()}</p>
-                                    </div>
+                            <div className="flex items-center space-x-6">
+                                <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
+                                    {user?.imageUrl ? (
+                                        <img src={user.imageUrl} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
+                                    ) : (
+                                        <span className="text-4xl">👤</span>
+                                    )}
                                 </div>
-                                <div className="flex items-center mt-10 text-sm space-x-4">
-                                    <div className="flex items-center">
-                                        <span className="text-slate-800 font-semibold">{userData.observers?.length || 34}</span>
-                                        <span className="text-slate-600 ml-2">Observers</span>
-                                    </div>
-                                    <div className="w-px h-4 bg-slate-200"></div>
-                                    <div className="flex items-center">
-                                        <span className="text-slate-800 font-semibold">{userData.observing?.length || 8}</span>
-                                        <span className="text-slate-600 ml-2">Observing</span>
-                                    </div>
+                                <div>
+                                    <h1 className="text-2xl font-bold text-slate-800">{user?.fullName || 'Student'}</h1>
+                                    <p className="text-slate-600 text-left pt-2">Total SP: {calculateTotalSP()}</p>
                                 </div>
                             </div>
-                       
+                            <div className="flex items-center mt-10 text-sm space-x-4">
+                                <div className="flex items-center">
+                                    <span className="text-slate-800 font-semibold">{userData.observers?.length || 34}</span>
+                                    <span className="text-slate-600 ml-2">Observers</span>
+                                </div>
+                                <div className="w-px h-4 bg-slate-200"></div>
+                                <div className="flex items-center">
+                                    <span className="text-slate-800 font-semibold">{userData.observing?.length || 8}</span>
+                                    <span className="text-slate-600 ml-2">Observing</span>
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Skills Grid */}
                         {(() => {
-                          const skillMap = {
-                            'python': { node: 'python', currentProjectField: 'PythonCurrentProject', img: python, label: 'Python', route: '/python' },
-                            'data-science': { node: 'data-science', currentProjectField: 'DataScienceCurrentProject', img: null, label: 'Data Science', icon: <span className="text-xl mr-2">📊</span>, route: '/data-science' },
-                            'public-speaking': { node: 'public-speaking', currentProjectField: 'PublicSpeakingCurrentProject', img: null, label: 'Public Speaking', icon: <span className="text-xl mr-2">🎤</span>, route: '/public-speaking' },
-                            'powerbi': { node: 'powerbi', currentProjectField: 'PowerBiCurrentProject', img: PowerBi, label: 'Power BI', route: '/powerbi' },
-                            'pandas': { node: 'pandas', currentProjectField: 'PandasCurrentProject', img: null, label: 'Pandas', icon: pandasIcon, route: '/pandas' },
-                          };
-                          const startedSkills = Object.entries(skillMap).filter(([key, skill]) =>
-                            userData && userData[skill.node] && userData[skill.node][skill.currentProjectField]
-                          );
-                          const gridClass = startedSkills.length === 1 ? 'grid grid-cols-1 gap-4 mb-6' : 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6';
-                          if (startedSkills.length === 0) return <div className="text-center text-slate-500 col-span-full py-8">No skills started yet.</div>;
-                          return (
-                            <div className={gridClass}>
-                              {startedSkills.map(([key, skill]) => {
-                                // Calculate learned/applied and total for Python
-                                let learned = 0, applied = 0, total = 0;
-                                if (key === 'python') {
-                                  let learnedConcepts = userData.python?.learnedConcepts || [];
-                                  if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
-                                    learnedConcepts = Object.values(learnedConcepts);
-                                  }
-                                  learned = learnedConcepts.length;
-                                  const conceptsUsed = new Set();
-                                  (Object.values(userData.python?.PythonCompletedProjects || {})).forEach(project => {
-                                    if (project.conceptUsed) {
-                                      project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
-                                    }
-                                  });
-                                  applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
-                                  total = 15 + 20 + 15;
-                                } else if (key === 'powerbi') {
-                                  learned = powerbiStats.learned;
-                                  applied = powerbiStats.applied;
-                                  total = powerbiStats.total;
-                                } else if (key === 'pandas') {
-                                  learned = pandasStats.learned;
-                                  applied = pandasStats.applied;
-                                  total = pandasStats.total;
-                                } else {
-                                  learned = 8;
-                                  applied = 2;
-                                  total = 50;
-                                }
-                                return (
-                                  <Link to={skill.route} key={key}>
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
-                            >
-                                <div className="flex items-center mb-3">
-                                        {skill.img ? <img src={skill.img} alt={skill.label} className="w-6 h-6 mr-2" /> : skill.icon}
-                                        <h2 className="text-lg font-semibold text-slate-800">{skill.label}</h2>
-                                </div>
-                                <div className="space-y-2">
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-sm text-slate-600">Concepts learned</span>
-                                            <span className="text-sm font-medium text-slate-800">{learned}/{total}</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div className={`h-1.5 rounded-full ${key === 'python' ? 'bg-purple-600' : key === 'powerbi' ? 'bg-blue-600' : key === 'data-science' ? 'bg-green-600' : 'bg-yellow-500'}`} style={{ width: `${total > 0 ? (learned / total) * 100 : 0}%` }}></div>
-                                        </div>
-                                    </div>
-                                    {/* Concepts Applied */}
-                                    <div>
-                                        <div className="flex justify-between mb-1">
-                                            <span className="text-sm mt-3 text-slate-600">Concepts applied</span>
-                                            <span className="text-sm font-medium text-slate-800">{applied}/{learned}</span>
-                                        </div>
-                                        <div className="w-full bg-slate-200 rounded-full h-1.5">
-                                            <div className="bg-yellow-400 h-1.5 rounded-full" style={{ width: `${learned > 0 ? (applied / learned) * 100 : 0}%` }}></div>
-                                          </div>
-                                        </div>
-                                        <p className="text-sm text-slate-600">SP Earned: {calculateSkillSP(key)}</p>
-                                </div>
-                            </motion.div>
-                            </Link>
+                            const skillMap = {
+                                'python': { node: 'python', currentProjectField: 'PythonCurrentProject', img: python, label: 'Python', route: '/python' },
+                                'data-science': { node: 'data-science', currentProjectField: 'DataScienceCurrentProject', img: null, label: 'Data Science', icon: <span className="text-xl mr-2">📊</span>, route: '/data-science' },
+                                'public-speaking': { node: 'public-speaking', currentProjectField: 'PublicSpeakingCurrentProject', img: null, label: 'Public Speaking', icon: <span className="text-xl mr-2">🎤</span>, route: '/public-speaking' },
+                                'powerbi': { node: 'powerbi', currentProjectField: 'PowerBiCurrentProject', img: PowerBi, label: 'Power BI', route: '/powerbi' },
+                                'pandas': { node: 'pandas', currentProjectField: 'PandasCurrentProject', img: null, label: 'Pandas', icon: pandasIcon, route: '/pandas' },
+                                'numpy': { node: 'numpy', currentProjectField: 'NumpyCurrentProject', img: null, label: 'NumPy', icon: <span className="text-xl mr-2">🔢</span>, route: '/numpy' },
+                                'c': { node: 'c', currentProjectField: 'CCurrentProject', img: null, label: 'C', icon: <span className="text-xl mr-2 font-mono">C</span>, route: '/c' },
+                                'cplus': { node: 'cplus', currentProjectField: 'CPlusCurrentProject', img: null, label: 'C++', icon: <span className="text-xl mr-2 font-mono">C++</span>, route: '/cplus' },
+                                'devops': { node: 'devops', currentProjectField: 'DevopsCurrentProject', img: null, label: 'DevOps', icon: <span className="text-xl mr-2">🛠️</span>, route: '/devops' },
+                                'dsa': { node: 'dsa', currentProjectField: 'DSACurrentProject', img: null, label: 'DSA', icon: <span className="text-xl mr-2">📚</span>, route: '/dsa' },
+                                'nodejs': { node: 'nodejs', currentProjectField: 'NodeJSCurrentProject', img: null, label: 'Node.js', icon: <span className="text-xl mr-2">🟢</span>, route: '/nodejs' },
+                                'reactjs': { node: 'reactjs', currentProjectField: 'ReactJSCurrentProject', img: null, label: 'React.js', icon: <span className="text-xl mr-2">⚛️</span>, route: '/reactjs' },
+                                'javascript': { node: 'javascript', currentProjectField: 'JavascriptCurrentProject', img: null, label: 'JavaScript', icon: <span className="text-xl mr-2">JS</span>, route: '/javascript' },
+                                'java': { node: 'java', currentProjectField: 'JavaCurrentProject', img: null, label: 'Java', icon: <span className="text-xl mr-2">☕</span>, route: '/java' },
+                                'sql': { node: 'sql', currentProjectField: 'SQLCurrentProject', img: null, label: 'SQL', icon: <span className="text-xl mr-2">🗃️</span>, route: '/sql' },
+                            };
+
+                            // Filter to show only skills that the user has started
+                            const startedSkills = Object.entries(skillMap).filter(([key, skill]) => {
+                                // Check if the skill has any data in user's profile
+                                const hasSkillData = userData[skill.node] && (
+                                    userData[skill.node][skill.currentProjectField] ||
+                                    (userData[skill.node].learnedConcepts && 
+                                     Object.keys(userData[skill.node].learnedConcepts || {}).length > 0) ||
+                                    Object.keys(userData[skill.node] || {}).some(k => 
+                                      k.endsWith('CompletedProjects') && 
+                                      Object.keys(userData[skill.node][k] || {}).length > 0
+                                    )
                                 );
-                              })}
-                                </div>
-                          );
+                                return hasSkillData;
+                            });
+
+                            const displayedSkills = showAllSkills ? startedSkills : startedSkills.slice(0, 4);
+                            const gridClass = 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-6';
+
+                            if (startedSkills.length === 0) {
+                                return <div className="text-center text-slate-500 col-span-full py-8">No skills available.</div>;
+                            }
+                            
+                            return (
+                                <>
+                                    <div className={gridClass}>
+                                        {displayedSkills.map(([key, skill]) => {
+                                            const stats = skillStats[skill.node] || { learned: 0, applied: 0, total: 30 };
+                                            const { learned, applied, total } = stats;
+                                            
+                                            return (
+                                                <Link to={skill.route} key={key} className="block h-full">
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow h-full flex flex-col"
+                                                    >
+                                                        <div className="flex items-center mb-3">
+                                                            {skill.img ? (
+                                                                <img src={skill.img} alt={skill.label} className="w-6 h-6 mr-2 object-contain" />
+                                                            ) : skill.icon ? (
+                                                                <span className="mr-2">{skill.icon}</span>
+                                                            ) : (
+                                                                <span className="w-6 h-6 mr-2 flex items-center justify-center">
+                                                                    {skill.label.charAt(0).toUpperCase()}
+                                                                </span>
+                                                            )}
+                                                            <h2 className="text-lg font-semibold text-slate-800">{skill.label}</h2>
+                                                        </div>
+                                                        <div className="flex-1 space-y-2">
+                                                            <div>
+                                                                <div className="flex justify-between mb-1">
+                                                                    <span className="text-sm text-slate-600">Concepts learned</span>
+                                                                    <span className="text-sm font-medium text-slate-800">{learned}/{total}</span>
+                                                                </div>
+                                                                <div className="w-full bg-slate-200 rounded-full h-1.5">
+                                                                    <div 
+                                                                        className={`h-1.5 rounded-full ${
+                                                                            key === 'python' ? 'bg-purple-600' : 
+                                                                            key === 'powerbi' ? 'bg-blue-600' : 
+                                                                            key === 'data-science' ? 'bg-green-600' :
+                                                                            key === 'pandas' ? 'bg-yellow-600' : 'bg-indigo-600'
+                                                                        }`} 
+                                                                        style={{ width: `${total > 0 ? Math.min((learned / total) * 100, 100) : 0}%` }}
+                                                                    ></div>
+                                                                </div>
+                                                            </div>
+                                                           
+                                                        </div>
+                                                    </motion.div>
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                    {startedSkills.length > 4 && (
+                                        <div className="col-span-full flex justify-center mt-4">
+                                            <button
+                                                onClick={() => setShowAllSkills(!showAllSkills)}
+                                                className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 focus:outline-none"
+                                            >
+                                                {showAllSkills ? 'Show Less' : `Show All ${startedSkills.length} Skills`}
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            );
                         })()}
 
                         {/* Project History */}
@@ -377,46 +458,46 @@ function Profile() {
                                                 <div className="flex flex-col mt-2">
                                                     <div className="flex justify-between items-center">
                                                         <div className="flex flex-wrap gap-2">
-                                                        {Array.isArray(project.skill) 
-                                                            ? project.skill.map((skill, idx) => (
-                                                                <span key={idx} className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full whitespace-nowrap">
-                                                                    {String(skill).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                                                </span>
-                                                            ))
-                                                            : (
-                                                                <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                                                    {(project.skill || 'General').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                                                </span>
-                                                            )}
+                                                            {Array.isArray(project.skill) 
+                                                                ? project.skill.map((skill, idx) => (
+                                                                    <span key={idx} className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full whitespace-nowrap">
+                                                                        {String(skill).replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                                    </span>
+                                                                ))
+                                                                : (
+                                                                    <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                                                        {(project.skill || 'General').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                                    </span>
+                                                                )}
                                                         </div>
                                                         <span className="text-sm text-slate-500">{project.completedDate}</span>
                                                     </div>
+                                                    {project.skill === 'python' && project.publicUrl && (
+                                                        <div className="flex mt-2">
+                                                            <button
+                                                                className="ml-2 px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-xs font-semibold border border-purple-200 transition-colors"
+                                                                onClick={() => {
+                                                                    // Ensure the URL uses /python-project/ instead of /public/python-project/
+                                                                    const url = project.publicUrl.replace('/public/python-project/', '/python-project/');
+                                                                    navigator.clipboard.writeText(window.location.origin + url);
+                                                                    setCopiedProjectId(project.id); // Changed from project._projectKey to project.id
+                                                                    setTimeout(() => setCopiedProjectId(null), 1500);
+                                                                }}
+                                                            >
+                                                                {copiedProjectId === project.id ? 'Copied!' : 'Share'}
+                                                            </button>
+                                                            <a
+                                                                href={project.publicUrl.replace('/public/python-project/', '/python-project/')}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-semibold border border-blue-200 transition-colors"
+                                                                style={{ fontWeight: 500 }}
+                                                            >
+                                                                Preview
+                                                            </a>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {project.skill === 'python' && project.publicUrl && (
-                                                    <>
-                                                        <button
-                                                            className="ml-2 px-3 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 text-xs font-semibold border border-purple-200 transition-colors"
-                                                            onClick={() => {
-                                                                // Ensure the URL uses /python-project/ instead of /public/python-project/
-                                                                const url = project.publicUrl.replace('/public/python-project/', '/python-project/');
-                                                                navigator.clipboard.writeText(window.location.origin + url);
-                                                                setCopiedProjectId(project._projectKey);
-                                                                setTimeout(() => setCopiedProjectId(null), 1500);
-                                                            }}
-                                                        >
-                                                            {copiedProjectId === project._projectKey ? 'Copied!' : 'Share'}
-                                                        </button>
-                                                        <a
-                                                            href={project.publicUrl.replace('/public/python-project/', '/python-project/')}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-xs font-semibold border border-blue-200 transition-colors"
-                                                            style={{fontWeight: 500 }}
-                                                        >
-                                                            Preview
-                                                        </a>
-                                                    </>
-                                                )}
                                             </div>
                                         </motion.div>
                                     ))
@@ -432,4 +513,4 @@ function Profile() {
     );
 }
 
-export default Profile; 
+export default Profile;
