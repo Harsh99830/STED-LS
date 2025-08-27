@@ -25,12 +25,9 @@ function Profile() {
         'data-science': {},
         'public-speaking': {},
         powerbi: {},
-        projectHistory: [],
-        observers: [3],
-        observing: []
+        projectHistory: []
     });
     const [isLoading, setIsLoading] = useState(true);
-    const [isObserving, setIsObserving] = useState(false);
     const [copiedProjectId, setCopiedProjectId] = useState(null);
     const [skillStats, setSkillStats] = useState({
         python: { learned: 0, applied: 0, total: 0 },
@@ -70,19 +67,40 @@ function Profile() {
                     let projects = [];
                     
                     if (projectsSnap.exists()) {
-                        projects = Object.entries(projectsSnap.val()).map(([id, project]) => ({
-                            id,
-                            name: project.title || 'Project',
-                            description: project.description || '',
-                            completedDate: project.completedAt ? new Date(project.completedAt).toLocaleDateString() : new Date().toLocaleDateString(),
-                            sp: project.sp || 10,
-                            skill: project.skills || 'general',
-                            publicUrl: project.link || '',
-                            timestamp: project.completedAt || Date.now()
-                        }));
+                        projects = Object.entries(projectsSnap.val()).map(([id, project]) => {
+                            // Ensure skills is always an array
+                            let skills = [];
+                            if (project.skills) {
+                                skills = Array.isArray(project.skills) 
+                                    ? project.skills 
+                                    : typeof project.skills === 'string' 
+                                        ? project.skills.split(',').map(s => s.trim())
+                                        : [];
+                            }
+                            
+                            // If no skills, default to 'general'
+                            if (skills.length === 0) {
+                                skills = ['general'];
+                            }
+                            
+                            return {
+                                id,
+                                name: project.title || 'Project',
+                                description: project.description || '',
+                                completedDate: project.completedAt ? new Date(project.completedAt).toLocaleDateString() : new Date().toLocaleDateString(),
+                                sp: Number(project.sp) || 10,
+                                skills: skills,
+                                skill: skills[0], // For backward compatibility
+                                publicUrl: project.link || '',
+                                timestamp: project.completedAt || Date.now(),
+                                conceptUsed: project.conceptUsed || ''
+                            };
+                        });
                         
                         // Sort by timestamp (newest first)
                         projects.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                        
+                        console.log('Processed projects:', projects);
                     }
                     
                     // Update state with projects
@@ -91,10 +109,6 @@ function Profile() {
                         projectHistory: projects,
                         projects: projects
                     });
-                    // Check if current user is observing this profile
-                    if (data.observers && data.observers.includes(user.id)) {
-                        setIsObserving(true);
-                    }
                 } else {
                     console.log('No data available');
                 }
@@ -202,78 +216,194 @@ function Profile() {
         }
     }, [isLoaded, isSignedIn, user]); // Removed userData.powerbi from dependencies
 
-    const handleObserve = async () => {
-        if (!user || !isSignedIn) return;
-
-        const userRef = ref(db, 'users/' + user.id);
-        const updates = {};
-
-        if (isObserving) {
-            // Remove from observers
-            updates.observers = userData.observers.filter(id => id !== user.id);
-            updates.observing = userData.observing.filter(id => id !== user.id);
-        } else {
-            // Add to observers
-            updates.observers = [...(userData.observers || []), user.id];
-            updates.observing = [...(userData.observing || []), user.id];
+ 
+    // Calculate SP for a specific skill
+    const calculateSkillStats = (skill) => {
+        const skillKey = skill === 'cplus' ? 'Cplus' : 
+                        skill === 'data-science' ? 'DataScience' :
+                        skill === 'public-speaking' ? 'PublicSpeaking' :
+                        skill.charAt(0).toUpperCase() + skill.slice(1);
+        
+        // Get learned concepts
+        let learnedConcepts = [];
+        if (userData[skill] && userData[skill].learnedConcepts) {
+            learnedConcepts = Array.isArray(userData[skill].learnedConcepts) 
+                ? userData[skill].learnedConcepts 
+                : Object.values(userData[skill].learnedConcepts || {});
         }
-
-        try {
-            await update(userRef, updates);
-            setIsObserving(!isObserving);
-            setUserData(prev => ({
-                ...prev,
-                observers: updates.observers,
-                observing: updates.observing
-            }));
-        } catch (error) {
-            console.error('Error updating observers:', error);
-        }
-    };
-
-    // Calculate total SP
-    const calculateTotalSP = () => {
-        let totalSP = 0;
-        // Python SP: (projects * 10) + (learned * 2) + (applied * 5)
-        let pythonSP = 0;
-        if (userData && userData.python) {
-            // Count completed projects
-            const pythonProjects = Object.values(userData.python.PythonCompletedProjects || {});
-            // Count learned concepts
-            let learnedConcepts = userData.python.learnedConcepts || [];
-            if (typeof learnedConcepts === 'object' && !Array.isArray(learnedConcepts)) {
-                learnedConcepts = Object.values(learnedConcepts);
+        
+        // Get projects for this skill
+        const projects = (userData.projectHistory || []).filter(p => {
+            if (!p) return false;
+            
+            const skillLower = skill.toLowerCase();
+            const projectSkills = Array.isArray(p.skills) 
+                ? p.skills 
+                : (p.skills || '').split(',').map(s => s.trim());
+            
+            // Check if project's skills array contains the skill
+            return projectSkills.some(s => 
+                s && typeof s === 'string' && s.toLowerCase() === skillLower
+            );
+        });
+        
+        
+        // Calculate applied concepts from projects
+        const appliedConcepts = new Set();
+        projects.forEach(project => {
+            if (project.conceptUsed) {
+                project.conceptUsed.split(',').forEach(c => appliedConcepts.add(c.trim()));
             }
-            const learned = learnedConcepts.length;
-            // Applied: count learned concepts that are used in any completed project
-            const conceptsUsed = new Set();
-            pythonProjects.forEach(project => {
-                if (project.conceptUsed) {
-                    project.conceptUsed.split(',').forEach(c => conceptsUsed.add(c.trim()));
-                }
+        });
+        
+        // Count applied concepts that were learned
+        const appliedCount = learnedConcepts.filter(concept => 
+            appliedConcepts.has(concept.concept || concept)
+        ).length;
+        
+        // Calculate SP
+        const learnedSP = learnedConcepts.length * 2;
+        const appliedSP = appliedCount * 5;
+        const projectsSP = projects.reduce((sum, p) => sum + (Number(p.sp) || 10), 0);
+        const totalSP = learnedSP + appliedSP + projectsSP;
+        
+        return {
+            skill,
+            learned: learnedConcepts.length,
+            applied: appliedCount,
+            projects: projects.length,
+            learnedSP,
+            appliedSP,
+            projectsSP,
+            totalSP
+        };
+    };
+    
+    // Calculate total SP across all skills
+    const calculateTotalSP = () => {
+        const allSkills = [
+            'python', 'pandas', 'data-science', 'public-speaking', 'powerbi',
+            'numpy', 'c', 'cplus', 'dsa', 'devops', 'java', 'javascript',
+            'nodejs', 'reactjs', 'sql'
+        ];
+        
+        // Track which projects we've already counted
+        const countedProjectIds = new Set();
+        let totalSP = 0;
+        
+        // First, calculate learned and applied SP for all skills
+        const skillStats = allSkills.map(skill => {
+            const stats = calculateSkillStats(skill);
+            return {
+                ...stats,
+                // Temporarily set projectsSP to 0, we'll calculate it separately
+                projectsSP: 0,
+                totalSP: stats.learnedSP + stats.appliedSP
+            };
+        });
+        
+        // Now, calculate project SP (ensuring each project is only counted once)
+        const allProjects = userData.projectHistory || [];
+        const projectContributions = {};
+        
+        allProjects.forEach(project => {
+            if (!project || !project.id) return;
+            
+            // Only count each project once
+            if (countedProjectIds.has(project.id)) return;
+            countedProjectIds.add(project.id);
+            
+            const projectSP = Number(project.sp) || 10;
+            const projectSkills = Array.isArray(project.skills) 
+                ? project.skills 
+                : (project.skills || '').split(',').map(s => s.trim());
+                
+            if (projectSkills.length === 0) return;
+            
+            // Distribute SP equally among all skills for this project
+            const spPerSkill = projectSP / projectSkills.length;
+            
+            projectSkills.forEach(skill => {
+                const skillLower = skill.toLowerCase();
+                projectContributions[skillLower] = (projectContributions[skillLower] || 0) + spPerSkill;
             });
-            const applied = learnedConcepts.filter(concept => conceptsUsed.has(concept.concept || concept)).length;
-            pythonSP = pythonProjects.length * 10 + learned * 2 + applied * 5;
-        }
-        totalSP += pythonSP;
-        // Other skills: sum SP from projectHistory
-        if (userData && userData.projectHistory) {
-            const otherSkills = ['data-science', 'public-speaking', 'powerbi'];
-            otherSkills.forEach(skill => {
-                totalSP += userData.projectHistory
-                    .filter(project => project.skill === skill)
-                    .reduce((acc, project) => acc + (project.sp || 0), 0);
-            });
-        }
-        return totalSP;
+        });
+        
+        // Update skill stats with project contributions
+        skillStats.forEach(stat => {
+            const skillLower = stat.skill.toLowerCase();
+            if (projectContributions[skillLower]) {
+                stat.projectsSP = Math.round(projectContributions[skillLower] * 10) / 10; // Round to 1 decimal
+                stat.totalSP += stat.projectsSP;
+            }
+            
+            if (stat.learned > 0 || stat.projects > 0) {
+                totalSP += stat.totalSP;
+            }
+        });
+        
+        
+        return Math.round(totalSP);
     };
 
     // Calculate skill-specific SP
     const calculateSkillSP = (skill) => {
-        if (!userData.projectHistory) return 0;
-        return userData.projectHistory
-            .filter(project => project.skill === skill)
-            .reduce((acc, project) => acc + (project.sp || 0), 0);
+        const stats = calculateSkillStats(skill);
+        return stats.learnedSP + stats.appliedSP; // Only include learned and applied SP
+    };
+    
+    // Get all skill stats for display
+    const getAllSkillStats = () => {
+        const allSkills = [
+            'python', 'pandas', 'data-science', 'public-speaking', 'powerbi',
+            'numpy', 'c', 'cplus', 'dsa', 'devops', 'java', 'javascript',
+            'nodejs', 'reactjs', 'sql'
+        ];
+        
+        // First calculate all stats without project SP
+        const statsWithoutProjects = allSkills.map(calculateSkillStats);
+        
+        // Now calculate project SP separately
+        const allProjects = userData.projectHistory || [];
+        const projectContributions = {};
+        const countedProjectIds = new Set();
+        
+        allProjects.forEach(project => {
+            if (!project || !project.id) return;
+            if (countedProjectIds.has(project.id)) return;
+            countedProjectIds.add(project.id);
+            
+            const projectSP = Number(project.sp) || 10;
+            const projectSkills = Array.isArray(project.skills) 
+                ? project.skills 
+                : (project.skills || '').split(',').map(s => s.trim());
+                
+            if (projectSkills.length === 0) return;
+            
+            // Distribute SP equally among all skills for this project
+            const spPerSkill = projectSP / projectSkills.length;
+            
+            projectSkills.forEach(skill => {
+                const skillLower = skill.toLowerCase();
+                projectContributions[skillLower] = (projectContributions[skillLower] || 0) + spPerSkill;
+            });
+        });
+        
+        // Combine the stats
+        return statsWithoutProjects
+            .map(stat => {
+                const skillLower = stat.skill.toLowerCase();
+                const projectsSP = projectContributions[skillLower] || 0;
+                
+                return {
+                    ...stat,
+                    projects: stat.projects, // Keep original project count for display
+                    projectsSP: Math.round(projectsSP * 10) / 10, // Round to 1 decimal
+                    totalSP: stat.learnedSP + stat.appliedSP + Math.round(projectsSP * 10) / 10
+                };
+            })
+            .filter(stat => stat.learned > 0 || stat.projects > 0)
+            .sort((a, b) => b.totalSP - a.totalSP);
     };
 
     if (isLoading) {
@@ -312,17 +442,7 @@ function Profile() {
                                     <p className="text-slate-600 text-left pt-2">Total SP: {calculateTotalSP()}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center mt-10 text-sm space-x-4">
-                                <div className="flex items-center">
-                                    <span className="text-slate-800 font-semibold">{userData.observers?.length || 34}</span>
-                                    <span className="text-slate-600 ml-2">Observers</span>
-                                </div>
-                                <div className="w-px h-4 bg-slate-200"></div>
-                                <div className="flex items-center">
-                                    <span className="text-slate-800 font-semibold">{userData.observing?.length || 8}</span>
-                                    <span className="text-slate-600 ml-2">Observing</span>
-                                </div>
-                            </div>
+                            <div className="mt-4"></div>
                         </div>
 
                         {/* Skills Grid */}
@@ -431,6 +551,7 @@ function Profile() {
                                 </>
                             );
                         })()}
+                        
 
                         {/* Project History */}
                         <div className="bg-white rounded-lg shadow-md p-6">

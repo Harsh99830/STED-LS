@@ -606,6 +606,136 @@ function Home() {
     }
   }, [isLoaded, isSignedIn, user]);
 
+
+
+  const calculateTotalSP = () => {
+    const allSkills = [
+        'python', 'pandas', 'data-science', 'public-speaking', 'powerbi',
+        'numpy', 'c', 'cplus', 'dsa', 'devops', 'java', 'javascript',
+        'nodejs', 'reactjs', 'sql'
+    ];
+    
+    // Track which projects we've already counted
+    const countedProjectIds = new Set();
+    let totalSP = 0;
+    
+    // First, calculate learned and applied SP for all skills
+    const skillStats = allSkills.map(skill => {
+        const stats = calculateSkillStats(skill);
+        return {
+            ...stats,
+            // Temporarily set projectsSP to 0, we'll calculate it separately
+            projectsSP: 0,
+            totalSP: stats.learnedSP + stats.appliedSP
+        };
+    });
+    
+    // Now, calculate project SP (ensuring each project is only counted once)
+    const allProjects = userData.projectHistory || [];
+    const projectContributions = {};
+    
+    allProjects.forEach(project => {
+        if (!project || !project.id) return;
+        
+        // Only count each project once
+        if (countedProjectIds.has(project.id)) return;
+        countedProjectIds.add(project.id);
+        
+        const projectSP = Number(project.sp) || 10;
+        const projectSkills = Array.isArray(project.skills) 
+            ? project.skills 
+            : (project.skills || '').split(',').map(s => s.trim());
+            
+        if (projectSkills.length === 0) return;
+        
+        // Distribute SP equally among all skills for this project
+        const spPerSkill = projectSP / projectSkills.length;
+        
+        projectSkills.forEach(skill => {
+            const skillLower = skill.toLowerCase();
+            projectContributions[skillLower] = (projectContributions[skillLower] || 0) + spPerSkill;
+        });
+    });
+    
+    // Update skill stats with project contributions
+    skillStats.forEach(stat => {
+        const skillLower = stat.skill.toLowerCase();
+        if (projectContributions[skillLower]) {
+            stat.projectsSP = Math.round(projectContributions[skillLower] * 10) / 10; // Round to 1 decimal
+            stat.totalSP += stat.projectsSP;
+        }
+        
+        if (stat.learned > 0 || stat.projects > 0) {
+            totalSP += stat.totalSP;
+        }
+    });
+    
+    
+    return Math.round(totalSP);
+};
+
+const calculateSkillStats = (skill) => {
+  const skillKey = skill === 'cplus' ? 'Cplus' : 
+                  skill === 'data-science' ? 'DataScience' :
+                  skill === 'public-speaking' ? 'PublicSpeaking' :
+                  skill.charAt(0).toUpperCase() + skill.slice(1);
+  
+  // Get learned concepts
+  let learnedConcepts = [];
+  if (userData[skill] && userData[skill].learnedConcepts) {
+      learnedConcepts = Array.isArray(userData[skill].learnedConcepts) 
+          ? userData[skill].learnedConcepts 
+          : Object.values(userData[skill].learnedConcepts || {});
+  }
+  
+  // Get projects for this skill
+  const projects = (userData.projectHistory || []).filter(p => {
+      if (!p) return false;
+      
+      const skillLower = skill.toLowerCase();
+      const projectSkills = Array.isArray(p.skills) 
+          ? p.skills 
+          : (p.skills || '').split(',').map(s => s.trim());
+      
+      // Check if project's skills array contains the skill
+      return projectSkills.some(s => 
+          s && typeof s === 'string' && s.toLowerCase() === skillLower
+      );
+  });
+  
+  
+  // Calculate applied concepts from projects
+  const appliedConcepts = new Set();
+  projects.forEach(project => {
+      if (project.conceptUsed) {
+          project.conceptUsed.split(',').forEach(c => appliedConcepts.add(c.trim()));
+      }
+  });
+  
+  // Count applied concepts that were learned
+  const appliedCount = learnedConcepts.filter(concept => 
+      appliedConcepts.has(concept.concept || concept)
+  ).length;
+  
+  // Calculate SP
+  const learnedSP = learnedConcepts.length * 2;
+  const appliedSP = appliedCount * 5;
+  const projectsSP = projects.reduce((sum, p) => sum + (Number(p.sp) || 10), 0);
+  const totalSP = learnedSP + appliedSP + projectsSP;
+  
+  return {
+      skill,
+      learned: learnedConcepts.length,
+      applied: appliedCount,
+      projects: projects.length,
+      learnedSP,
+      appliedSP,
+      projectsSP,
+      totalSP
+  };
+};
+
+
   // Fetch NumPy data
   useEffect(() => {
     if (isLoaded && isSignedIn && user?.id) {
@@ -1386,7 +1516,6 @@ function Home() {
                         totalSP += calculateSkillSP(key);
                       }
                     });
-                    return <p className="text-center text-sm mb-2 text-slate-600">Total SP: {totalSP}</p>;
                   })()}
                   <div className="flex flex-wrap justify-center gap-1 mb-2">
                     {userData.projectHistory && userData.projectHistory.length > 0 ? (
